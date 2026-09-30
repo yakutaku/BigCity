@@ -123,7 +123,7 @@ Use `COPY_PLUGIN_AFTER_BUILD TRUE` so every build installs itself to `~/Library/
 
 | ID | Type | Range | Default | Notes |
 |---|---|---|---|---|
-| `citySize` | float | 0–100, step 0.1 | 50 | Label "City Size", unit "%" |
+| `citySize` | float | 0–100, step 0.1 | 50 | Label "City size", unit "%" |
 | `bypass` | bool | on/off | off | Returned by `getBypassParameter()` |
 
 State save and restore go through the APVTS.
