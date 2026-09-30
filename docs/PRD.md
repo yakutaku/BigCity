@@ -141,7 +141,7 @@ These states are designed in Figma and implemented in code:
 - The readout font's license must allow bundling; DSEG7 (OFL) is the fallback.
 
 **Header:**
-- Logo, ビッグシティ, エアー＆レジャー (pending a native speaker's review), Model BC-01 (sentence case per Practical UI).
+- Logo, ビッグシティ, エアー＆レジャー (pending a native speaker's review), MODEL BC-01 (uppercase labels are an approved exception; see Practical UI decision D1).
 - Removed: "Made with luv," the 理科準備室 tag, and the empty circle.
 
 **Texture:**
@@ -197,7 +197,7 @@ These states are designed in Figma and implemented in code:
 ## 13. Open items
 
 - [x] Maker name: **sunshower audio** (all lowercase) (`com.sunshoweraudio.bigcity`, manufacturer code `Snsh`)
-- [x] Practical UI rules written to `docs/practical-ui.md`. Decisions D1–D4 resolve toward the book.
+- [x] Practical UI rules written to `docs/practical-ui.md`. D1 is an approved exception (uppercase labels); D2–D4 follow the book.
 - [ ] Minimum macOS: 11.0 matches Live 12. Revisit if beta testers are on older systems.
 - [ ] Native speaker review of エアー＆レジャー
 - [ ] Apple approval → Developer ID Application and Installer certificates (needed by Day 9)

@@ -59,7 +59,7 @@ All UI decisions follow Adham Dannaway's *Practical UI*. **The rules are in `doc
 - **Spacing:** 8 pt grid (8, 16, 24, 32, 48, 80, 96). Use 4 and 12 only for tight spacing inside a component, as the starter kit does.
 - **Type scale:** 40/48, 32/40, 20/28, 16/24, 14/20 (size/line height), in **Jost**.
   - Two weights only: Regular 400 and Bold (Semi Bold 600).
-  - No uppercase styles; use sentence case.
+  - Sentence case everywhere, except the plugin's control and header labels. Those use the uppercase style (Semi Bold 14/24, +2 letter spacing), per Practical UI decision D1.
 - **Text colors:** two emphasis levels only, strong and weak. Both must meet 4.5:1 on their background.
 - **Strokes:** weak for decoration; strong for control edges, which must meet 3:1.
 - **Corner radius:** 8 / 16 / 32.

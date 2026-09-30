@@ -51,7 +51,7 @@ This file summarizes the principles of Adham Dannaway's *Practical UI* (2nd edit
 | Rule | How it applies to BigCity |
 |---|---|
 | Concise; sentences under 20 words | Plugin labels, quick-start PDF, Gumroad page |
-| Sentence case, never title case or uppercase | Labels read "City size", "FX on", "Bypass", "Model BC-01" (decision D1) |
+| Sentence case, never title case or uppercase | Sentence case for the quick-start PDF, the Gumroad page and the readout. **Exception:** control and header labels on the plugin are uppercase (decision D1). |
 | Front-load the important words | Quick-start headings start with the action, e.g. "Turn the knob to add sparkle" |
 | Inverted pyramid for longer text | Gumroad description: what it does → why → details |
 | Numbers as numerals | "0–100", "30 instances" |
@@ -72,11 +72,11 @@ This file summarizes the principles of Adham Dannaway's *Practical UI* (2nd edit
 
 ## Decisions where the book and the mockup disagree
 
-These resolve toward the book. The user asked that it be followed exactly.
+These resolve toward the book unless the user approved an exception. Each exception records its reason.
 
 | # | Conflict | Decision |
 |---|---|---|
-| D1 | The mockup uses uppercase hardware-style labels ("CITY SIZE", "FX ON") | **Sentence case.** Vintage character comes from texture, color, type and the Japanese copy instead. |
+| D1 | The mockup uses uppercase hardware-style labels ("CITY SIZE", "FX ON") | **Exception, approved by the user: uppercase for plugin control and header labels only** ("CITY SIZE", "FX ON", "BYPASS", "MODEL BC-01"). *Reason:* this follows the plugin-industry convention (Valhalla, Serum) and the hardware reference, and the labels are short enough to read easily. *Guardrails:* use the starter kit's uppercase style (Jost Semi Bold 14/24, +2 letter spacing), keep labels to 1–2 words, and meet 4.5:1 contrast. Everywhere else uses sentence case. |
 | D2 | The mockup's readout uses a second typeface | **Jost with tabular (fixed-width) figures** on the LCD panel, so digits don't jitter. If Jost's figures jitter, we'll pad to a fixed width in code. |
 | D3 | Short labels are centered over the round knob | **Left-align labels to the group's left edge** on the 12-column grid. The layout is tested in Figma on Day 5; if it looks wrong, we'll raise it as an exception with a reason. |
 | D4 | The v1.0 PRD said "the knob dims" when bypassed | **No dimming below contrast minimums.** Bypass is shown by the switch, its label, the LED and the skyline. The knob and readout stay at full contrast. |
