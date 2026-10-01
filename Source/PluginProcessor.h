@@ -4,6 +4,11 @@
 #include "BypassCrossfade.h"
 #include "CityMacro.h"
 #include "MicroShifter.h"
+#include "SoundTuning.h"
+
+#if BIGCITY_TUNING
+ #include "TuningParameters.h"
+#endif
 
 #include <juce_audio_utils/juce_audio_utils.h>
 
@@ -46,10 +51,15 @@ private:
     void renderBlock (juce::AudioBuffer<float>& buffer, bool bypassRequested);
     void renderChunk (juce::AudioBuffer<float>& buffer, int chunkStart, int chunkLength, float wetGainAtChunkStart);
     void applyCitySettings (const CitySettings& settings);
+    SoundTuning currentTuning() const;
 
     juce::AudioProcessorValueTreeState parameters;
     juce::AudioParameterBool* bypassParameter = nullptr;
     std::atomic<float>* citySizeValue = nullptr;
+
+   #if BIGCITY_TUNING
+    TuningParameters::Reader tuningParameters { parameters };
+   #endif
 
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> citySizeSmoothed;
     AirShelf airShelf;

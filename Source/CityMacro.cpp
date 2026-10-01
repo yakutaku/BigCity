@@ -15,14 +15,14 @@ namespace
     }
 
     // "Off" has no dB value, so the lower half fades in linearly in amplitude (PRD "wet level curve").
-    float wetLevelDbInLowerHalf (float proportion)
+    float wetLevelDbInLowerHalf (float proportion, float wetLevelDbAtMidpoint)
     {
-        const auto gainAtMidpoint = juce::Decibels::decibelsToGain (SoundSpec::wetLevelDbAtMidpoint);
+        const auto gainAtMidpoint = juce::Decibels::decibelsToGain (wetLevelDbAtMidpoint);
         return juce::Decibels::gainToDecibels (interpolate (0.0f, gainAtMidpoint, proportion), minusInfinityDb);
     }
 }
 
-CitySettings CityMacro::map (float citySizePercent)
+CitySettings CityMacro::map (float citySizePercent, const SoundTuning& tuning)
 {
     using namespace SoundSpec;
 
@@ -32,18 +32,25 @@ CitySettings CityMacro::map (float citySizePercent)
         ? (citySize - citySizeMinPercent) / (curveMidpointPercent - citySizeMinPercent)
         : (citySize - curveMidpointPercent) / (citySizeMaxPercent - curveMidpointPercent);
 
+    // Each curve scales with its maximum so its shape holds. At the default tuning the scale is
+    // exactly 1 and the offset exactly 0, so shipping builds get the PRD curves bit for bit.
+    const auto detuneScale = tuning.detuneCentsAtMax / detuneCentsAtMax;
+    const auto wetOffsetDb = tuning.wetLevelDbAtMax - wetLevelDbAtMax;
+
     CitySettings settings;
-    settings.airGainDb = airMaxGainDb * (citySize - citySizeMinPercent) / (citySizeMaxPercent - citySizeMinPercent);
+    settings.airGainDb = tuning.airMaxGainDb * (citySize - citySizeMinPercent) / (citySizeMaxPercent - citySizeMinPercent);
+    settings.airCornerHz = tuning.airCornerHz;
+    settings.airShelfQ = tuning.airShelfQ;
 
     if (inLowerHalf)
     {
-        settings.detuneCents = interpolate (detuneCentsAtMin, detuneCentsAtMidpoint, proportionOfHalf);
-        settings.wetLevelDb = wetLevelDbInLowerHalf (proportionOfHalf);
+        settings.detuneCents = interpolate (detuneCentsAtMin, detuneCentsAtMidpoint, proportionOfHalf) * detuneScale;
+        settings.wetLevelDb = wetLevelDbInLowerHalf (proportionOfHalf, wetLevelDbAtMidpoint + wetOffsetDb);
     }
     else
     {
-        settings.detuneCents = interpolate (detuneCentsAtMidpoint, detuneCentsAtMax, proportionOfHalf);
-        settings.wetLevelDb = interpolate (wetLevelDbAtMidpoint, wetLevelDbAtMax, proportionOfHalf);
+        settings.detuneCents = interpolate (detuneCentsAtMidpoint, detuneCentsAtMax, proportionOfHalf) * detuneScale;
+        settings.wetLevelDb = interpolate (wetLevelDbAtMidpoint + wetOffsetDb, wetLevelDbAtMax + wetOffsetDb, proportionOfHalf);
     }
 
     return settings;

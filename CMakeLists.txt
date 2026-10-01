@@ -34,6 +34,14 @@ set(BIGCITY_SOURCES
     Source/AirShelf.cpp
     Source/MicroShifter.cpp)
 
+# Developer-only: exposes sound-tuning parameters in the generic editor. Never ship a build with this ON.
+option(BIGCITY_TUNING "Developer-only sound tuning parameters; never ship" OFF)
+
+if (BIGCITY_TUNING)
+    message(WARNING "BIGCITY_TUNING is ON: this is a developer tuning build. Never ship or release it.")
+    list(APPEND BIGCITY_SOURCES Source/TuningParameters.cpp)
+endif()
+
 target_sources(BigCity
     PRIVATE
         ${BIGCITY_SOURCES})
@@ -42,7 +50,8 @@ target_compile_definitions(BigCity
     PUBLIC
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
-        JUCE_VST3_CAN_REPLACE_VST2=0)
+        JUCE_VST3_CAN_REPLACE_VST2=0
+        BIGCITY_TUNING=$<BOOL:${BIGCITY_TUNING}>)
 
 target_link_libraries(BigCity
     PRIVATE
@@ -76,7 +85,8 @@ target_compile_definitions(BigCityTests
     PRIVATE
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
-        JucePlugin_Name="BigCity")
+        JucePlugin_Name="BigCity"
+        BIGCITY_TUNING=$<BOOL:${BIGCITY_TUNING}>)
 
 target_link_libraries(BigCityTests
     PRIVATE

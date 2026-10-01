@@ -32,7 +32,7 @@ public:
         beginTest ("At +6 dB the shelf boosts the top and leaves the bass alone");
         {
             constexpr double sampleRate = 48000.0;
-            const auto c = AirShelf::makeCoefficients (sampleRate, SoundSpec::airShelfQ, 6.0f);
+            const auto c = AirShelf::makeCoefficients (sampleRate, SoundSpec::airCornerHz, SoundSpec::airShelfQ, 6.0f);
 
             // At DC z = 1, at Nyquist z = -1, so the response is a ratio of coefficient sums.
             const auto dcGain = (c.b0 + c.b1 + c.b2) / (1.0 + c.a1 + c.a2);

@@ -41,7 +41,7 @@ namespace
 
         for (auto sampleRate : sampleRatesHz)
         {
-            const auto db = magnitudeDb (AirShelf::makeCoefficients (sampleRate, q, gainDb), frequencyHz, sampleRate);
+            const auto db = magnitudeDb (AirShelf::makeCoefficients (sampleRate, SoundSpec::airCornerHz, q, gainDb), frequencyHz, sampleRate);
             lowestDb = std::min (lowestDb, db);
             highestDb = std::max (highestDb, db);
         }
@@ -59,7 +59,7 @@ namespace
             std::printf ("%10.0f", frequencyHz);
 
             for (auto sampleRate : sampleRatesHz)
-                std::printf (" %+10.2f", magnitudeDb (AirShelf::makeCoefficients (sampleRate, q, gainDb), frequencyHz, sampleRate));
+                std::printf (" %+10.2f", magnitudeDb (AirShelf::makeCoefficients (sampleRate, SoundSpec::airCornerHz, q, gainDb), frequencyHz, sampleRate));
 
             std::printf (" %10.2f\n", spreadAcrossSampleRates (q, gainDb, frequencyHz));
         }

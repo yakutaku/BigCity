@@ -40,7 +40,20 @@ juce::AudioProcessorValueTreeState::ParameterLayout BigCityAudioProcessor::creat
         "Bypass",
         false));
 
+   #if BIGCITY_TUNING
+    TuningParameters::addTo (layout);
+   #endif
+
     return layout;
+}
+
+SoundTuning BigCityAudioProcessor::currentTuning() const
+{
+   #if BIGCITY_TUNING
+    return tuningParameters.read();
+   #else
+    return {};
+   #endif
 }
 
 void BigCityAudioProcessor::prepareToPlay (double sampleRate, int)
@@ -52,7 +65,7 @@ void BigCityAudioProcessor::prepareToPlay (double sampleRate, int)
     // Start at the current knob position so loading a session doesn't sweep up from 0.
     citySizeSmoothed.reset (sampleRate, SoundSpec::citySizeSmoothingSeconds);
     citySizeSmoothed.setCurrentAndTargetValue (citySizeValue->load());
-    applyCitySettings (CityMacro::map (citySizeSmoothed.getCurrentValue()));
+    applyCitySettings (CityMacro::map (citySizeSmoothed.getCurrentValue(), currentTuning()));
 }
 
 void BigCityAudioProcessor::releaseResources()
@@ -102,14 +115,14 @@ void BigCityAudioProcessor::renderBlock (juce::AudioBuffer<float>& buffer, bool 
         const auto chunkLength = std::min (SoundSpec::controlIntervalSamples, numSamples - chunkStart);
         const auto wetGainAtChunkStart = wetGain;
 
-        applyCitySettings (CityMacro::map (citySizeSmoothed.skip (chunkLength)));
+        applyCitySettings (CityMacro::map (citySizeSmoothed.skip (chunkLength), currentTuning()));
         renderChunk (buffer, chunkStart, chunkLength, wetGainAtChunkStart);
     }
 }
 
 void BigCityAudioProcessor::applyCitySettings (const CitySettings& settings)
 {
-    airShelf.setGainDb (settings.airGainDb);
+    airShelf.update (settings.airGainDb, settings.airCornerHz, settings.airShelfQ);
     microShifter.setDetuneCents (settings.detuneCents);
     wetGain = juce::Decibels::decibelsToGain (settings.wetLevelDb, -std::numeric_limits<float>::infinity());
 }

@@ -17,11 +17,11 @@ public:
     static constexpr int maxChannels = 2;
 
     // Exposed so the shelf check measures exactly the coefficients the plugin uses.
-    static BiquadCoefficients makeCoefficients (double sampleRate, double q, float gainDb);
+    static BiquadCoefficients makeCoefficients (double sampleRate, double cornerHz, double q, float gainDb);
 
     void prepare (double newSampleRate);
     void reset();
-    void setGainDb (float gainDb);
+    void update (float gainDb, double cornerHz, double q);
 
     float processSample (int channel, float input)
     {
