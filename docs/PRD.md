@@ -56,6 +56,9 @@ BigCity does one job, costs little CPU, and needs no learning.
 - Resizable window
 - Buildings growing or animating
 
+**v1.1 backlog**
+- Matched (analog-like) shelf design for the air shelf, so its response no longer depends on sample rate (see the §6 shelf check finding)
+
 ## 6. Sound spec
 
 Every value is tagged with its source. **We don't guess.**
@@ -86,6 +89,8 @@ Every value is tagged with its source. **We don't guess.**
 | Bypass crossfade | 20 ms | — | Click-free |
 
 **Shelf response check (Day 3):** measure the air shelf's frequency response at 44.1, 48 and 96 kHz. Flag it if the responses differ by more than 0.5 dB anywhere below 16 kHz.
+
+**Finding (Day 3, accepted for v1):** at Q 0.5 and City Size 100, the 44.1 and 96 kHz responses differ by up to 0.73 dB, and only above 14.8 kHz. The cause is the standard digital design's frequency squeeze near Nyquist. A matched shelf design is on the v1.1 backlog (§5).
 
 ## 7. Interaction spec
 
