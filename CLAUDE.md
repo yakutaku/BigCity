@@ -80,7 +80,7 @@ Never invent a spacing, size or color outside these scales. If a layout seems to
   - Standalone is for development testing only.
   - No AU and no Windows in v1.
 - **Architectures:** universal binary, `CMAKE_OSX_ARCHITECTURES="arm64;x86_64"`
-- **Minimum macOS:** 11.0
+- **Minimum macOS:** 12.0
 - **Plugin identity** (final; never change after the first beta):
   - Company: "sunshower audio" (all lowercase, deliberately)
   - Manufacturer code: `Snsh`

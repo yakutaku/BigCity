@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.22)
 
-# Set before project() so the build is universal and targets macOS 11 without command-line flags.
+# Set before project() so the build is universal and targets macOS 12 without command-line flags.
+# 12.0 is the oldest target Xcode 27 supports.
 set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "" FORCE)
-set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "" FORCE)
+set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "" FORCE)
 
 project(BigCity VERSION 0.1.0 LANGUAGES C CXX)
 

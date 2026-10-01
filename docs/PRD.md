@@ -43,7 +43,7 @@ BigCity does one job, costs little CPU, and needs no learning.
 **In v1**
 - One macro knob and a bypass switch
 - Pixel skyline that responds to the knob
-- VST3 only, macOS 11+, universal binary
+- VST3 only, macOS 12+, universal binary
 - Signed and notarized installer
 - Quick-start PDF
 - Gumroad listing
@@ -198,7 +198,7 @@ These states are designed in Figma and implemented in code:
 
 - [x] Maker name: **sunshower audio** (all lowercase) (`com.sunshoweraudio.bigcity`, manufacturer code `Snsh`)
 - [x] Practical UI rules written to `docs/practical-ui.md`. D1 is an approved exception (uppercase labels); D2–D4 follow the book.
-- [ ] Minimum macOS: 11.0 matches Live 12. Revisit if beta testers are on older systems.
+- [x] Minimum macOS: **12.0**. Xcode 27 supports 12.0–27.0.
 - [ ] Native speaker review of エアー＆レジャー
 - [ ] Apple approval → Developer ID Application and Installer certificates (needed by Day 9)
 - [ ] Reference track list for the air measurement
