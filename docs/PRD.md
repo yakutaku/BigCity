@@ -69,10 +69,10 @@ Every value is tagged with its source. **We don't guess.**
 | Signal flow | Dry at unity gain, plus an air shelf and a micro-shift wet signal. The macro scales both. | — | Design decision |
 | At 0 | Fully transparent (identical to bypass) | — | Design decision |
 | Default | 50 | — | Industry convention (NI, Kilohearts) |
-| **Air:** shelf type | High shelf, gentle slope (Q ≈ 0.5) | Test | Broad "air" shelves are the reference sound (Mäag Air Band) |
-| **Air:** corner frequency | 12 kHz | Measure | v1.0 PRD said 10–12 kHz; confirm from reference analysis |
-| **Air:** max gain at 100 | Placeholder +6 dB | **Measure** | Average >10 kHz energy difference between city pop references and the producer's own bounces |
-| **Air:** curve | Gain in dB, linear in knob position | Test | dB is perceptually close to linear |
+| **Air:** filter | RBJ high-shelf biquad, one per channel | Decided v1 (user research). Test: A/B Q 0.5 vs 0.707 by ear on Day 3. | RBJ Audio EQ Cookbook |
+| **Air:** corner frequency | 12 kHz | Decided v1 (user research). Test: A/B Q 0.5 vs 0.707 by ear on Day 3. | v1.0 PRD said 10–12 kHz |
+| **Air:** Q | Fixed 0.5 | Decided v1 (user research). Test: A/B Q 0.5 vs 0.707 by ear on Day 3. | Broad "air" shelves are the reference sound (Mäag Air Band) |
+| **Air:** gain curve | 0 dB at 0 → +6 dB at 100; `gainDb = 6.0 × citySize / 100` | Decided v1 (user research). Test: A/B Q 0.5 vs 0.707 by ear on Day 3. | dB is perceptually close to linear |
 | **Micro-shift:** detune | Left down, right up; ±5 cents at low settings → ±7 at 50 → ±10 at 100 | Sourced range, curve Test | H3000 micropitch recipes: ±7 cents (Splice preset 519), 8–10 cents common, 4–12 cents range |
 | **Micro-shift:** pre-delay | Left 11 ms / right 17 ms, fixed | Sourced range, values Test | 6–20 ms common, offset left and right |
 | **Micro-shift:** wet level | Off at 0 → −12 dB at 50 → −6 dB at 100 | Test | "Turn it up until you hear it, then back off" |
@@ -81,12 +81,7 @@ Every value is tagged with its source. **We don't guess.**
 | Smoothing | 30 ms on `citySize` | — | Prevents zipper noise |
 | Bypass crossfade | 20 ms | — | Click-free |
 
-**Measurement protocol (Day 2):**
-1. Use lossless files only. Note vinyl rips and remasters as such.
-2. Compute the average spectrum per track, normalized at 1–4 kHz.
-3. Compare 10–16 kHz energy between the two sets.
-4. Report the mean, spread and outliers.
-5. If city pop references are *not* brighter, lower the air gain and record that as a finding.
+**Shelf response check (Day 3):** measure the air shelf's frequency response at 44.1, 48 and 96 kHz. Flag it if the responses differ by more than 0.5 dB anywhere below 16 kHz.
 
 ## 7. Interaction spec
 
@@ -201,4 +196,3 @@ These states are designed in Figma and implemented in code:
 - [x] Minimum macOS: **12.0**. Xcode 27 supports 12.0–27.0.
 - [ ] Native speaker review of エアー＆レジャー
 - [ ] Apple approval → Developer ID Application and Installer certificates (needed by Day 9)
-- [ ] Reference track list for the air measurement
