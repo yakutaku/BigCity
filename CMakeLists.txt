@@ -65,7 +65,8 @@ target_sources(BigCityTests
         Tests/TestMain.cpp
         Tests/CityMacroTests.cpp
         Tests/AirShelfTests.cpp
-        Tests/MicroShifterTests.cpp)
+        Tests/MicroShifterTests.cpp
+        Tests/ProcessorTests.cpp)
 
 target_include_directories(BigCityTests
     PRIVATE
