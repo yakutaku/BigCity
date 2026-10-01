@@ -72,10 +72,10 @@ Every value is tagged with its source. **We don't guess.**
 | Signal flow | Dry at unity gain, plus an air shelf and a micro-shift wet signal. The macro scales both. | — | Design decision |
 | At 0 | Fully transparent (identical to bypass) | — | Design decision |
 | Default | 50 | — | Industry convention (NI, Kilohearts) |
-| **Air:** filter | RBJ high-shelf biquad, one per channel | Decided v1 (user research). Test: A/B Q 0.5 vs 0.707 by ear on Day 3. | RBJ Audio EQ Cookbook |
-| **Air:** corner frequency | 12 kHz | Decided v1 (user research). Test: A/B Q 0.5 vs 0.707 by ear on Day 3. | v1.0 PRD said 10–12 kHz |
-| **Air:** Q | Fixed 0.5 | Decided v1 (user research). Test: A/B Q 0.5 vs 0.707 by ear on Day 3. | Broad "air" shelves are the reference sound (Mäag Air Band) |
-| **Air:** gain curve | 0 dB at 0 → +6 dB at 100; `gainDb = 6.0 × citySize / 100` | Decided v1 (user research). Test: A/B Q 0.5 vs 0.707 by ear on Day 3. | dB is perceptually close to linear |
+| **Air:** filter | RBJ high-shelf biquad, one per channel | Decided v1 (user research) | RBJ Audio EQ Cookbook |
+| **Air:** corner frequency | 12 kHz | Decided v1 (user research) | v1.0 PRD said 10–12 kHz |
+| **Air:** Q | Fixed 0.707 | Decided by A/B listen: Q 0.707 had more top end | Broad "air" shelves are the reference sound (Mäag Air Band) |
+| **Air:** gain curve | 0 dB at 0 → +6 dB at 100; `gainDb = 6.0 × citySize / 100` | Decided v1 (user research) | dB is perceptually close to linear |
 | **Micro-shift:** detune | Left down, right up; ±5 cents at low settings → ±7 at 50 → ±10 at 100 | Sourced range, curve Test | H3000 micropitch recipes: ±7 cents (Splice preset 519), 8–10 cents common, 4–12 cents range |
 | **Micro-shift:** pre-delay | Left 11 ms / right 17 ms, fixed | Sourced range, values Test | 6–20 ms common, offset left and right |
 | **Micro-shift:** wet level | Off at 0 → −12 dB at 50 → −6 dB at 100 | Test | "Turn it up until you hear it, then back off" |
@@ -90,7 +90,7 @@ Every value is tagged with its source. **We don't guess.**
 
 **Shelf response check (Day 3):** measure the air shelf's frequency response at 44.1, 48 and 96 kHz. Flag it if the responses differ by more than 0.5 dB anywhere below 16 kHz.
 
-**Finding (Day 3, accepted for v1):** at Q 0.5 and City Size 100, the 44.1 and 96 kHz responses differ by up to 0.73 dB, and only above 14.8 kHz. The cause is the standard digital design's frequency squeeze near Nyquist. A matched shelf design is on the v1.1 backlog (§5).
+**Finding (Day 3, accepted for v1):** at City Size 100, the 44.1 and 96 kHz responses differ by up to 0.84 dB at Q 0.707, and only above 13.7 kHz. (At Q 0.5 it was 0.73 dB above 14.8 kHz.) The cause is the standard digital design's frequency squeeze near Nyquist. A matched shelf design is on the v1.1 backlog (§5).
 
 ## 7. Interaction spec
 

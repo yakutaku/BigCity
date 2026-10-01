@@ -19,7 +19,7 @@ namespace SoundSpec
     constexpr double airCornerHz = 12000.0;
 
     // PRD §6 "Air: Q"
-    constexpr double airShelfQ = 0.5;
+    constexpr double airShelfQ = 0.707;
 
     // PRD §6 "Air: Q" status: the Day 3 A/B alternative, used only by the shelf check
     constexpr double airShelfAlternativeQ = 0.707;
