@@ -27,9 +27,14 @@ juce_add_plugin(BigCity
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
     COPY_PLUGIN_AFTER_BUILD TRUE)
 
+# Shared by the plugin and the tests, so the tests exercise the code that ships.
+set(BIGCITY_SOURCES
+    Source/PluginProcessor.cpp
+    Source/CityMacro.cpp)
+
 target_sources(BigCity
     PRIVATE
-        Source/PluginProcessor.cpp)
+        ${BIGCITY_SOURCES})
 
 target_compile_definitions(BigCity
     PUBLIC
@@ -40,7 +45,40 @@ target_compile_definitions(BigCity
 target_link_libraries(BigCity
     PRIVATE
         juce::juce_audio_utils
+        juce::juce_dsp
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
+
+# Unit tests: run with `ctest --test-dir build -C Release`.
+enable_testing()
+
+juce_add_console_app(BigCityTests
+    PRODUCT_NAME "BigCityTests")
+
+target_sources(BigCityTests
+    PRIVATE
+        ${BIGCITY_SOURCES}
+        Tests/TestMain.cpp
+        Tests/CityMacroTests.cpp)
+
+target_include_directories(BigCityTests
+    PRIVATE
+        Source)
+
+target_compile_definitions(BigCityTests
+    PRIVATE
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+        JucePlugin_Name="BigCity")
+
+target_link_libraries(BigCityTests
+    PRIVATE
+        juce::juce_audio_utils
+        juce::juce_dsp
+    PUBLIC
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags)
+
+add_test(NAME BigCityTests COMMAND BigCityTests)

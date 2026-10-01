@@ -77,6 +77,10 @@ Every value is tagged with its source. **We don't guess.**
 | **Micro-shift:** pre-delay | Left 11 ms / right 17 ms, fixed | Sourced range, values Test | 6–20 ms common, offset left and right |
 | **Micro-shift:** wet level | Off at 0 → −12 dB at 50 → −6 dB at 100 | Test | "Turn it up until you hear it, then back off" |
 | **Micro-shift:** algorithm | Dual-tap crossfading delay-line shifter (H910-style) | — | Lowest CPU; small shifts produce minimal artifacts |
+| **Micro-shift:** detune curve | Linear between points: ±5 cents at 0 → ±7 at 50 → ±10 at 100 | Test | The detune row gives the points; "low settings" read as 0. Inaudible at 0 because the wet signal is off. |
+| **Micro-shift:** wet level curve | 0–50: linear in amplitude from off to −12 dB. 50–100: linear in dB from −12 to −6 dB. | Test | "Off" has no dB value; linear in dB above 50 matches the air curve |
+| **Micro-shift:** window | 20 ms, centered on the pre-delay (left sweeps 1–21 ms, right 7–27 ms). Two taps half a cycle apart with sin² crossfades; 4-point cubic Hermite interpolation. | Test | Average delay stays at the pre-delay. About one crossfade cycle per 3.5 s at ±10 cents. |
+| Signal order | Output = air shelf(dry + wet level × micro-shift(dry)) | Test | The air reaches the wet signal too, with one shelf per channel |
 | Auto gain | Fixed compensation curve, one value per knob position | **Measure** | Pink noise through the plugin; match integrated loudness to bypass |
 | Smoothing | 30 ms on `citySize` | — | Prevents zipper noise |
 | Bypass crossfade | 20 ms | — | Click-free |

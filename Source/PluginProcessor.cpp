@@ -1,4 +1,5 @@
 #include "PluginProcessor.h"
+#include "SoundSpec.h"
 
 namespace
 {
@@ -8,11 +9,6 @@ namespace
 
     // Bumped only when a parameter's meaning changes, so hosts can migrate old sessions.
     constexpr int parameterVersion = 1;
-
-    constexpr float citySizeMinPercent = 0.0f;
-    constexpr float citySizeMaxPercent = 100.0f;
-    constexpr float citySizeStepPercent = 0.1f;
-    constexpr float citySizeDefaultPercent = 50.0f; // PRD §6 "Default"
 }
 
 BigCityAudioProcessor::BigCityAudioProcessor()
@@ -28,6 +24,8 @@ BigCityAudioProcessor::BigCityAudioProcessor()
 juce::AudioProcessorValueTreeState::ParameterLayout BigCityAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
+
+    using namespace SoundSpec;
 
     layout.add (std::make_unique<juce::AudioParameterFloat> (
         juce::ParameterID { citySizeId, parameterVersion },
