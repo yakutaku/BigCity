@@ -31,7 +31,8 @@ juce_add_plugin(BigCity
 set(BIGCITY_SOURCES
     Source/PluginProcessor.cpp
     Source/CityMacro.cpp
-    Source/AirShelf.cpp)
+    Source/AirShelf.cpp
+    Source/MicroShifter.cpp)
 
 target_sources(BigCity
     PRIVATE
@@ -63,7 +64,8 @@ target_sources(BigCityTests
         ${BIGCITY_SOURCES}
         Tests/TestMain.cpp
         Tests/CityMacroTests.cpp
-        Tests/AirShelfTests.cpp)
+        Tests/AirShelfTests.cpp
+        Tests/MicroShifterTests.cpp)
 
 target_include_directories(BigCityTests
     PRIVATE
