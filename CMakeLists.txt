@@ -30,7 +30,8 @@ juce_add_plugin(BigCity
 # Shared by the plugin and the tests, so the tests exercise the code that ships.
 set(BIGCITY_SOURCES
     Source/PluginProcessor.cpp
-    Source/CityMacro.cpp)
+    Source/CityMacro.cpp
+    Source/AirShelf.cpp)
 
 target_sources(BigCity
     PRIVATE
@@ -61,7 +62,8 @@ target_sources(BigCityTests
     PRIVATE
         ${BIGCITY_SOURCES}
         Tests/TestMain.cpp
-        Tests/CityMacroTests.cpp)
+        Tests/CityMacroTests.cpp
+        Tests/AirShelfTests.cpp)
 
 target_include_directories(BigCityTests
     PRIVATE
@@ -82,3 +84,29 @@ target_link_libraries(BigCityTests
         juce::juce_recommended_warning_flags)
 
 add_test(NAME BigCityTests COMMAND BigCityTests)
+
+# PRD §6 shelf response check. It reports findings rather than passing or failing, so it isn't a CTest test.
+juce_add_console_app(ShelfCheck
+    PRODUCT_NAME "ShelfCheck")
+
+target_sources(ShelfCheck
+    PRIVATE
+        Source/AirShelf.cpp
+        Source/CityMacro.cpp
+        Tests/ShelfCheck.cpp)
+
+target_include_directories(ShelfCheck
+    PRIVATE
+        Source)
+
+target_compile_definitions(ShelfCheck
+    PRIVATE
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0)
+
+target_link_libraries(ShelfCheck
+    PRIVATE
+        juce::juce_dsp
+    PUBLIC
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags)
