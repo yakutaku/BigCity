@@ -173,7 +173,7 @@ These states are designed in Figma and implemented in code:
 | Day | Date | Work | Done when |
 |---|---|---|---|
 | 1 | Tue 9/29 | Environment setup | ✅ |
-| 2 | Wed 9/30 | Docs, scaffold, air measurement | Pass-through plugin loads and passes pluginval |
+| 2 | Wed 9/30 | Docs, scaffold | Pass-through plugin loads and passes pluginval |
 | 3 | Thu 10/1 | Sound v1 | |
 | 4 | Fri 10/2 | Tuning, auto gain | Sound frozen; test build to one producer |
 | 5 | Mon 10/5 | Figma: tokens, layout, knob, switch | |
