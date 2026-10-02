@@ -23,6 +23,7 @@ namespace
     constexpr TuningRange modulationDepth { "tuningModulationDepthMs", "Tuning: modulation depth",   0.0f,    (float) MicroShifter::maxModulationDepthMs, 0.01f, 1.5f, "ms" };
     constexpr TuningRange wetHighPass     { "tuningWetHighPassHz",     "Tuning: wet high-pass",      20.0f,   1000.0f,  1.0f,  250.0f,   "Hz" };
     constexpr TuningRange wetLowPass      { "tuningWetLowPassHz",      "Tuning: wet low-pass",       4000.0f, 16000.0f, 10.0f, 8000.0f,  "Hz" };
+    constexpr TuningRange wetDrive        { "tuningWetDriveDb",        "Tuning: wet drive",          0.0f,    12.0f,    0.1f,  3.0f,     "dB" };
 
     void add (juce::AudioProcessorValueTreeState::ParameterLayout& layout, const TuningRange& range)
     {
@@ -38,7 +39,7 @@ namespace
 void TuningParameters::addTo (juce::AudioProcessorValueTreeState::ParameterLayout& layout)
 {
     for (const auto* range : { &airMaxGain, &airCorner, &airQ, &maxWetLevel, &maxDetune,
-                               &modulationRate, &modulationDepth, &wetHighPass, &wetLowPass })
+                               &modulationRate, &modulationDepth, &wetHighPass, &wetLowPass, &wetDrive })
         add (layout, *range);
 }
 
@@ -51,12 +52,13 @@ TuningParameters::Reader::Reader (juce::AudioProcessorValueTreeState& parameters
       modulationRateHz (parameters.getRawParameterValue (modulationRate.id)),
       modulationDepthMs (parameters.getRawParameterValue (modulationDepth.id)),
       wetHighPassHz (parameters.getRawParameterValue (wetHighPass.id)),
-      wetLowPassHz (parameters.getRawParameterValue (wetLowPass.id))
+      wetLowPassHz (parameters.getRawParameterValue (wetLowPass.id)),
+      wetDriveDb (parameters.getRawParameterValue (wetDrive.id))
 {
     jassert (airMaxGainDb != nullptr && airCornerHz != nullptr && airShelfQ != nullptr
              && wetLevelDbAtMax != nullptr && detuneCentsAtMax != nullptr
              && modulationRateHz != nullptr && modulationDepthMs != nullptr
-             && wetHighPassHz != nullptr && wetLowPassHz != nullptr);
+             && wetHighPassHz != nullptr && wetLowPassHz != nullptr && wetDriveDb != nullptr);
 }
 
 SoundTuning TuningParameters::Reader::read() const
@@ -69,5 +71,6 @@ SoundTuning TuningParameters::Reader::read() const
     tuning.detuneCentsAtMax = detuneCentsAtMax->load();
     tuning.wetModulation = MicroShifter::Modulation { modulationRateHz->load(), modulationDepthMs->load() };
     tuning.wetFilterCutoffs = WetFilter::Cutoffs { wetHighPassHz->load(), wetLowPassHz->load() };
+    tuning.wetDriveDb = wetDriveDb->load();
     return tuning;
 }

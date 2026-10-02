@@ -5,6 +5,7 @@
 #include "CityMacro.h"
 #include "MicroShifter.h"
 #include "SoundTuning.h"
+#include "WetDrive.h"
 #include "WetFilter.h"
 
 #if BIGCITY_TUNING
@@ -67,7 +68,9 @@ private:
     AirShelf airShelf;
     MicroShifter microShifter;
     WetFilter wetFilter;
+    WetDrive wetDrive;
     bool wetFilterEnabled = false;
+    bool wetDriveEnabled = false;
     BypassCrossfade bypassCrossfade;
     float wetGain = 0.0f;   // at the end of the last rendered chunk
 

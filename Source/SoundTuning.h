@@ -16,8 +16,9 @@ struct SoundTuning
     float wetLevelDbAtMax = SoundSpec::wetLevelDbAtMax;
     float detuneCentsAtMax = SoundSpec::detuneCentsAtMax;
 
-    // Stages on the wet signal that only tuning builds try out. The PRD has neither, so shipping
+    // Stages on the wet signal that only tuning builds try out. The PRD has none of them, so shipping
     // builds leave them empty and the wet path stays exactly the PRD's.
     std::optional<MicroShifter::Modulation> wetModulation;
     std::optional<WetFilter::Cutoffs> wetFilterCutoffs;
+    std::optional<float> wetDriveDb;
 };

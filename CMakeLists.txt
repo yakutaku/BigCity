@@ -77,6 +77,7 @@ target_sources(BigCityTests
         Tests/AirShelfTests.cpp
         Tests/MicroShifterTests.cpp
         Tests/WetFilterTests.cpp
+        Tests/WetDriveTests.cpp
         Tests/ProcessorTests.cpp)
 
 target_include_directories(BigCityTests

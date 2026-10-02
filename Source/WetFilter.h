@@ -6,8 +6,9 @@
 
 #include <array>
 
-// Band-limits the micro-shift's wet signal: a 12 dB/oct Butterworth high-pass, then low-pass, per
-// channel. Cutoffs glide rather than jump, so moving them while audio plays never clicks.
+// Band-limits the micro-shift's wet signal: a 12 dB/oct Butterworth high-pass and low-pass per
+// channel, run as two calls so other stages can sit between them. Cutoffs glide rather than jump,
+// so moving them while audio plays never clicks.
 class WetFilter
 {
 public:
@@ -29,10 +30,14 @@ public:
 
     Cutoffs currentCutoffs() const;
 
-    float processSample (int channel, float input)
+    float processHighPass (int channel, float input)
     {
-        auto& state = channelStates[(size_t) channel];
-        return state.lowPass.process (lowPassCoefficients, state.highPass.process (highPassCoefficients, input));
+        return channelStates[(size_t) channel].highPass.process (highPassCoefficients, input);
+    }
+
+    float processLowPass (int channel, float input)
+    {
+        return channelStates[(size_t) channel].lowPass.process (lowPassCoefficients, input);
     }
 
 private:

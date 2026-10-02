@@ -65,6 +65,7 @@ void BigCityAudioProcessor::prepareToPlay (double sampleRate, int)
     airShelf.prepare (sampleRate);
     microShifter.prepare (sampleRate);
     wetFilter.prepare (sampleRate);
+    wetDrive.prepare (sampleRate);
     bypassCrossfade.prepare (sampleRate, bypassParameter->get());
 
     // Start at the current knob position so loading a session doesn't sweep up from 0.
@@ -145,6 +146,11 @@ void BigCityAudioProcessor::applyWetPathTuning (const SoundTuning& tuning)
 
     if (wetFilterEnabled)
         wetFilter.setCutoffs (*tuning.wetFilterCutoffs);
+
+    wetDriveEnabled = tuning.wetDriveDb.has_value();
+
+    if (wetDriveEnabled)
+        wetDrive.setDriveDb (*tuning.wetDriveDb);
 }
 
 void BigCityAudioProcessor::renderChunk (juce::AudioBuffer<float>& buffer, int chunkStart, int chunkLength, float wetGainAtChunkStart)
@@ -156,16 +162,20 @@ void BigCityAudioProcessor::renderChunk (juce::AudioBuffer<float>& buffer, int c
     auto* left = buffer.getWritePointer (0, chunkStart);
     auto* right = isStereo ? buffer.getWritePointer (1, chunkStart) : nullptr;
 
-    // Filtering happens before the wet level, so at City Size 0 the wet signal is still exactly silent.
-    const auto shapeWet = [this] (int channel, float wetSample)
+    // The drive sits between the filters so the low-pass smooths the harmonics it adds. All of it
+    // happens before the wet level, so at City Size 0 the wet signal is still exactly silent.
+    const auto shapeWet = [this] (int channel, float wetSample, float driveGain)
     {
-        return wetFilterEnabled ? wetFilter.processSample (channel, wetSample) : wetSample;
+        auto shaped = wetFilterEnabled ? wetFilter.processHighPass (channel, wetSample) : wetSample;
+        shaped = wetDriveEnabled ? WetDrive::saturate (shaped, driveGain) : shaped;
+        return wetFilterEnabled ? wetFilter.processLowPass (channel, shaped) : shaped;
     };
 
     for (int i = 0; i < chunkLength; ++i)
     {
         const auto wetGainNow = wetGainAtChunkStart + wetGainStep * (float) (i + 1);
         const auto dryProportion = bypassCrossfade.nextDryProportion();
+        const auto driveGain = wetDriveEnabled ? wetDrive.nextDriveGain() : 1.0f;
 
         const auto dryLeft = left[i];
         const auto dryRight = isStereo ? right[i] : dryLeft;
@@ -173,13 +183,13 @@ void BigCityAudioProcessor::renderChunk (juce::AudioBuffer<float>& buffer, int c
 
         if (isStereo)
         {
-            left[i] = BypassCrossfade::blend (airShelf.processSample (0, dryLeft + wetGainNow * shapeWet (0, wet.left)), dryLeft, dryProportion);
-            right[i] = BypassCrossfade::blend (airShelf.processSample (1, dryRight + wetGainNow * shapeWet (1, wet.right)), dryRight, dryProportion);
+            left[i] = BypassCrossfade::blend (airShelf.processSample (0, dryLeft + wetGainNow * shapeWet (0, wet.left, driveGain)), dryLeft, dryProportion);
+            right[i] = BypassCrossfade::blend (airShelf.processSample (1, dryRight + wetGainNow * shapeWet (1, wet.right, driveGain)), dryRight, dryProportion);
         }
         else
         {
             // Mono hears what the stereo version sounds like summed to mono.
-            const auto monoWet = shapeWet (0, (wet.left + wet.right) / 2.0f);
+            const auto monoWet = shapeWet (0, (wet.left + wet.right) / 2.0f, driveGain);
             left[i] = BypassCrossfade::blend (airShelf.processSample (0, dryLeft + wetGainNow * monoWet), dryLeft, dryProportion);
         }
     }

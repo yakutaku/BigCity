@@ -33,7 +33,7 @@ private:
         for (int i = 0; i < settleSamples + measuredSamples; ++i)
         {
             const auto input = (float) std::sin (juce::MathConstants<double>::twoPi * frequencyHz * i / sampleRate);
-            const auto output = filter.processSample (0, input);
+            const auto output = filter.processLowPass (0, filter.processHighPass (0, input));
 
             if (i >= settleSamples)
                 peak = std::max (peak, std::abs (output));

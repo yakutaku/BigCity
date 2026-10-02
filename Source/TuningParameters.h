@@ -27,5 +27,6 @@ namespace TuningParameters
         std::atomic<float>* modulationDepthMs;
         std::atomic<float>* wetHighPassHz;
         std::atomic<float>* wetLowPassHz;
+        std::atomic<float>* wetDriveDb;
     };
 }
