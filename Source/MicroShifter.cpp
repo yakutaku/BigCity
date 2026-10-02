@@ -29,13 +29,13 @@ namespace
     }
 }
 
-void ShiftVoice::prepare (double sampleRate, double centreDelayMs, double windowMs)
+void ShiftVoice::prepare (double sampleRate, double centreDelayMs, double windowMs, double maxSweepMs)
 {
     const auto samplesPerMs = sampleRate / millisecondsPerSecond;
     centreDelaySamples = centreDelayMs * samplesPerMs;
     windowSamples = windowMs * samplesPerMs;
 
-    const auto longestDelaySamples = (int) std::ceil (centreDelaySamples + windowSamples * halfCycle);
+    const auto longestDelaySamples = (int) std::ceil (centreDelaySamples + windowSamples * halfCycle + maxSweepMs * samplesPerMs);
     const auto delayLineLength = juce::nextPowerOfTwo (longestDelaySamples + interpolationGuardSamples);
     delayLine.assign ((size_t) delayLineLength, 0.0f);
     writeMask = delayLineLength - 1;
@@ -58,14 +58,14 @@ void ShiftVoice::setPitchCents (float cents)
     phaseIncrement = (1.0 - pitchRatio) / windowSamples;
 }
 
-float ShiftVoice::processSample (float input)
+float ShiftVoice::processSample (float input, double sweepSamples)
 {
     delayLine[(size_t) writeIndex] = input;
 
     // sin² and its half-cycle partner cos² always sum to 1, and each tap is silent as its delay wraps.
     const auto fadeA = (float) juce::square (std::sin (juce::MathConstants<double>::pi * phase));
-    const auto tapA = readDelayed (delayForPhase (phase));
-    const auto tapB = readDelayed (delayForPhase (wrapPhase (phase + halfCycle)));
+    const auto tapA = readDelayed (delayForPhase (phase, sweepSamples));
+    const auto tapB = readDelayed (delayForPhase (wrapPhase (phase + halfCycle), sweepSamples));
 
     phase = wrapPhase (phase + phaseIncrement);
     writeIndex = (writeIndex + 1) & writeMask;
@@ -73,9 +73,9 @@ float ShiftVoice::processSample (float input)
     return fadeA * tapA + (1.0f - fadeA) * tapB;
 }
 
-double ShiftVoice::delayForPhase (double tapPhase) const
+double ShiftVoice::delayForPhase (double tapPhase, double sweepSamples) const
 {
-    return centreDelaySamples + (tapPhase - halfCycle) * windowSamples;
+    return centreDelaySamples + (tapPhase - halfCycle) * windowSamples + sweepSamples;
 }
 
 float ShiftVoice::readDelayed (double delaySamples) const
@@ -89,16 +89,48 @@ float ShiftVoice::readDelayed (double delaySamples) const
     return hermite (sampleAt (-1), sampleAt (0), sampleAt (1), sampleAt (2), fraction);
 }
 
-void MicroShifter::prepare (double sampleRate)
+MicroShifter::Sweep MicroShifter::sweepFor (double lfoValue, double depthSamples)
 {
-    downVoice.prepare (sampleRate, SoundSpec::preDelayLeftMs, SoundSpec::microShiftWindowMs);
-    upVoice.prepare (sampleRate, SoundSpec::preDelayRightMs, SoundSpec::microShiftWindowMs);
+    const auto proportionUp = (1.0 + lfoValue) / 2.0;
+    return { proportionUp * depthSamples, (1.0 - proportionUp) * depthSamples };
+}
+
+void MicroShifter::setModulation (Modulation target)
+{
+    modulationRateHz.setTargetValue (target.rateHz);
+    modulationDepthMs.setTargetValue (juce::jlimit (0.0, maxModulationDepthMs, target.depthMs));
+}
+
+void MicroShifter::prepare (double newSampleRate)
+{
+    sampleRate = newSampleRate;
+    downVoice.prepare (sampleRate, SoundSpec::preDelayLeftMs, SoundSpec::microShiftWindowMs, maxModulationDepthMs);
+    upVoice.prepare (sampleRate, SoundSpec::preDelayRightMs, SoundSpec::microShiftWindowMs, maxModulationDepthMs);
+
+    // Same glide time as City Size, so every control responds alike.
+    modulationRateHz.reset (sampleRate, SoundSpec::citySizeSmoothingSeconds);
+    modulationDepthMs.reset (sampleRate, SoundSpec::citySizeSmoothingSeconds);
+    lfoPhase = 0.0;
 }
 
 void MicroShifter::reset()
 {
     downVoice.reset();
     upVoice.reset();
+    lfoPhase = 0.0;
+}
+
+MicroShifter::Sweep MicroShifter::nextSweep()
+{
+    lfoPhase = wrapPhase (lfoPhase + modulationRateHz.getNextValue() / sampleRate);
+    const auto depthMs = modulationDepthMs.getNextValue();
+
+    // Without modulation (every shipping build) skip the sine; a zero sweep leaves each delay untouched.
+    if (depthMs <= 0.0)
+        return { 0.0, 0.0 };
+
+    const auto lfoValue = std::sin (juce::MathConstants<double>::twoPi * lfoPhase);
+    return sweepFor (lfoValue, depthMs * sampleRate / millisecondsPerSecond);
 }
 
 void MicroShifter::setDetuneCents (float detuneCents)
