@@ -51,8 +51,15 @@ private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
     void renderBlock (juce::AudioBuffer<float>& buffer, bool bypassRequested);
-    void renderChunk (juce::AudioBuffer<float>& buffer, int chunkStart, int chunkLength, float wetGainAtChunkStart);
-    void applyCitySettings (const CitySettings& settings);
+    // Gains that ramp across each chunk rather than stepping between chunks.
+    struct ChunkGains
+    {
+        float wet = 0.0f;
+        float output = 1.0f;
+    };
+
+    void renderChunk (juce::AudioBuffer<float>& buffer, int chunkStart, int chunkLength, ChunkGains gainsAtChunkStart);
+    void applyCitySize (float citySizePercent, const SoundTuning& tuning);
     void applyWetPathTuning (const SoundTuning& tuning);
     SoundTuning currentTuning() const;
 
@@ -70,7 +77,7 @@ private:
     WetFilter wetFilter;
     WetDrive wetDrive;
     BypassCrossfade bypassCrossfade;
-    float wetGain = 0.0f;   // at the end of the last rendered chunk
+    ChunkGains gains;   // at the end of the last rendered chunk
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BigCityAudioProcessor)
 };

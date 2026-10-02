@@ -33,7 +33,8 @@ set(BIGCITY_SOURCES
     Source/CityMacro.cpp
     Source/AirShelf.cpp
     Source/MicroShifter.cpp
-    Source/WetFilter.cpp)
+    Source/WetFilter.cpp
+    Source/AutoGain.cpp)
 
 # Developer-only: exposes sound-tuning parameters in the generic editor. Never ship a build with this ON.
 option(BIGCITY_TUNING "Developer-only sound tuning parameters; never ship" OFF)
@@ -78,6 +79,7 @@ target_sources(BigCityTests
         Tests/MicroShifterTests.cpp
         Tests/WetFilterTests.cpp
         Tests/WetDriveTests.cpp
+        Tests/AutoGainTests.cpp
         Tests/ProcessorTests.cpp)
 
 target_include_directories(BigCityTests
@@ -122,6 +124,35 @@ target_compile_definitions(ShelfCheck
 
 target_link_libraries(ShelfCheck
     PRIVATE
+        juce::juce_dsp
+    PUBLIC
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags)
+
+# PRD §6 auto gain measurement: prints the loudness of each City Size against bypass and the curve
+# that would match it. A tool for building SoundSpec::autoGainDb, so it isn't a CTest test.
+juce_add_console_app(AutoGainMeasure
+    PRODUCT_NAME "AutoGainMeasure")
+
+target_sources(AutoGainMeasure
+    PRIVATE
+        ${BIGCITY_SOURCES}
+        Tests/AutoGainMeasure.cpp)
+
+target_include_directories(AutoGainMeasure
+    PRIVATE
+        Source)
+
+target_compile_definitions(AutoGainMeasure
+    PRIVATE
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+        JucePlugin_Name="BigCity"
+        BIGCITY_TUNING=$<BOOL:${BIGCITY_TUNING}>)
+
+target_link_libraries(AutoGainMeasure
+    PRIVATE
+        juce::juce_audio_utils
         juce::juce_dsp
     PUBLIC
         juce::juce_recommended_config_flags

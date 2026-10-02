@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 // Every audio constant BigCity uses. Each comment names its row in docs/PRD.md §6 "Sound spec"
 // (or, where stated, the CLAUDE.md parameter table). Change a value here only after changing the PRD.
 namespace SoundSpec
@@ -53,6 +55,11 @@ namespace SoundSpec
 
     // PRD §6 "Wet: drive"
     constexpr float wetDriveDb = 3.0f;
+
+    // PRD §6 "Auto gain": output gain in dB at City Size 0, 10, 20 … 100, from Tests/AutoGainMeasure.
+    // The first value must stay exactly 0 so City Size 0 nulls against bypass.
+    constexpr float autoGainStepPercent = 10.0f;
+    constexpr std::array<float, 11> autoGainDb { 0.0f, -0.20f, -0.43f, -0.69f, -0.99f, -1.33f, -1.67f, -2.04f, -2.45f, -2.90f, -3.38f };
 
     // PRD §6 "Smoothing"
     constexpr double citySizeSmoothingSeconds = 0.030;

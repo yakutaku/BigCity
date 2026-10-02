@@ -1,4 +1,5 @@
 #include "PluginProcessor.h"
+#include "AutoGain.h"
 #include "SoundSpec.h"
 
 namespace
@@ -9,6 +10,16 @@ namespace
 
     // Bumped only when a parameter's meaning changes, so hosts can migrate old sessions.
     constexpr int parameterVersion = 1;
+
+    // A gain moving linearly across a chunk, reaching its end value on the chunk's last sample.
+    struct GainRamp
+    {
+        float start, step;
+
+        GainRamp (float from, float to, int length) : start (from), step ((to - from) / (float) length) {}
+
+        float at (int sampleIndex) const { return start + step * (float) (sampleIndex + 1); }
+    };
 }
 
 BigCityAudioProcessor::BigCityAudioProcessor()
@@ -71,7 +82,7 @@ void BigCityAudioProcessor::prepareToPlay (double sampleRate, int)
     // Start at the current knob position so loading a session doesn't sweep up from 0.
     citySizeSmoothed.reset (sampleRate, SoundSpec::citySizeSmoothingSeconds);
     citySizeSmoothed.setCurrentAndTargetValue (citySizeValue->load());
-    applyCitySettings (CityMacro::map (citySizeSmoothed.getCurrentValue(), tuning));
+    applyCitySize (citySizeSmoothed.getCurrentValue(), tuning);
 }
 
 void BigCityAudioProcessor::releaseResources()
@@ -122,19 +133,23 @@ void BigCityAudioProcessor::renderBlock (juce::AudioBuffer<float>& buffer, bool 
     for (int chunkStart = 0; chunkStart < numSamples; chunkStart += SoundSpec::controlIntervalSamples)
     {
         const auto chunkLength = std::min (SoundSpec::controlIntervalSamples, numSamples - chunkStart);
-        const auto wetGainAtChunkStart = wetGain;
+        const auto gainsAtChunkStart = gains;
 
-        applyCitySettings (CityMacro::map (citySizeSmoothed.skip (chunkLength), tuning));
+        applyCitySize (citySizeSmoothed.skip (chunkLength), tuning);
         wetFilter.advance (chunkLength);
-        renderChunk (buffer, chunkStart, chunkLength, wetGainAtChunkStart);
+        renderChunk (buffer, chunkStart, chunkLength, gainsAtChunkStart);
     }
 }
 
-void BigCityAudioProcessor::applyCitySettings (const CitySettings& settings)
+void BigCityAudioProcessor::applyCitySize (float citySizePercent, const SoundTuning& tuning)
 {
+    const auto settings = CityMacro::map (citySizePercent, tuning);
     airShelf.update (settings.airGainDb, settings.airCornerHz, settings.airShelfQ);
     microShifter.setDetuneCents (settings.detuneCents);
-    wetGain = juce::Decibels::decibelsToGain (settings.wetLevelDb, -std::numeric_limits<float>::infinity());
+    gains.wet = juce::Decibels::decibelsToGain (settings.wetLevelDb, -std::numeric_limits<float>::infinity());
+
+    // 0 dB gives a gain of exactly 1, so City Size 0 still nulls bit for bit.
+    gains.output = juce::Decibels::decibelsToGain (AutoGain::gainDbFor (citySizePercent));
 }
 
 void BigCityAudioProcessor::applyWetPathTuning (const SoundTuning& tuning)
@@ -144,10 +159,11 @@ void BigCityAudioProcessor::applyWetPathTuning (const SoundTuning& tuning)
     wetDrive.setDriveDb (tuning.wetDriveDb);
 }
 
-void BigCityAudioProcessor::renderChunk (juce::AudioBuffer<float>& buffer, int chunkStart, int chunkLength, float wetGainAtChunkStart)
+void BigCityAudioProcessor::renderChunk (juce::AudioBuffer<float>& buffer, int chunkStart, int chunkLength, ChunkGains gainsAtChunkStart)
 {
-    // The wet level ramps across the chunk so it never steps; the shelf and detune update per chunk.
-    const auto wetGainStep = (wetGain - wetGainAtChunkStart) / (float) chunkLength;
+    // The wet level and auto gain ramp across the chunk so they never step; the shelf and detune update per chunk.
+    const GainRamp wetGainRamp { gainsAtChunkStart.wet, gains.wet, chunkLength };
+    const GainRamp outputGainRamp { gainsAtChunkStart.output, gains.output, chunkLength };
     const auto isStereo = getTotalNumInputChannels() > 1;
 
     auto* left = buffer.getWritePointer (0, chunkStart);
@@ -163,9 +179,16 @@ void BigCityAudioProcessor::renderChunk (juce::AudioBuffer<float>& buffer, int c
 
     for (int i = 0; i < chunkLength; ++i)
     {
-        const auto wetGainNow = wetGainAtChunkStart + wetGainStep * (float) (i + 1);
+        const auto wetGainNow = wetGainRamp.at (i);
+        const auto outputGainNow = outputGainRamp.at (i);
         const auto dryProportion = bypassCrossfade.nextDryProportion();
         const auto driveGain = wetDrive.nextDriveGain();
+
+        const auto processed = [&] (int channel, float dry, float shapedWet)
+        {
+            const auto mixed = airShelf.processSample (channel, dry + wetGainNow * shapedWet);
+            return BypassCrossfade::blend (outputGainNow * mixed, dry, dryProportion);
+        };
 
         const auto dryLeft = left[i];
         const auto dryRight = isStereo ? right[i] : dryLeft;
@@ -173,14 +196,13 @@ void BigCityAudioProcessor::renderChunk (juce::AudioBuffer<float>& buffer, int c
 
         if (isStereo)
         {
-            left[i] = BypassCrossfade::blend (airShelf.processSample (0, dryLeft + wetGainNow * shapeWet (0, wet.left, driveGain)), dryLeft, dryProportion);
-            right[i] = BypassCrossfade::blend (airShelf.processSample (1, dryRight + wetGainNow * shapeWet (1, wet.right, driveGain)), dryRight, dryProportion);
+            left[i] = processed (0, dryLeft, shapeWet (0, wet.left, driveGain));
+            right[i] = processed (1, dryRight, shapeWet (1, wet.right, driveGain));
         }
         else
         {
             // Mono hears what the stereo version sounds like summed to mono.
-            const auto monoWet = shapeWet (0, (wet.left + wet.right) / 2.0f, driveGain);
-            left[i] = BypassCrossfade::blend (airShelf.processSample (0, dryLeft + wetGainNow * monoWet), dryLeft, dryProportion);
+            left[i] = processed (0, dryLeft, shapeWet (0, (wet.left + wet.right) / 2.0f, driveGain));
         }
     }
 }
