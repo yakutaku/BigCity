@@ -58,14 +58,19 @@ SoundTuning BigCityAudioProcessor::currentTuning() const
 
 void BigCityAudioProcessor::prepareToPlay (double sampleRate, int)
 {
+    // Set before prepare, which starts the wet-path glides at these values rather than sweeping to them.
+    const auto tuning = currentTuning();
+    applyWetPathTuning (tuning);
+
     airShelf.prepare (sampleRate);
     microShifter.prepare (sampleRate);
+    wetFilter.prepare (sampleRate);
     bypassCrossfade.prepare (sampleRate, bypassParameter->get());
 
     // Start at the current knob position so loading a session doesn't sweep up from 0.
     citySizeSmoothed.reset (sampleRate, SoundSpec::citySizeSmoothingSeconds);
     citySizeSmoothed.setCurrentAndTargetValue (citySizeValue->load());
-    applyCitySettings (CityMacro::map (citySizeSmoothed.getCurrentValue(), currentTuning()));
+    applyCitySettings (CityMacro::map (citySizeSmoothed.getCurrentValue(), tuning));
 }
 
 void BigCityAudioProcessor::releaseResources()
@@ -108,6 +113,9 @@ void BigCityAudioProcessor::renderBlock (juce::AudioBuffer<float>& buffer, bool 
     bypassCrossfade.setBypassed (bypassRequested);
     citySizeSmoothed.setTargetValue (citySizeValue->load());
 
+    const auto tuning = currentTuning();
+    applyWetPathTuning (tuning);
+
     const auto numSamples = buffer.getNumSamples();
 
     for (int chunkStart = 0; chunkStart < numSamples; chunkStart += SoundSpec::controlIntervalSamples)
@@ -115,7 +123,8 @@ void BigCityAudioProcessor::renderBlock (juce::AudioBuffer<float>& buffer, bool 
         const auto chunkLength = std::min (SoundSpec::controlIntervalSamples, numSamples - chunkStart);
         const auto wetGainAtChunkStart = wetGain;
 
-        applyCitySettings (CityMacro::map (citySizeSmoothed.skip (chunkLength), currentTuning()));
+        applyCitySettings (CityMacro::map (citySizeSmoothed.skip (chunkLength), tuning));
+        wetFilter.advance (chunkLength);
         renderChunk (buffer, chunkStart, chunkLength, wetGainAtChunkStart);
     }
 }
@@ -127,6 +136,17 @@ void BigCityAudioProcessor::applyCitySettings (const CitySettings& settings)
     wetGain = juce::Decibels::decibelsToGain (settings.wetLevelDb, -std::numeric_limits<float>::infinity());
 }
 
+void BigCityAudioProcessor::applyWetPathTuning (const SoundTuning& tuning)
+{
+    if (tuning.wetModulation.has_value())
+        microShifter.setModulation (*tuning.wetModulation);
+
+    wetFilterEnabled = tuning.wetFilterCutoffs.has_value();
+
+    if (wetFilterEnabled)
+        wetFilter.setCutoffs (*tuning.wetFilterCutoffs);
+}
+
 void BigCityAudioProcessor::renderChunk (juce::AudioBuffer<float>& buffer, int chunkStart, int chunkLength, float wetGainAtChunkStart)
 {
     // The wet level ramps across the chunk so it never steps; the shelf and detune update per chunk.
@@ -135,6 +155,12 @@ void BigCityAudioProcessor::renderChunk (juce::AudioBuffer<float>& buffer, int c
 
     auto* left = buffer.getWritePointer (0, chunkStart);
     auto* right = isStereo ? buffer.getWritePointer (1, chunkStart) : nullptr;
+
+    // Filtering happens before the wet level, so at City Size 0 the wet signal is still exactly silent.
+    const auto shapeWet = [this] (int channel, float wetSample)
+    {
+        return wetFilterEnabled ? wetFilter.processSample (channel, wetSample) : wetSample;
+    };
 
     for (int i = 0; i < chunkLength; ++i)
     {
@@ -147,13 +173,13 @@ void BigCityAudioProcessor::renderChunk (juce::AudioBuffer<float>& buffer, int c
 
         if (isStereo)
         {
-            left[i] = BypassCrossfade::blend (airShelf.processSample (0, dryLeft + wetGainNow * wet.left), dryLeft, dryProportion);
-            right[i] = BypassCrossfade::blend (airShelf.processSample (1, dryRight + wetGainNow * wet.right), dryRight, dryProportion);
+            left[i] = BypassCrossfade::blend (airShelf.processSample (0, dryLeft + wetGainNow * shapeWet (0, wet.left)), dryLeft, dryProportion);
+            right[i] = BypassCrossfade::blend (airShelf.processSample (1, dryRight + wetGainNow * shapeWet (1, wet.right)), dryRight, dryProportion);
         }
         else
         {
             // Mono hears what the stereo version sounds like summed to mono.
-            const auto monoWet = (wet.left + wet.right) / 2.0f;
+            const auto monoWet = shapeWet (0, (wet.left + wet.right) / 2.0f);
             left[i] = BypassCrossfade::blend (airShelf.processSample (0, dryLeft + wetGainNow * monoWet), dryLeft, dryProportion);
         }
     }
@@ -174,7 +200,7 @@ bool BigCityAudioProcessor::isMidiEffect() const { return false; }
 double BigCityAudioProcessor::getTailLengthSeconds() const
 {
     // The micro-shift keeps sounding for its longest delay after the input stops, so offline renders keep it.
-    return (SoundSpec::preDelayRightMs + SoundSpec::microShiftWindowMs / 2.0) / 1000.0;
+    return (SoundSpec::preDelayRightMs + SoundSpec::microShiftWindowMs / 2.0 + MicroShifter::maxModulationDepthMs) / 1000.0;
 }
 
 int BigCityAudioProcessor::getNumPrograms() { return 1; }

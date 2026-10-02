@@ -5,6 +5,7 @@
 #include "CityMacro.h"
 #include "MicroShifter.h"
 #include "SoundTuning.h"
+#include "WetFilter.h"
 
 #if BIGCITY_TUNING
  #include "TuningParameters.h"
@@ -51,6 +52,7 @@ private:
     void renderBlock (juce::AudioBuffer<float>& buffer, bool bypassRequested);
     void renderChunk (juce::AudioBuffer<float>& buffer, int chunkStart, int chunkLength, float wetGainAtChunkStart);
     void applyCitySettings (const CitySettings& settings);
+    void applyWetPathTuning (const SoundTuning& tuning);
     SoundTuning currentTuning() const;
 
     juce::AudioProcessorValueTreeState parameters;
@@ -64,6 +66,8 @@ private:
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> citySizeSmoothed;
     AirShelf airShelf;
     MicroShifter microShifter;
+    WetFilter wetFilter;
+    bool wetFilterEnabled = false;
     BypassCrossfade bypassCrossfade;
     float wetGain = 0.0f;   // at the end of the last rendered chunk
 

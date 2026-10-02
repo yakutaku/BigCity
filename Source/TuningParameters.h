@@ -23,5 +23,9 @@ namespace TuningParameters
         std::atomic<float>* airShelfQ;
         std::atomic<float>* wetLevelDbAtMax;
         std::atomic<float>* detuneCentsAtMax;
+        std::atomic<float>* modulationRateHz;
+        std::atomic<float>* modulationDepthMs;
+        std::atomic<float>* wetHighPassHz;
+        std::atomic<float>* wetLowPassHz;
     };
 }
