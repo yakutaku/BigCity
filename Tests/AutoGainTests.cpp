@@ -23,6 +23,9 @@ private:
         beginTest ("The curve is exactly 0 dB at 0, hits each measured point, interpolates in dB and clamps");
 
         expect (juce::exactlyEqual (AutoGain::gainDbFor (0.0f), 0.0f), "not exactly 0 dB at City Size 0");
+        expect (juce::exactlyEqual ((float) (SoundSpec::autoGainDb.size() - 1) * SoundSpec::autoGainStepPercent,
+                                    SoundSpec::citySizeMaxPercent - SoundSpec::citySizeMinPercent),
+                "the auto gain points don't cover the whole City Size range");
 
         for (size_t point = 0; point < SoundSpec::autoGainDb.size(); ++point)
             expectWithinAbsoluteError (AutoGain::gainDbFor ((float) point * SoundSpec::autoGainStepPercent), SoundSpec::autoGainDb[point], 1.0e-6f);

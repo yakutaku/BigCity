@@ -95,7 +95,7 @@ Every value is tagged with its source. **We don't guess.**
 
 **Shelf response check (Day 3):** measure the air shelf's frequency response at 44.1, 48 and 96 kHz. Flag it if the responses differ by more than 0.5 dB anywhere below 16 kHz.
 
-**Finding (Day 3, accepted for v1):** at City Size 100, the 44.1 and 96 kHz responses differ by up to 0.84 dB at Q 0.707, and only above 13.7 kHz. (At Q 0.5 it was 0.73 dB above 14.8 kHz.) The cause is the standard digital design's frequency squeeze near Nyquist. A matched shelf design is on the v1.1 backlog (§5).
+**Finding (Day 3, accepted for v1; re-measured 10/2 with the tuned 10 kHz / +7.8 dB shelf):** at City Size 100, the 44.1 and 96 kHz responses differ by up to 0.77 dB at Q 0.707, and only above 11.9 kHz. (At Q 0.5 it is 0.94 dB above 13.1 kHz.) On Day 3, at 12 kHz / +6 dB, it was 0.84 dB above 13.7 kHz. The cause is the standard digital design's frequency squeeze near Nyquist. A matched shelf design is on the v1.1 backlog (§5).
 
 ## 7. Interaction spec
 
