@@ -32,7 +32,8 @@ set(BIGCITY_SOURCES
     Source/PluginProcessor.cpp
     Source/CityMacro.cpp
     Source/AirShelf.cpp
-    Source/MicroShifter.cpp)
+    Source/MicroShifter.cpp
+    Source/WetFilter.cpp)
 
 # Developer-only: exposes sound-tuning parameters in the generic editor. Never ship a build with this ON.
 option(BIGCITY_TUNING "Developer-only sound tuning parameters; never ship" OFF)
@@ -75,6 +76,7 @@ target_sources(BigCityTests
         Tests/CityMacroTests.cpp
         Tests/AirShelfTests.cpp
         Tests/MicroShifterTests.cpp
+        Tests/WetFilterTests.cpp
         Tests/ProcessorTests.cpp)
 
 target_include_directories(BigCityTests
