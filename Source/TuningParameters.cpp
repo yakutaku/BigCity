@@ -14,13 +14,13 @@ namespace
 
     // Ranges and defaults are the tuning tasks' starting points, not PRD values: shipping builds
     // never see these and keep using SoundSpec.h until the PRD changes.
-    constexpr TuningRange airMaxGain      { "tuningAirMaxGainDb",      "Tuning: air max gain",       4.0f,    10.0f,    0.1f,  7.0f,     "dB" };
-    constexpr TuningRange airCorner       { "tuningAirCornerHz",       "Tuning: air corner",         8000.0f, 14000.0f, 10.0f, 11000.0f, "Hz" };
+    constexpr TuningRange airMaxGain      { "tuningAirMaxGainDb",      "Tuning: air max gain",       4.0f,    10.0f,    0.1f,  7.8f,     "dB" };
+    constexpr TuningRange airCorner       { "tuningAirCornerHz",       "Tuning: air corner",         8000.0f, 14000.0f, 10.0f, 10000.0f, "Hz" };
     constexpr TuningRange airQ            { "tuningAirShelfQ",         "Tuning: air Q",              0.5f,    0.9f,     0.01f, 0.707f,   "" };
-    constexpr TuningRange maxWetLevel     { "tuningWetLevelDbAtMax",   "Tuning: max wet level",      -12.0f,  -2.0f,    0.1f,  -4.0f,    "dB" };
-    constexpr TuningRange maxDetune       { "tuningDetuneCentsAtMax",  "Tuning: max detune",         6.0f,    14.0f,    0.1f,  10.0f,    "cents" };
-    constexpr TuningRange modulationRate  { "tuningModulationRateHz",  "Tuning: modulation rate",    0.1f,    2.0f,     0.01f, 0.5f,     "Hz" };
-    constexpr TuningRange modulationDepth { "tuningModulationDepthMs", "Tuning: modulation depth",   0.0f,    (float) MicroShifter::maxModulationDepthMs, 0.01f, 1.5f, "ms" };
+    constexpr TuningRange maxWetLevel     { "tuningWetLevelDbAtMax",   "Tuning: max wet level",      -12.0f,  -2.0f,    0.1f,  -3.0f,    "dB" };
+    constexpr TuningRange maxDetune       { "tuningDetuneCentsAtMax",  "Tuning: max detune",         6.0f,    14.0f,    0.1f,  11.0f,    "cents" };
+    constexpr TuningRange modulationRate  { "tuningModulationRateHz",  "Tuning: modulation rate",    0.1f,    2.0f,     0.01f, 0.72f,    "Hz" };
+    constexpr TuningRange modulationDepth { "tuningModulationDepthMs", "Tuning: modulation depth",   0.0f,    (float) MicroShifter::maxModulationDepthMs, 0.01f, 1.65f, "ms" };
     constexpr TuningRange wetHighPass     { "tuningWetHighPassHz",     "Tuning: wet high-pass",      20.0f,   1000.0f,  1.0f,  250.0f,   "Hz" };
     constexpr TuningRange wetLowPass      { "tuningWetLowPassHz",      "Tuning: wet low-pass",       4000.0f, 16000.0f, 10.0f, 8000.0f,  "Hz" };
     constexpr TuningRange wetDrive        { "tuningWetDriveDb",        "Tuning: wet drive",          0.0f,    12.0f,    0.1f,  3.0f,     "dB" };
