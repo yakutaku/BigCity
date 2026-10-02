@@ -7,10 +7,7 @@ BiquadCoefficients AirShelf::makeCoefficients (double sampleRate, double cornerH
     // JUCE's ArrayCoefficients follow the RBJ Audio EQ Cookbook and return by value, so this
     // is safe on the audio thread.
     const auto gain = (double) juce::Decibels::decibelsToGain (gainDb);
-    const auto raw = juce::dsp::IIR::ArrayCoefficients<double>::makeHighShelf (sampleRate, cornerHz, q, gain);
-    const auto a0 = raw[3];
-
-    return { raw[0] / a0, raw[1] / a0, raw[2] / a0, raw[4] / a0, raw[5] / a0 };
+    return BiquadCoefficients::normalise (juce::dsp::IIR::ArrayCoefficients<double>::makeHighShelf (sampleRate, cornerHz, q, gain));
 }
 
 void AirShelf::prepare (double newSampleRate)
