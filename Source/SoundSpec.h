@@ -16,7 +16,7 @@ namespace SoundSpec
     constexpr float curveMidpointPercent = 50.0f;
 
     // PRD §6 "Air: corner frequency"
-    constexpr double airCornerHz = 12000.0;
+    constexpr double airCornerHz = 10000.0;
 
     // PRD §6 "Air: Q"
     constexpr double airShelfQ = 0.707;
@@ -25,23 +25,34 @@ namespace SoundSpec
     constexpr double airShelfAlternativeQ = 0.5;
 
     // PRD §6 "Air: gain curve"
-    constexpr float airMaxGainDb = 6.0f;
+    constexpr float airMaxGainDb = 7.8f;
 
     // PRD §6 "Micro-shift: detune" and "Micro-shift: detune curve"
-    constexpr float detuneCentsAtMin = 5.0f;
-    constexpr float detuneCentsAtMidpoint = 7.0f;
-    constexpr float detuneCentsAtMax = 10.0f;
+    constexpr float detuneCentsAtMin = 5.5f;
+    constexpr float detuneCentsAtMidpoint = 7.7f;
+    constexpr float detuneCentsAtMax = 11.0f;
 
     // PRD §6 "Micro-shift: pre-delay"
     constexpr double preDelayLeftMs = 11.0;
     constexpr double preDelayRightMs = 17.0;
 
     // PRD §6 "Micro-shift: wet level" and "Micro-shift: wet level curve"
-    constexpr float wetLevelDbAtMidpoint = -12.0f;
-    constexpr float wetLevelDbAtMax = -6.0f;
+    constexpr float wetLevelDbAtMidpoint = -9.0f;
+    constexpr float wetLevelDbAtMax = -3.0f;
 
     // PRD §6 "Micro-shift: window"
     constexpr double microShiftWindowMs = 20.0;
+
+    // PRD §6 "Micro-shift: modulation"
+    constexpr double modulationRateHz = 0.72;
+    constexpr double modulationDepthMs = 1.65;
+
+    // PRD §6 "Wet: high-pass" and "Wet: low-pass"
+    constexpr double wetHighPassHz = 250.0;
+    constexpr double wetLowPassHz = 7000.0;
+
+    // PRD §6 "Wet: drive"
+    constexpr float wetDriveDb = 3.0f;
 
     // PRD §6 "Smoothing"
     constexpr double citySizeSmoothingSeconds = 0.030;

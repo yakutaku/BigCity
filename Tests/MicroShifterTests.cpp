@@ -88,7 +88,7 @@ private:
 
     void testZeroDepthLeavesTheShiftUnchanged()
     {
-        beginTest ("Modulation at 0 ms depth is bit-identical to no modulation, as in shipping builds");
+        beginTest ("Modulation at 0 ms depth is bit-identical to no modulation");
 
         MicroShifter unmodulated, zeroDepth;
         zeroDepth.setModulation ({ 2.0, 0.0 });

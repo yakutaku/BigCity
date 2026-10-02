@@ -1,6 +1,6 @@
 # BigCity PRD v1.1
 
-**Status:** Build in progress · **Updated:** 2026-09-30 · **Launch target:** Tue 2026-10-13
+**Status:** Build in progress · **Updated:** 2026-10-02 · **Launch target:** Tue 2026-10-13
 
 This version replaces v1.0. The earlier timelines are void.
 
@@ -66,25 +66,30 @@ Every value is tagged with its source. **We don't guess.**
 - **Sourced:** backed by published practitioner or manufacturer data.
 - **Measure:** set by our own measurement.
 - **Test:** a starting point, confirmed or changed by blind A/B in beta.
+- **Tuned by ear 10/2:** set by listening in the developer tuning build on 2026-10-02. Still open to change by blind A/B in beta.
 
 | Element | Value | Status | Basis |
 |---|---|---|---|
-| Signal flow | Dry at unity gain, plus an air shelf and a micro-shift wet signal. The macro scales both. | — | Design decision |
+| Signal flow | Dry at unity gain, plus an air shelf and a micro-shift wet signal. The macro scales both, and auto gain levels the result. | — | Design decision |
 | At 0 | Fully transparent (identical to bypass) | — | Design decision |
 | Default | 50 | — | Industry convention (NI, Kilohearts) |
 | **Air:** filter | RBJ high-shelf biquad, one per channel | Decided v1 (user research) | RBJ Audio EQ Cookbook |
-| **Air:** corner frequency | 12 kHz | Decided v1 (user research) | v1.0 PRD said 10–12 kHz |
-| **Air:** Q | Fixed 0.707 | Decided by A/B listen: Q 0.707 had more top end | Broad "air" shelves are the reference sound (Mäag Air Band) |
-| **Air:** gain curve | 0 dB at 0 → +6 dB at 100; `gainDb = 6.0 × citySize / 100` | Decided v1 (user research) | dB is perceptually close to linear |
-| **Micro-shift:** detune | Left down, right up; ±5 cents at low settings → ±7 at 50 → ±10 at 100 | Sourced range, curve Test | H3000 micropitch recipes: ±7 cents (Splice preset 519), 8–10 cents common, 4–12 cents range |
+| **Air:** corner frequency | 10 kHz | Tuned by ear 10/2 | The low end of the v1.0 PRD's 10–12 kHz range |
+| **Air:** Q | Fixed 0.707 | Tuned by ear 10/2 (A/B listen: Q 0.707 had more top end) | Broad "air" shelves are the reference sound (Mäag Air Band) |
+| **Air:** gain curve | 0 dB at 0 → +7.8 dB at 100; `gainDb = 7.8 × citySize / 100` | Tuned by ear 10/2 | dB is perceptually close to linear |
+| **Micro-shift:** detune | Left down, right up; ±5.5 cents at 0 → ±7.7 at 50 → ±11 at 100 | Tuned by ear 10/2 | Practitioner range: H3000 micropitch recipes use ±7 cents (Splice preset 519), 8–10 cents commonly, 4–12 cents overall |
 | **Micro-shift:** pre-delay | Left 11 ms / right 17 ms, fixed | Sourced range, values Test | 6–20 ms common, offset left and right |
-| **Micro-shift:** wet level | Off at 0 → −12 dB at 50 → −6 dB at 100 | Test | "Turn it up until you hear it, then back off" |
+| **Micro-shift:** wet level | Off at 0 → −9 dB at 50 → −3 dB at 100 | Tuned by ear 10/2 | "Turn it up until you hear it, then back off" |
 | **Micro-shift:** algorithm | Dual-tap crossfading delay-line shifter (H910-style) | — | Lowest CPU; small shifts produce minimal artifacts |
-| **Micro-shift:** detune curve | Linear between points: ±5 cents at 0 → ±7 at 50 → ±10 at 100 | Test | The detune row gives the points; "low settings" read as 0. Inaudible at 0 because the wet signal is off. |
-| **Micro-shift:** wet level curve | 0–50: linear in amplitude from off to −12 dB. 50–100: linear in dB from −12 to −6 dB. | Test | "Off" has no dB value; linear in dB above 50 matches the air curve |
-| **Micro-shift:** window | 20 ms, centered on the pre-delay (left sweeps 1–21 ms, right 7–27 ms). Two taps half a cycle apart with sin² crossfades; 4-point cubic Hermite interpolation. | Test | Average delay stays at the pre-delay. About one crossfade cycle per 3.5 s at ±10 cents. |
-| Signal order | Output = air shelf(dry + wet level × micro-shift(dry)) | Test | The air reaches the wet signal too, with one shelf per channel |
-| Auto gain | Fixed compensation curve, one value per knob position | **Measure** | Pink noise through the plugin; match integrated loudness to bypass |
+| **Micro-shift:** detune curve | Linear between points: ±5.5 cents at 0 → ±7.7 at 50 → ±11 at 100 | Tuned by ear 10/2 | The v1 curve's shape (5 : 7 : 10) scaled to the tuned maximum. Inaudible at 0 because the wet signal is off. |
+| **Micro-shift:** wet level curve | 0–50: linear in amplitude from off to −9 dB. 50–100: linear in dB from −9 to −3 dB. | Tuned by ear 10/2 | The v1 curve's shape (6 dB from 50 to 100) moved to the tuned maximum. "Off" has no dB value; linear in dB above 50 matches the air curve. |
+| **Micro-shift:** window | 20 ms, centered on the pre-delay (left sweeps 1–21 ms, right 7–27 ms) before modulation. Two taps half a cycle apart with sin² crossfades; 4-point cubic Hermite interpolation. | Test | About one crossfade cycle per 3.1 s at ±11 cents |
+| **Micro-shift:** modulation | Sine LFO at 0.72 Hz sweeps each voice's delay over 1.65 ms in total, upward from the pre-delay; left and right in opposite phase | Tuned by ear 10/2 | Juno-60 chorus: a slow LFO with the two sides in opposite phase. Upward only because the left window already reaches down to 1 ms; the average delay sits 0.83 ms above the pre-delay. |
+| **Wet:** high-pass | 250 Hz, 12 dB/oct Butterworth | Tuned by ear 10/2 | MicroShift's Focus control: keeps the shifted signal out of the low end |
+| **Wet:** low-pass | 7 kHz, 12 dB/oct Butterworth | Tuned by ear 10/2 | MicroShift's Focus control; also smooths the drive's added harmonics |
+| **Wet:** drive | 3 dB into a level-compensated tanh, `tanh(g·x) / g`, between the high-pass and the low-pass; no oversampling | Tuned by ear 10/2 | Gentle saturation, as in hardware shifters' wet path. Quiet signals pass at unity; only peaks round off. |
+| Signal order | Output = auto gain × air shelf(dry + wet level × low-pass(drive(high-pass(micro-shift(dry))))) | Test | The air reaches the wet signal too, with one shelf per channel. The wet level comes last in the wet path, so at 0 the wet signal is exactly silent. |
+| Auto gain | Fixed compensation curve: one value per 10 of City Size, linear in dB between points, following the smoothed City Size. Exactly 0 dB at 0. Values in `SoundSpec.h`. | **Measure** | Pink noise at −18 dBFS RMS through the plugin at 48 kHz; K-weighted loudness (ITU-R BS.1770) matched to bypass within 0.5 dB |
 | Smoothing | 30 ms on `citySize` | — | Prevents zipper noise |
 | Bypass crossfade | 20 ms | — | Click-free |
 

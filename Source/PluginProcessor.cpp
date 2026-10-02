@@ -139,18 +139,9 @@ void BigCityAudioProcessor::applyCitySettings (const CitySettings& settings)
 
 void BigCityAudioProcessor::applyWetPathTuning (const SoundTuning& tuning)
 {
-    if (tuning.wetModulation.has_value())
-        microShifter.setModulation (*tuning.wetModulation);
-
-    wetFilterEnabled = tuning.wetFilterCutoffs.has_value();
-
-    if (wetFilterEnabled)
-        wetFilter.setCutoffs (*tuning.wetFilterCutoffs);
-
-    wetDriveEnabled = tuning.wetDriveDb.has_value();
-
-    if (wetDriveEnabled)
-        wetDrive.setDriveDb (*tuning.wetDriveDb);
+    microShifter.setModulation (tuning.wetModulation);
+    wetFilter.setCutoffs (tuning.wetFilterCutoffs);
+    wetDrive.setDriveDb (tuning.wetDriveDb);
 }
 
 void BigCityAudioProcessor::renderChunk (juce::AudioBuffer<float>& buffer, int chunkStart, int chunkLength, float wetGainAtChunkStart)
@@ -166,16 +157,15 @@ void BigCityAudioProcessor::renderChunk (juce::AudioBuffer<float>& buffer, int c
     // happens before the wet level, so at City Size 0 the wet signal is still exactly silent.
     const auto shapeWet = [this] (int channel, float wetSample, float driveGain)
     {
-        auto shaped = wetFilterEnabled ? wetFilter.processHighPass (channel, wetSample) : wetSample;
-        shaped = wetDriveEnabled ? WetDrive::saturate (shaped, driveGain) : shaped;
-        return wetFilterEnabled ? wetFilter.processLowPass (channel, shaped) : shaped;
+        const auto driven = WetDrive::saturate (wetFilter.processHighPass (channel, wetSample), driveGain);
+        return wetFilter.processLowPass (channel, driven);
     };
 
     for (int i = 0; i < chunkLength; ++i)
     {
         const auto wetGainNow = wetGainAtChunkStart + wetGainStep * (float) (i + 1);
         const auto dryProportion = bypassCrossfade.nextDryProportion();
-        const auto driveGain = wetDriveEnabled ? wetDrive.nextDriveGain() : 1.0f;
+        const auto driveGain = wetDrive.nextDriveGain();
 
         const auto dryLeft = left[i];
         const auto dryRight = isStereo ? right[i] : dryLeft;

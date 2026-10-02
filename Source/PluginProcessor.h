@@ -69,8 +69,6 @@ private:
     MicroShifter microShifter;
     WetFilter wetFilter;
     WetDrive wetDrive;
-    bool wetFilterEnabled = false;
-    bool wetDriveEnabled = false;
     BypassCrossfade bypassCrossfade;
     float wetGain = 0.0f;   // at the end of the last rendered chunk
 
