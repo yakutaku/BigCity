@@ -1,29 +1,13 @@
 #include "PluginProcessor.h"
+#include "ProcessorHarness.h"
 #include "SoundSpec.h"
 
-#include <juce_audio_processors/juce_audio_processors.h>
-
 #include <cmath>
-#include <functional>
+
+using namespace ProcessorHarness;
 
 namespace
 {
-    void setParameter (juce::AudioProcessor& processor, const juce::String& parameterId, float value)
-    {
-        for (auto* parameter : processor.getParameters())
-            if (auto* ranged = dynamic_cast<juce::RangedAudioParameter*> (parameter); ranged != nullptr && ranged->getParameterID() == parameterId)
-                ranged->setValueNotifyingHost (ranged->convertTo0to1 (value));
-    }
-
-    void useChannelCount (juce::AudioProcessor& processor, int numChannels)
-    {
-        const auto channelSet = juce::AudioChannelSet::canonicalChannelSet (numChannels);
-        juce::AudioProcessor::BusesLayout layout;
-        layout.inputBuses.add (channelSet);
-        layout.outputBuses.add (channelSet);
-        processor.setBusesLayout (layout);
-    }
-
     juce::AudioBuffer<float> makeNoise (int numChannels, int numSamples)
     {
         juce::AudioBuffer<float> noise (numChannels, numSamples);
@@ -45,25 +29,6 @@ namespace
                 sine.setSample (channel, i, amplitude * (float) std::sin (juce::MathConstants<double>::twoPi * frequencyHz * i / sampleRate));
 
         return sine;
-    }
-
-    // Renders in place, block by block. beforeBlock lets a test change parameters or pick the bypassed path.
-    void render (BigCityAudioProcessor& processor, juce::AudioBuffer<float>& audio, int blockSize,
-                 const std::function<bool (int blockIndex)>& beforeBlock = {})
-    {
-        juce::MidiBuffer midi;
-
-        for (int start = 0, blockIndex = 0; start < audio.getNumSamples(); start += blockSize, ++blockIndex)
-        {
-            const auto length = std::min (blockSize, audio.getNumSamples() - start);
-            juce::AudioBuffer<float> block (audio.getArrayOfWritePointers(), audio.getNumChannels(), start, length);
-            const auto useBypassedPath = beforeBlock ? beforeBlock (blockIndex) : false;
-
-            if (useBypassedPath)
-                processor.processBlockBypassed (block, midi);
-            else
-                processor.processBlock (block, midi);
-        }
     }
 
     // Largest difference between two buffers, relative to the reference's peak, in dB.
