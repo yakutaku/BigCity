@@ -21,8 +21,8 @@ namespace SoundSpec
     // PRD §6 "Air: Q"
     constexpr double airShelfQ = 0.707;
 
-    // PRD §6 "Air: Q" status: the Day 3 A/B alternative, used only by the shelf check
-    constexpr double airShelfAlternativeQ = 0.707;
+    // PRD §6 "Air: Q" status: the Q that lost the A/B listen, used only by the shelf check
+    constexpr double airShelfAlternativeQ = 0.5;
 
     // PRD §6 "Air: gain curve"
     constexpr float airMaxGainDb = 6.0f;
