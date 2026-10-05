@@ -58,6 +58,7 @@ All UI decisions follow Adham Dannaway's *Practical UI*. **The rules are in `doc
 **Token structure from the starter kit** (values adapted to BigCity in `Source/Tokens.h`):
 - **Spacing:** 8 pt grid (8, 16, 24, 32, 48, 80, 96). Use 4 and 12 only for tight spacing inside a component, as the starter kit does.
 - **Type scale:** 40/48, 32/40, 20/28, 16/24, 14/20 (size/line height), in **Jost**.
+  - Japanese text only uses **Zen Kaku Gothic New**, because Jost has no Japanese glyphs (Practical UI decision D5).
   - Two weights only: Regular 400 and Bold (Semi Bold 600).
   - Sentence case everywhere, except the plugin's control and header labels. Those use the uppercase style (Semi Bold 14/24, +2 letter spacing), per Practical UI decision D1.
 - **Text colors:** two emphasis levels only, strong and weak. Both must meet 4.5:1 on their background.
@@ -132,7 +133,7 @@ State save and restore go through the APVTS.
 
 **Rendering:**
 - Native JUCE drawing, no WebView.
-- The window is a fixed size, set from Figma on Day 6.
+- The window is a fixed 768 × 416, on a 12-column grid (decision D-11).
 - Use @2x raster assets, and draw pixel art with nearest-neighbour scaling.
 
 **Performance:**

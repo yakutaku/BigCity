@@ -6,7 +6,7 @@
 
 | # | Evidence | Source | When | Status |
 |---|---|---|---|---|
-| 1 | Decision log (10+ hard calls with reasoning) | `docs/decisions.md` | Ongoing | 🟡 Seeded (D-01 to D-10) |
+| 1 | Decision log (10+ hard calls with reasoning) | `docs/decisions.md` | Ongoing | 🟡 Seeded (D-01 to D-13) |
 | 2 | Time to dial in (target under 10 s) | Beta test 1 | 10/10–11 | ⏳ |
 | 3 | Blind A/B ratings at 25/50/75/100 | Beta test 2 | 10/10–11 | ⏳ |
 | 4 | Tester quotes, plus permission for screen-recording clips | Beta test 3 | 10/10–11 | ⏳ |
@@ -27,6 +27,7 @@
 - Kept the rescaled curves "as heard" instead of locking only the maximums.
 - Rejected uninstalled tooling (clangd LSP) and auto mode while the project was new; enabled auto mode once the steps became routine.
 - Required "plan first, wait for OK" on every substantial task.
+- Rejected the first Figma pass, which the AI built from the tokens instead of the mockup and which lost the texture and craft. It was rebuilt with the mockup as the source of truth. Lesson: give AI the visual reference, not just the spec (D-13).
 
 ## Daily habit (5–10 minutes)
 At the end of each day, add any new decision to `decisions.md` and update this table.

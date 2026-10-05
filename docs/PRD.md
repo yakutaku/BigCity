@@ -145,8 +145,12 @@ These states are designed in Figma and implemented in code:
 - The switch track needs an edge of at least 3:1.
 - Verify every pair in Coolors before the design is frozen.
 
+**Window:**
+- Fixed at 768 × 416, on a 12-column grid, matching the mockup's proportions (decision D-11).
+
 **Type:**
 - Jost (SIL Open Font License) for all labels.
+- Zen Kaku Gothic New for Japanese text only (ビッグシティ, エアー＆レジャー), because Jost has no Japanese glyphs (Practical UI decision D5).
 - The readout font's license must allow bundling; DSEG7 (OFL) is the fallback.
 
 **Header:**
