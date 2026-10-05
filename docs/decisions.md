@@ -79,3 +79,18 @@ Each hard call, with its options, reasoning and evidence. This is the source for
 ## D-10 · No dimming on bypass (Day 2)
 - **Rule:** Practical UI says to avoid disabled-looking states.
 - **Decision:** the knob and readout stay at full contrast when bypassed. Bypass is shown by the switch, its label, the LED and the skyline together, never by color alone.
+
+## D-11 · Plugin window 768×416 on a 12-column grid (Day 5)
+- **Decision:** the plugin window is 768 × 416, laid out on a 12-column grid.
+- **Evidence:** it matches the mockup's proportions.
+
+## D-12 · Zen Kaku Gothic New for Japanese text only (Day 5)
+- **Rule:** Practical UI says to use one sans-serif typeface.
+- **Decision:** Zen Kaku Gothic New for Japanese text only; Jost for everything else.
+- **Evidence:** Jost has no Japanese glyphs.
+- **Result:** recorded as Practical UI exception D5.
+
+## D-13 · First Figma pass rejected; rebuilt from the mockup (Day 5)
+- **Context:** the first Figma pass was built from the tokens instead of the mockup, and lost the texture and craft.
+- **Decision:** rejected it and rebuilt with the mockup as the source of truth.
+- **Lesson:** give AI the visual reference, not just the spec.
