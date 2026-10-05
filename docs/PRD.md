@@ -89,7 +89,7 @@ Every value is tagged with its source. **We don't guess.**
 | **Wet:** low-pass | 7 kHz, 12 dB/oct Butterworth | Tuned by ear 10/2 | MicroShift's Focus control; also smooths the drive's added harmonics |
 | **Wet:** drive | 3 dB into a level-compensated tanh, `tanh(g·x) / g`, between the high-pass and the low-pass; no oversampling | Tuned by ear 10/2 | Gentle saturation, as in hardware shifters' wet path. Quiet signals pass at unity; only peaks round off. |
 | Signal order | Output = auto gain × air shelf(dry + wet level × low-pass(drive(high-pass(micro-shift(dry))))) | Test | The air reaches the wet signal too, with one shelf per channel. The wet level comes last in the wet path, so at 0 the wet signal is exactly silent. |
-| Auto gain | Fixed compensation curve: one value per 10 of City Size, linear in dB between points, following the smoothed City Size. Exactly 0 dB at 0. Values in `SoundSpec.h`. | **Measure** | Pink noise at −18 dBFS RMS through the plugin at 48 kHz; K-weighted loudness (ITU-R BS.1770) matched to bypass within 0.5 dB |
+| Auto gain | Fixed compensation curve: one value per 10 of City Size, linear in dB between points, following the smoothed City Size. Exactly 0 dB at 0. Values in `SoundSpec.h`. | **Measure** | Measured on programme simulation noise (music-weighted): the IEC 60268-1 Table II spectrum at −18 dBFS RMS through the plugin at 48 kHz; K-weighted loudness (ITU-R BS.1770) matched to bypass within 0.5 dB. Re-measured 10/5; it was pink noise until then (decision D-08). |
 | Smoothing | 30 ms on `citySize` | — | Prevents zipper noise |
 | Bypass crossfade | 20 ms | — | Click-free |
 

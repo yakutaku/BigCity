@@ -11,7 +11,7 @@
 | 3 | Blind A/B ratings at 25/50/75/100 | Beta test 2 | 10/10–11 | ⏳ |
 | 4 | Tester quotes, plus permission for screen-recording clips | Beta test 3 | 10/10–11 | ⏳ |
 | 5 | CPU benchmark: 30 instances on the M2, % CPU and buffer size recorded | Day 9 | 10/9 | ⏳ |
-| 6 | Loudness match: auto gain old vs new table (pink noise vs music) | D-08 | 10/5 | ⏳ |
+| 6 | Loudness match: auto gain old vs new table (pink noise vs music) | D-08 | 10/5 | ✅ |
 | 7 | Null test: 0 is bit-identical to bypass | Unit tests | Done | ✅ |
 | 8 | Mapping-curve chart: City size → air dB, detune, shimmer dB, compensation | SoundSpec.h values | Day 10 | ⏳ |
 | 9 | State inventory sheet: every knob, switch and skyline state | Figma | Day 6 | ⏳ |

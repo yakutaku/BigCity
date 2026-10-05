@@ -1,7 +1,7 @@
 #pragma once
 
-// Keeps every City Size position as loud as bypass, using the fixed curve measured with pink noise
-// (PRD §6 "Auto gain").
+// Keeps every City Size position as loud as bypass, using the fixed curve measured with programme
+// simulation noise (PRD §6 "Auto gain").
 namespace AutoGain
 {
     // citySize (0–100, clamped) to output gain in dB: linear in dB between the measured points,

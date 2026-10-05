@@ -39,7 +39,7 @@ private:
 
     void testLoudnessMatchesBypass()
     {
-        beginTest ("Pink noise at every 10 of City Size is within 0.5 dB of bypass (K-weighted, 48 kHz)");
+        beginTest ("Programme simulation noise at every 10 of City Size is within 0.5 dB of bypass (K-weighted, 48 kHz)");
 
         constexpr int stereo = 2, mono = 1;
 

@@ -60,8 +60,15 @@ Each hard call, with its options, reasoning and evidence. This is the source for
 ## D-08 · Calibrate loudness on music, not pink noise (Day 4)
 - **Context:** auto gain was calibrated on pink noise, but BigCity sounded slightly quieter than bypass on real material.
 - **Cause:** pink noise has more high-frequency energy than music, so the air boost raised its measured loudness more than it raises a mix. The plugin then over-compensated.
-- **Decision:** re-measure on a dry vocal and a dry full mix.
-- **Result:** _fill in: old vs new compensation per step._
+- **Decision:** re-measure on IEC 60268-1 programme simulation noise (Clause 7, Table II), a standard noise whose spectrum matches the average of speech and music: flat from 250 to 800 Hz, −11.9 dB at 10 kHz. The first plan was a dry vocal and a dry full mix.
+- **Evidence:** the old pink-noise curve, measured on programme simulation noise, left BigCity quieter than bypass at every position, by 0.98 dB at 50 and 2.16 dB at 100. Same method otherwise: −18 dBFS RMS, 48 kHz, BS.1770 K-weighted, stereo.
+- **Result (10/5):** about a third of the old compensation at 100. 0 stays exactly 0 dB, so 0 still nulls against bypass. After the change, every point measures within 0.01 dB of bypass in stereo; mono is within 0.46 dB (at 100), inside the 0.5 dB tolerance.
+
+  | City size | 0 | 10 | 20 | 30 | 40 | 50 | 60 | 70 | 80 | 90 | 100 |
+  |---|---|---|---|---|---|---|---|---|---|---|---|
+  | Old gain, pink noise (dB) | 0.00 | −0.20 | −0.43 | −0.69 | −0.99 | −1.33 | −1.67 | −2.04 | −2.45 | −2.90 | −3.38 |
+  | Old gain vs bypass on programme noise (dB) | 0.00 | −0.18 | −0.36 | −0.54 | −0.75 | −0.98 | −1.20 | −1.44 | −1.68 | −1.93 | −2.16 |
+  | **New gain, programme noise (dB)** | **0.00** | **−0.02** | **−0.07** | **−0.15** | **−0.24** | **−0.35** | **−0.47** | **−0.60** | **−0.77** | **−0.97** | **−1.22** |
 
 ## D-09 · Uppercase control labels as a documented Practical UI exception (Day 2)
 - **Rule:** Practical UI says sentence case.

@@ -3,11 +3,17 @@
 #include "Biquad.h"
 #include "ProcessorHarness.h"
 
-#include <cmath>
+#include <juce_dsp/juce_dsp.h>
 
-// The PRD §6 "Auto gain" measurement: pink noise through the real processor, K-weighted loudness
-// compared with bypass. Shared by the AutoGainMeasure tool, which builds the curve, and the test
-// that checks it.
+#include <array>
+#include <cmath>
+#include <complex>
+#include <random>
+#include <vector>
+
+// The PRD §6 "Auto gain" measurement: programme simulation noise through the real processor,
+// K-weighted loudness compared with bypass. Shared by the AutoGainMeasure tool, which builds the
+// curve, and the test that checks it.
 namespace LoudnessMeasurement
 {
     // PRD §6 "Auto gain" basis
@@ -19,29 +25,56 @@ namespace LoudnessMeasurement
     constexpr int measuredSamples = 10 * 48000;
     constexpr int blockSize = 512;
 
-    // Paul Kellet's refined pink filter (musicdsp.org): seven one-pole sections whose sum stays
-    // within about 0.05 dB of a 1/f slope across the audio band. The level is set afterwards.
-    inline juce::AudioBuffer<float> makePinkNoise (int numChannels, int numSamples)
+    // IEC 60268-1:1985 Clause 7 "simulated programme signal", Table II: the relative power of each
+    // one-third-octave band from 20 Hz to 20 kHz. It stands in for the average spectrum of speech and
+    // music, which has much less top end than pink noise, so the air shelf is measured the way it
+    // meets real material.
+    constexpr std::array<double, 31> programmeBandLevelsDb {
+        -13.5, -10.2, -7.4, -5.2, -3.5, -2.3, -1.4, -0.9, -0.5, -0.2, -0.1,   // 20 … 200 Hz
+          0.0,   0.0,  0.0,  0.0,  0.0,  0.0,                                 // 250 … 800 Hz
+         -0.1,  -0.3, -0.6, -1.0, -1.6, -2.5, -3.7, -5.1, -7.0, -9.4, -11.9,  // 1 … 10 kHz
+        -14.8, -18.2, -21.6                                                   // 12.5 … 20 kHz
+    };
+    constexpr double oneKilohertzBand = 17;
+
+    // Table II between the band centres: linear in dB against log frequency, carried on at the end
+    // slopes beyond 20 Hz and 20 kHz. Every band's power then lands within 0.12 dB of its printed
+    // level, well inside the table's tolerances (0.5 dB at the tightest).
+    inline double programmeLevelDb (double frequencyHz)
     {
-        juce::AudioBuffer<float> noise (numChannels, numSamples);
-        juce::Random random (1770);
-        double b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+        constexpr auto lastSegment = (int) programmeBandLevelsDb.size() - 2;
+        const auto bandPosition = oneKilohertzBand + 3.0 * std::log2 (frequencyHz / 1000.0);
+        const auto lower = (size_t) juce::jlimit (0, lastSegment, (int) std::floor (bandPosition));
+        const auto fraction = bandPosition - (double) lower;
+        return programmeBandLevelsDb[lower] + fraction * (programmeBandLevelsDb[lower + 1] - programmeBandLevelsDb[lower]);
+    }
 
-        for (int i = 0; i < numSamples; ++i)
+    // Stationary Gaussian noise with the Table II spectrum, as the clause asks, made in the frequency
+    // domain so the shape is exact: Gaussian bins weighted to pink (equal power per band) times
+    // Table II, then one inverse FFT. The level is set afterwards.
+    inline juce::AudioBuffer<float> makeProgrammeNoise (int numChannels, int numSamples)
+    {
+        juce::dsp::FFT fft ((int) std::ceil (std::log2 ((double) numSamples)));
+        const auto fftSize = (size_t) fft.getSize();
+        std::vector<std::complex<float>> spectrum (fftSize), signal (fftSize);
+        std::mt19937 random (1770);
+        std::normal_distribution<float> gaussian;
+
+        for (size_t bin = 1; bin < fftSize / 2; ++bin)
         {
-            const auto white = (double) random.nextFloat() * 2.0 - 1.0;
-            b0 = 0.99886 * b0 + white * 0.0555179;
-            b1 = 0.99332 * b1 + white * 0.0750759;
-            b2 = 0.96900 * b2 + white * 0.1538520;
-            b3 = 0.86650 * b3 + white * 0.3104856;
-            b4 = 0.55000 * b4 + white * 0.5329522;
-            b5 = -0.7616 * b5 - white * 0.0168980;
-            const auto pink = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
-            b6 = white * 0.115926;
-
-            for (int channel = 0; channel < numChannels; ++channel)
-                noise.setSample (channel, i, (float) pink);
+            const auto frequencyHz = (double) bin * sampleRate / (double) fftSize;
+            const auto amplitude = (float) (juce::Decibels::decibelsToGain (programmeLevelDb (frequencyHz), -1000.0) / std::sqrt (frequencyHz));
+            spectrum[bin] = amplitude * std::complex<float> (gaussian (random), gaussian (random));
+            spectrum[fftSize - bin] = std::conj (spectrum[bin]);
         }
+
+        fft.perform (spectrum.data(), signal.data(), true);
+
+        juce::AudioBuffer<float> noise (numChannels, numSamples);
+
+        for (int channel = 0; channel < numChannels; ++channel)
+            for (int i = 0; i < numSamples; ++i)
+                noise.setSample (channel, i, signal[(size_t) i].real());
 
         const auto rms = noise.getRMSLevel (0, 0, numSamples);
         noise.applyGain (juce::Decibels::decibelsToGain (noiseRmsDbfs) / rms);
@@ -86,7 +119,7 @@ namespace LoudnessMeasurement
         ProcessorHarness::setParameter (processor, "citySize", citySizePercent);
         processor.prepareToPlay (sampleRate, blockSize);
 
-        const auto input = makePinkNoise (numChannels, settleSamples + measuredSamples);
+        const auto input = makeProgrammeNoise (numChannels, settleSamples + measuredSamples);
         auto output = input;
         ProcessorHarness::render (processor, output, blockSize);
 
