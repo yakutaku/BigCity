@@ -1,6 +1,6 @@
 # BigCity PRD v1.1
 
-**Status:** Build in progress · **Updated:** 2026-10-02 · **Launch target:** Tue 2026-10-13
+**Status:** Build in progress · **Updated:** 2026-10-05 · **Launch target:** Tue 2026-10-13
 
 This version replaces v1.0. The earlier timelines are void.
 
@@ -150,7 +150,7 @@ These states are designed in Figma and implemented in code:
 - The readout font's license must allow bundling; DSEG7 (OFL) is the fallback.
 
 **Header:**
-- Logo, ビッグシティ, エアー＆レジャー (pending a native speaker's review), MODEL BC-01 (uppercase labels are an approved exception; see Practical UI decision D1).
+- Logo, ビッグシティ, エアー＆レジャー (confirmed by a native speaker), MODEL BC-01 (uppercase labels are an approved exception; see Practical UI decision D1).
 - Removed: "Made with luv," the 理科準備室 tag, and the empty circle.
 
 **Texture:**
@@ -180,7 +180,7 @@ These states are designed in Figma and implemented in code:
 | Automated | pluginval strictness 5 on every build |
 | Ableton matrix | 44.1 / 48 / 96 kHz; buffers of 32 / 128 / 1024; save and reload a session; automation; freeze and flatten; offline export; mono and stereo tracks; 30 instances |
 | Machines | M4 (dev), friend's M2, Intel slice via Ableton under Rosetta |
-| Beta | 2–3 producers; blind A/B at 25 / 50 / 75 / 100; time-to-dial-in observed |
+| Beta | 2–3 producers (confirmed for 10/10–11); blind A/B at 25 / 50 / 75 / 100; time-to-dial-in observed |
 
 ## 12. Timeline (4 hrs/day)
 
@@ -208,5 +208,6 @@ These states are designed in Figma and implemented in code:
 - [x] Maker name: **sunshower audio** (all lowercase) (`com.sunshoweraudio.bigcity`, manufacturer code `Snsh`)
 - [x] Practical UI rules written to `docs/practical-ui.md`. D1 is an approved exception (uppercase labels); D2–D4 follow the book.
 - [x] Minimum macOS: **12.0**. Xcode 27 supports 12.0–27.0.
-- [ ] Native speaker review of エアー＆レジャー
+- [x] Native speaker review of エアー＆レジャー: **confirmed**
+- [x] Beta testers: **2–3 producers confirmed** for 10/10–11
 - [ ] Apple approval → Developer ID Application and Installer certificates (needed by Day 9)
