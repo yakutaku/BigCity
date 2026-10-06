@@ -56,12 +56,12 @@ All coordinates are in points, relative to the window's top-left. Assets are exp
   - 3½ digits: a half-digit "1" for 100.0, then tens, ones and tenths. Leading zeros are blank, e.g. " 5.0".
   - Lit segments are drawn as paths in `ink/primary`. **No font is needed.**
 - **Geometry** (LCD-local points; mirror the constants from the Figma script):
-  - Each cell is 15 × 28 at y 6; segment thickness 3 with hexagonal ends; 1.1 gap between segments; italic skew of 6°.
-  - Cell x positions: half digit 21, tens 39, ones 57, tenths 79.
-  - Decimal point: a 3 × 3 square at (74, 34).
+  - Each cell is 16 × 28 at y 6; segment thickness 4.5 with hexagonal ends; 1.0 gap between segments; italic skew of 6°.
+  - Cell x positions: half digit 18, tens 36, ones 55, tenths 80.
+  - Decimal point: a 4 × 4 square at (74.5, 30).
   - Segment map: 0 abcdef · 1 bc · 2 abged · 3 abgcd · 4 fgbc · 5 afgcd · 6 afgedc · 7 abc · 8 abcdefg · 9 abcdfg.
 - **Editing:**
-  - Double-click opens entry with the value selected. The selection uses `pastel/sky` at 44, 8, 62, 32 in readout-local coordinates.
+  - Double-click opens entry with the value selected. The selection uses `pastel/sky` at 43, 8, 63, 32 in readout-local coordinates.
   - Typed characters render as segments.
   - The LCD gets a 2 pt `accent/teal` focus ring outside its bounds, and the burned-in ghost is hidden.
   - Enter commits and clamps to 0–100. Esc cancels.
@@ -108,11 +108,14 @@ Reference counts:
 - **None.** Every label, including the Japanese, is baked into the images (D-18), and the readout is drawn as segments (D-21).
 
 ## Tokens used in code
+The knob rim (`#706248`) and the LCD edge (`#5F6B49`) are baked into the images, so they need no token.
+
 | Token | Value |
 |---|---|
 | `ink/primary` | `#3B3160` |
 | `ink/secondary` | **`#4F4577`** (changed from `#5E5486`) |
 | `accent/teal` | `#1F6F68` |
+| `stroke/strong` | **`#676080`** (changed from `#7D7590`; control edges stay ≥3:1 on the aged panel) |
 | `pastel/sky` | `#A9D3EE` |
 | `surface/lcd` | `#D3DCC0` |
 | `skyline/windowLit` | `#FBE08A` |

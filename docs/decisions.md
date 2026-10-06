@@ -80,9 +80,10 @@ Each hard call, with its options, reasoning and evidence. This is the source for
 - **Rule:** Practical UI says to avoid disabled-looking states.
 - **Decision:** the knob and readout stay at full contrast when bypassed. Bypass is shown by the switch, its label, the LED and the skyline together, never by color alone.
 
-## D-11 · Plugin window 768×416 on a 12-column grid (Day 5)
-- **Decision:** the plugin window is 768 × 416, laid out on a 12-column grid.
+## D-11 · Plugin window 768×416 (Day 5)
+- **Decision:** the plugin window is 768 × 416.
 - **Evidence:** it matches the mockup's proportions.
+- **Corrected Day 6:** this entry first claimed a 12-column grid; the built layout uses symmetric 8 pt zones (D-23).
 
 ## D-12 · Zen Kaku Gothic New for Japanese text only (Day 5)
 - **Rule:** Practical UI says to use one sans-serif typeface.
@@ -148,3 +149,21 @@ Each hard call, with its options, reasoning and evidence. This is the source for
 - **Decision:** 3½-digit 7-segment digits drawn as shapes, with a burned-in "188.8" at 13%. The half-digit "1" is needed for 100.0.
 - **Benefit:** no font is bundled at all.
 - **Cost:** about 30 minutes extra for the segment-rendered edit state.
+
+## D-22 · Control edges ≥3:1 on the aged panel, not just on clean cream (Day 6)
+- **Context:** a Practical UI audit measured control boundaries against the darkest aged panel next to each control. stroke/strong (`#7D7590`) passed on clean cream (3.54:1) but dropped to 2.5–2.9:1 on the yellowed panel. The knob rim measured about 2.5:1 and the LCD edge about 1.9:1.
+- **Decision:**
+  - stroke/strong changes to `#676080`.
+  - The knob rim changes to `#706248`.
+  - The LCD edge changes to `#5F6B49`.
+- **Evidence (re-measured, worst case):**
+  - Switch track: 3.79:1.
+  - Knob rim: 3.14:1.
+  - LCD edge: 3.05:1.
+  - Readout digits on the LCD: 7.4:1 or better.
+- **Also:** the 7-segment digits are thicker (4.5 pt segments, up from 3 pt) after feedback that they were too faint.
+
+## D-23 · 12-column grid exception (Day 6)
+- **Rule:** align the layout to a 12-column grid.
+- **Finding:** no 12-column grid with spacing on the 8 pt scale can hold the three fixed-size objects. Those are the knob (176, set by touch-target size and the tick ring), the bezel (352, set by the 112-px skyline at 3 pt per pixel) and the switch (128), with equal gaps between them. D-11 previously claimed a 12-column grid; that was not true of the built layout.
+- **Decision:** a documented exception. The layout uses symmetric 8 pt zones instead: 32 | 176 | 24 | 352 | 24 | 128 | 32, with one shared centre line. This keeps what the rule is for (consistent alignment and predictable spacing) in a fixed-size instrument panel.

@@ -133,7 +133,7 @@ State save and restore go through the APVTS.
 
 **Rendering:**
 - Native JUCE drawing, no WebView.
-- The window is a fixed 768 × 416, on a 12-column grid (decision D-11).
+- The window is a fixed 768 × 416 (decision D-11), in symmetric 8 pt zones (decision D-23).
 - Use @2x raster assets, and draw pixel art with nearest-neighbour scaling.
 
 **Performance:**

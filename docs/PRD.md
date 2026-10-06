@@ -130,6 +130,7 @@ These states are designed in Figma and implemented in code:
 |---|---|---|---|
 | ink/primary | `#3B3160` | 9.5:1 | Labels, knob pointer, active switch label |
 | ink/secondary | `#4F4577` | 7.0:1 (4.8:1 on the darkest texture) | Inactive labels, model line. **Not on pink or lavender surfaces.** |
+| stroke/strong | `#676080` | 4.8:1; ≥3:1 on the darkest aged panel (D-22) | Control edges (switch track) |
 | accent/teal | `#1F6F68` | 4.8:1 | Accent text |
 | ink/rose | `#A63D5A` | 5.0:1 | Accent text |
 | pastel/pink | `#F4A6B7` | decorative | Primary ink on it: 6.1:1 |
@@ -142,11 +143,11 @@ These states are designed in Figma and implemented in code:
 **Contrast rules:**
 - Practical UI minimums: 4.5:1 for text, 3:1 for UI components.
 - The knob arc is decorative; the pointer and the readout carry the value.
-- The switch track needs an edge of at least 3:1.
+- Control edges (switch track, knob rim, LCD edge) need at least 3:1 against the darkest aged panel (D-22).
 - Verify every pair in Coolors before the design is frozen.
 
 **Window:**
-- Fixed at 768 × 416, on a 12-column grid, matching the mockup's proportions (decision D-11).
+- Fixed at 768 × 416, matching the mockup's proportions (decision D-11), in symmetric 8 pt zones (decision D-23).
 
 **Type:**
 - Jost (SIL Open Font License) for all labels.

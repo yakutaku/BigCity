@@ -82,7 +82,7 @@ The source list below is the user's guideline list, reproduced exactly. The tabl
 | Group related items with containers, proximity, similarity or alignment | Knob, label and readout form one group. Switch, LED and labels form another. |
 | Build hierarchy with size, color, contrast, spacing, position and depth | The knob and skyline share equal weight: the skyline through size, the knob through contrast and depth. The header is secondary. |
 | 8 pt spacing grid | 8, 16, 24, 32, 48, 80, 96. 4 and 12 only inside components. |
-| Align the layout to a 12-column grid | The plugin window uses a 12-column grid with margins and gutters from the 8 pt scale. |
+| Align the layout to a 12-column grid | **Exception (D-23):** symmetric 8 pt zones, 32 \| 176 \| 24 \| 352 \| 24 \| 128 \| 32, with one shared centre line. No 12-column grid on the 8 pt scale fits the three fixed-size controls. See decision D6. |
 | Left-align text; don't mix alignments within one component | See decision D3. |
 
 ## Typography
@@ -99,7 +99,7 @@ The source list below is the user's guideline list, reproduced exactly. The tabl
 
 | Rule | How it applies to BigCity |
 |---|---|
-| Small text 4.5:1; UI components and large text 3:1 | Verified per token in PRD §9. Coolors check before the design is frozen. |
+| Small text 4.5:1; UI components and large text 3:1 | Verified per token in PRD §9. Coolors check before the design is frozen. Control edges are measured against the darkest aged panel next to each control, not clean cream (D-22). |
 | Never rely on color alone; use icons or thicker borders for color-blind users | Bypass is shown by switch position, the label, the LED and the skyline change together. The switch position and its text label carry the state without color. |
 | Red, amber and green only for error, warning and success | No red, amber or green is used for decoration or interactive UI. The FX-on LED is teal. The rose ink is not used for text, so it can't read as an error. Pastel mint appears only in skyline decoration. |
 | The brand color marks interactive elements | `ink/primary` (#3B3160) is the interactive color: knob pointer, switch thumb edge, readout text. |
@@ -144,3 +144,4 @@ These resolve toward the book unless the user approved an exception. Each except
 | D3 | Short labels are centered over the round knob | **Exception, approved by the user (Day 6): CITY SIZE is centered over the knob.** |
 | D4 | The v1.0 PRD said "the knob dims" when bypassed | **No dimming below contrast minimums.** Bypass is shown by the switch, its label, the LED and the skyline. The knob and readout stay at full contrast. |
 | D5 | The book asks for one typeface, but Jost has no Japanese glyphs, and the header has Japanese text (ビッグシティ, エアー＆レジャー) | **Exception, approved by the user: Zen Kaku Gothic New for Japanese text only.** *Reason:* Jost can't render Japanese. Everything else stays in Jost. See decision log D-12. |
+| D6 | The book asks for a 12-column grid, but no 12-column grid on the 8 pt scale fits the knob (176), the bezel (352) and the switch (128) with equal gaps | **Exception: symmetric 8 pt zones,** 32 \| 176 \| 24 \| 352 \| 24 \| 128 \| 32, with one shared centre line. *Reason:* it keeps what the rule is for, consistent alignment and predictable spacing, in a fixed-size instrument panel. See decision log D-23. |
