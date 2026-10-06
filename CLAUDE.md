@@ -141,7 +141,8 @@ State save and restore go through the APVTS.
 - Cache static layers.
 
 **Design tokens:**
-- All colors, fonts and spacing live in `Source/Tokens.h`, mirrored from the Figma variables.
+- All colors and spacing live in `Source/Tokens.h`, mirrored from the Figma variables.
+- **Fonts:** none bundled. Labels are baked into the images (D-18); the readout is drawn as 7-segment shapes (D-21).
 - Never hard-code a hex value outside that file.
 
 **Figma:**

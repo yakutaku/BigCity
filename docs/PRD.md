@@ -120,7 +120,7 @@ These states are designed in Figma and implemented in code:
 - **Switch:** FX on, bypassed, hover
 - **Whole plugin:** normal, bypassed
 - **Skyline:** frames at 0, 25, 50, 75 and 100, plus the bypassed look
-- **Readout:** normal, editing, bypassed (dimmed)
+- **Readout:** normal, editing, bypassed (unchanged, full contrast; D-10)
 
 ## 9. Visual spec
 
@@ -129,8 +129,8 @@ These states are designed in Figma and implemented in code:
 | Token | Hex | Contrast | Use |
 |---|---|---|---|
 | ink/primary | `#3B3160` | 9.5:1 | Labels, knob pointer, active switch label |
-| ink/secondary | `#5E5486` | 5.5:1 | Inactive labels, model line. **Not on pink or lavender surfaces.** |
-| ink/teal | `#1F6F68` | 4.8:1 | Accent text |
+| ink/secondary | `#4F4577` | 7.0:1 (4.8:1 on the darkest texture) | Inactive labels, model line. **Not on pink or lavender surfaces.** |
+| accent/teal | `#1F6F68` | 4.8:1 | Accent text |
 | ink/rose | `#A63D5A` | 5.0:1 | Accent text |
 | pastel/pink | `#F4A6B7` | decorative | Primary ink on it: 6.1:1 |
 | pastel/peach | `#F9C8A0` | decorative | 7.7:1 |
@@ -150,11 +150,11 @@ These states are designed in Figma and implemented in code:
 
 **Type:**
 - Jost (SIL Open Font License) for all labels.
-- Zen Kaku Gothic New for Japanese text only (ビッグシティ, エアー＆レジャー), because Jost has no Japanese glyphs (Practical UI decision D5).
-- The readout font's license must allow bundling; DSEG7 (OFL) is the fallback.
+- Zen Kaku Gothic New for Japanese text only (サンシャワー・オーディオ, エアー＆レジャー), because Jost has no Japanese glyphs (Practical UI decision D5).
+- Readout: 7-segment LCD drawn as paths, no font (D-21).
 
 **Header:**
-- Logo, ビッグシティ, エアー＆レジャー (confirmed by a native speaker), MODEL BC-01 (uppercase labels are an approved exception; see Practical UI decision D1).
+- Logo, サンシャワー・オーディオ with a marker doodle of a sun behind a rain cloud (D-20), エアー＆レジャー (confirmed by a native speaker), MODEL BC-01 (uppercase labels are an approved exception; see Practical UI decision D1).
 - Removed: "Made with luv," the 理科準備室 tag, and the empty circle.
 
 **Texture:**

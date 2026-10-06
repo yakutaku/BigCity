@@ -89,7 +89,7 @@ The source list below is the user's guideline list, reproduced exactly. The tabl
 
 | Rule | How it applies to BigCity |
 |---|---|
-| One sans-serif typeface | Jost for everything, including the value readout (decision D2). Japanese text uses Zen Kaku Gothic New (decision D5). The logo is a brand mark and is exempt. |
+| One sans-serif typeface | Jost for every label. The value readout uses no font: it is a 7-segment LCD drawn as paths (decision log D-21, which replaces D2). Japanese text uses Zen Kaku Gothic New (decision D5). The logo is a brand mark and is exempt. |
 | Two weights: regular and bold | Jost Regular 400 and Semi Bold 600 |
 | Body text at least 18 px with at least 1.5 line height | Applies to the quick-start PDF and the Gumroad page. The plugin has no body text. |
 | Line length of 40–80 characters | Quick-start PDF and Gumroad page |
@@ -140,7 +140,7 @@ These resolve toward the book unless the user approved an exception. Each except
 | # | Conflict | Decision |
 |---|---|---|
 | D1 | The mockup uses uppercase hardware-style labels ("CITY SIZE", "FX ON") | **Exception, approved by the user: uppercase for plugin control and header labels only** ("CITY SIZE", "FX ON", "BYPASS", "MODEL BC-01"). *Reason:* this follows the plugin-industry convention (Valhalla, Serum) and the hardware reference, and the labels are short enough to read easily. *Guardrails:* use the starter kit's uppercase style (Jost Semi Bold 14/24, +2 letter spacing), keep labels to 1–2 words, and meet 4.5:1 contrast. Everywhere else uses sentence case. |
-| D2 | The mockup's readout uses a second typeface | **Jost with tabular (fixed-width) figures** on the LCD panel, so digits don't jitter. If Jost's figures jitter, we'll pad to a fixed width in code. |
-| D3 | Short labels are centered over the round knob | **Left-align labels to the group's left edge** on the 12-column grid. The layout is tested in Figma on Day 5; if it looks wrong, we'll raise it as an exception with a reason. |
+| D2 | The mockup's readout uses a second typeface | **Replaced by decision log D-21:** a 7-segment LCD drawn as paths, with burned-in "188.8" digits. No font is used. |
+| D3 | Short labels are centered over the round knob | **Exception, approved by the user (Day 6): CITY SIZE is centered over the knob.** |
 | D4 | The v1.0 PRD said "the knob dims" when bypassed | **No dimming below contrast minimums.** Bypass is shown by the switch, its label, the LED and the skyline. The knob and readout stay at full contrast. |
 | D5 | The book asks for one typeface, but Jost has no Japanese glyphs, and the header has Japanese text (ビッグシティ, エアー＆レジャー) | **Exception, approved by the user: Zen Kaku Gothic New for Japanese text only.** *Reason:* Jost can't render Japanese. Everything else stays in Jost. See decision log D-12. |
