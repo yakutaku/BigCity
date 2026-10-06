@@ -32,7 +32,7 @@ All coordinates are in points, relative to the window's top-left. Assets are exp
 | 5 | `knob_rotor.png` | Rotated image: knurl, grime, rim wear, face wear, pointer | Same as `knob_base`; pivot at (96, 96) in the image, which is (120, 232) in the window | Value changes |
 | 6 | Knob overlay | Code: an ellipse at 32, 32, 112, 112 relative to the knob origin (32, 144) | | Hover and press |
 | 7 | Readout digits | Code: 7-segment paths (see below), drawn in the LCD at 68, 332, 104, 40 | | Value changes |
-| 8 | `switch_fx_on.png` or `switch_bypassed.png` | One image per state | 608, 188, 128, 112 | Bypass changes |
+| 8 | `switch_fx_on.png` or `switch_bypassed.png` | One image per state | 608, 188, 136, 112 (the LED glow overflows the 128-wide switch) | Bypass changes |
 | 9 | Switch overlay | Code: a rounded rect at 0, 0, 48, 112 (radius 24) relative to the switch | | Hover and press |
 
 ## Knob
@@ -68,9 +68,9 @@ All coordinates are in points, relative to the window's top-left. Assets are exp
 - **Bypassed:** unchanged. Full contrast and editable (D-10).
 
 ## Bypass switch
-- **Size:** 128 × 112.
+- **Size:** 128 × 112. The state images are 136 × 112 so the LED glow fits; they share the switch origin.
 - **Labels:** FX ON and BYPASS share one left edge at x 60. The LED sits inline, 8 pt after FX ON.
-- **Hit area:** the whole switch, including both labels.
+- **Hit area:** 128 × 112 at 608, 188: the whole switch, including both labels, but not the glow overflow.
 - **Cursor:** pointing hand.
 - **Overlays on the track:**
   - Hover: white at 10%.
@@ -102,7 +102,7 @@ Reference counts:
 
 ## Performance
 - Cache layers 1, 3 and 4.
-- Repaint only the screen rect on value changes and the switch rect on bypass changes, with a timer of at most 30 fps.
+- Repaint only the screen rect on value changes and the switch image rect (608, 188, 136, 112) on bypass changes, with a timer of at most 30 fps.
 
 ## Fonts
 - **None.** Every label, including the Japanese, is baked into the images (D-18), and the readout is drawn as segments (D-21).
@@ -132,7 +132,7 @@ Export from Figma: select `Export · JUCE assets @2x` on 02 Plugin, then Export.
 | `screen_overlay.png` | 672×560 |
 | `knob_base.png` | 384×384 |
 | `knob_rotor.png` | 384×384 |
-| `switch_fx_on.png` | 256×224 |
-| `switch_bypassed.png` | 256×224 |
+| `switch_fx_on.png` | 272×224 |
+| `switch_bypassed.png` | 272×224 |
 
 Also needed: `assets/skyline-windows.json`.
