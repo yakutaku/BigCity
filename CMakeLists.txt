@@ -95,6 +95,7 @@ target_sources(BigCityTests
         Tests/TestMain.cpp
         Tests/CityMacroTests.cpp
         Tests/KnobInputTests.cpp
+        Tests/CityKnobTests.cpp
         Tests/SevenSegmentTests.cpp
         Tests/AirShelfTests.cpp
         Tests/MicroShifterTests.cpp
