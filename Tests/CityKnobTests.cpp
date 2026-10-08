@@ -11,6 +11,25 @@ public:
 
     void runTest() override
     {
+        beginTest ("Hit area: only the cap, a circle of radius 56 around the knob centre");
+        {
+            Fixture fixture { 50.0f };
+            auto& knob = fixture.knob;
+            const auto centre = UiSpec::Knob::centre.toInt();
+            const auto radius = (int) UiSpec::Knob::capRadius;
+
+            expect (knob.hitTest (centre.x, centre.y), "centre");
+            expect (knob.hitTest (centre.x + radius - 1, centre.y), "just inside the cap, right");
+            expect (knob.hitTest (centre.x, centre.y - radius + 1), "just inside the cap, top");
+            expect (! knob.hitTest (centre.x + radius + 1, centre.y), "just outside the cap, right");
+            expect (! knob.hitTest (centre.x, centre.y - radius - 4), "the 50% tick above the cap");
+
+            // The corner of the old 176 square: well outside the cap's circle.
+            const auto knobInset = 8;
+            expect (! knob.hitTest (knobInset + 4, knobInset + 4), "corner of the 176 square");
+            expect (! knob.hitTest (centre.x + 40, centre.y + 45), "diagonal, outside the circle but inside the square");
+        }
+
         for (const auto startPercent : { 0.0f, 37.3f, 69.6f, 100.0f })
         {
             beginTest ("Option-click resets to exactly 50.0 from " + juce::String (startPercent));

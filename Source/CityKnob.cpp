@@ -41,8 +41,8 @@ void CityKnob::paint (juce::Graphics& g)
 
 bool CityKnob::hitTest (int x, int y)
 {
-    // The images overhang the knob to fit its shadow; only the knob itself takes the mouse.
-    return getLocalBounds().reduced (UiSpec::Knob::hitAreaInset).contains (x, y);
+    // Only the cap takes the mouse: not the ticks, the arc or the shadow around it.
+    return juce::Point<float> ((float) x, (float) y).getDistanceFrom (UiSpec::Knob::centre) <= UiSpec::Knob::capRadius;
 }
 
 void CityKnob::mouseDown (const juce::MouseEvent& e)
@@ -169,7 +169,7 @@ void CityKnob::sendToHost (float citySizePercent)
 void CityKnob::drawRotor (juce::Graphics& g) const
 {
     const auto pointsPerImagePixel = (float) getWidth() / (float) rotor.getWidth();
-    const auto pivot = UiSpec::Knob::rotorPivot;
+    const auto pivot = UiSpec::Knob::centre;
 
     g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
     g.drawImageTransformed (rotor, juce::AffineTransform::scale (pointsPerImagePixel)
@@ -187,7 +187,7 @@ void CityKnob::drawOverlay (juce::Graphics& g) const
     else
         return;
 
-    const auto inset = (float) UiSpec::Knob::hitAreaInset;
+    const auto capDiameter = UiSpec::Knob::capRadius * 2.0f;
     g.setColour (overlay);
-    g.fillEllipse (UiSpec::Knob::overlayEllipse.translated (inset, inset));
+    g.fillEllipse (juce::Rectangle<float> (capDiameter, capDiameter).withCentre (UiSpec::Knob::centre));
 }

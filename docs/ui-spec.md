@@ -31,7 +31,7 @@ All coordinates are in points, relative to the window's top-left. Assets are exp
 | 3 | `screen_overlay.png` | Static image: scanlines, glare, glass scratches | 240, 104, 336, 280 (corner radius 14) | Never |
 | 4 | `knob_base.png` | Static image: ticks, arc, cast shadow, skirt and face lighting | 24, 136, 192, 192 (the knob's origin minus 8) | Never |
 | 5 | `knob_rotor.png` | Rotated image: knurl, grime, rim wear, face wear, pointer | Same as `knob_base`; pivot at (96, 96) in the image, which is (120, 232) in the window | Value changes |
-| 6 | Knob overlay | Code: an ellipse at 32, 32, 112, 112 relative to the knob origin (32, 144) | | Hover and press |
+| 6 | Knob overlay | Code: the cap circle, an ellipse at 32, 32, 112, 112 relative to the knob origin (32, 144) | | Hover and press |
 | 7 | Readout digits | Code: 7-segment paths (see below), drawn in the LCD at 68, 332, 104, 40 | | Value changes |
 | 8 | `switch_fx_on.png` or `switch_bypassed.png` | One image per state | 608, 188, 136, 112 (the LED glow overflows the 128-wide switch) | Bypass changes |
 | 9 | Switch overlay | Code: a rounded rect at 0, 0, 48, 112 (radius 24) relative to the switch | | Hover and press |
@@ -39,7 +39,7 @@ All coordinates are in points, relative to the window's top-left. Assets are exp
 ## Knob
 - **Angle:** `angle = −135 + 2.7 × value` degrees, clockwise from 12 o'clock. Only `knob_rotor` rotates; the lighting in `knob_base` stays fixed.
 - **Ticks:** 11 ticks, one per 10%. The ticks at 0, 50 and 100 are major (2 pt); the rest are 1.5 pt. They are drawn in `ink/secondary` and baked into `knob_base`.
-- **Hit area:** the 176 × 176 knob bounds.
+- **Hit area:** the cap (the skirt): a circle of radius 56 around the knob centre (120, 232). Hover, press, the cursor, clicks and scrolling apply only inside it, not over the ticks or the rest of the 176 square. Its 112 diameter clears the 48 pt minimum.
 - **Overlays:**
   - Hover: white at 10%.
   - Press and drag: `ink/primary` at 8%.

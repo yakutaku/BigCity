@@ -22,14 +22,11 @@ namespace UiSpec
         // "Draw order" layers 4 and 5: knob_base and knob_rotor share these bounds, the knob's origin minus 8
         inline const juce::Rectangle<int> imageBounds { 24, 136, 192, 192 };
 
-        // "Knob": the hit area is the 176 × 176 knob bounds, inset this far inside the images
-        constexpr int hitAreaInset = 8;
+        // "Draw order" layer 5: the knob's centre, image-local. The rotor turns about it and the cap is centred on it.
+        inline const juce::Point<float> centre { 96.0f, 96.0f };
 
-        // "Draw order" layer 5: the rotor's pivot, image-local
-        inline const juce::Point<float> rotorPivot { 96.0f, 96.0f };
-
-        // "Draw order" layer 6: the hover and press ellipse, relative to the knob's origin (not the images')
-        inline const juce::Rectangle<float> overlayEllipse { 32.0f, 32.0f, 112.0f, 112.0f };
+        // "Knob": the cap (the skirt). Its circle is the hit area and the hover and press overlay (layer 6).
+        constexpr float capRadius = 56.0f;
 
         // "Knob": angle = −135 + 2.7 × value, in degrees clockwise from 12 o'clock
         constexpr float angleAtZeroDegrees = -135.0f;
