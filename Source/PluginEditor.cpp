@@ -7,7 +7,8 @@ BigCityAudioProcessorEditor::BigCityAudioProcessorEditor (BigCityAudioProcessor&
     : AudioProcessorEditor (bigCityProcessor),
       citySize (bigCityProcessor.getCitySizeParameter()),
       panel (juce::ImageCache::getFromMemory (BinaryData::panel_png, BinaryData::panel_pngSize)),
-      knob (citySize)
+      knob (citySize),
+      readout (citySize.get())
 {
     // The panel covers every pixel, so nothing behind the editor needs drawing.
     setOpaque (true);
@@ -15,6 +16,7 @@ BigCityAudioProcessorEditor::BigCityAudioProcessorEditor (BigCityAudioProcessor&
     setSize (UiSpec::windowWidth, UiSpec::windowHeight);
 
     addAndMakeVisible (knob);
+    addAndMakeVisible (readout);
     startTimerHz (UiSpec::repaintRateHz);
 }
 
@@ -25,5 +27,7 @@ void BigCityAudioProcessorEditor::paint (juce::Graphics& g)
 
 void BigCityAudioProcessorEditor::timerCallback()
 {
-    knob.setDisplayedPercent (citySize.get());
+    const auto citySizePercent = citySize.get();
+    knob.setDisplayedPercent (citySizePercent);
+    readout.setDisplayedPercent (citySizePercent);
 }

@@ -2,6 +2,7 @@
 
 #include "CityKnob.h"
 #include "PluginProcessor.h"
+#include "SevenSegmentReadout.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
@@ -24,6 +25,7 @@ private:
     const juce::Image panel;
 
     CityKnob knob;
+    SevenSegmentReadout readout;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BigCityAudioProcessorEditor)
 };

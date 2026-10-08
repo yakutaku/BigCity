@@ -46,6 +46,8 @@ set(BIGCITY_SOURCES
     Source/PluginEditor.cpp
     Source/CityKnob.cpp
     Source/KnobInput.cpp
+    Source/SevenSegment.cpp
+    Source/SevenSegmentReadout.cpp
     Source/CityMacro.cpp
     Source/AirShelf.cpp
     Source/MicroShifter.cpp
@@ -93,6 +95,7 @@ target_sources(BigCityTests
         Tests/TestMain.cpp
         Tests/CityMacroTests.cpp
         Tests/KnobInputTests.cpp
+        Tests/SevenSegmentTests.cpp
         Tests/AirShelfTests.cpp
         Tests/MicroShifterTests.cpp
         Tests/WetFilterTests.cpp
