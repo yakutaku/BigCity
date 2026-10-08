@@ -167,3 +167,8 @@ Each hard call, with its options, reasoning and evidence. This is the source for
 - **Rule:** align the layout to a 12-column grid.
 - **Finding:** no 12-column grid with spacing on the 8 pt scale can hold the three fixed-size objects. Those are the knob (176, set by touch-target size and the tick ring), the bezel (352, set by the 112-px skyline at 3 pt per pixel) and the switch (128), with equal gaps between them. D-11 previously claimed a 12-column grid; that was not true of the built layout.
 - **Decision:** a documented exception. The layout uses symmetric 8 pt zones instead: 32 | 176 | 24 | 352 | 24 | 128 | 32, with one shared centre line. This keeps what the rule is for (consistent alignment and predictable spacing) in a fixed-size instrument panel.
+
+## D-24 · Knob accessibility deferred to Saturday cleanup (Day 7)
+- **Context:** the knob is a custom component, not a `juce::Slider`, because Slider can't do Shift fine-drag or a fine scroll wheel, and enabling its Option-click reset also makes a plain double-click reset (which tomorrow's text entry needs). A custom component loses the VoiceOver support Slider gets for free.
+- **Decision:** add an accessibility handler to the knob as a Saturday cleanup task, about 45 minutes. It exposes the value, the 0–100 range and the title "City size".
+- **If Saturday runs out of time:** it moves to the v1.1 backlog.
