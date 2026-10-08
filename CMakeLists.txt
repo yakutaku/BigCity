@@ -43,6 +43,7 @@ juce_add_binary_data(BigCityAssets
 # Shared by the plugin and the tests, so the tests exercise the code that ships.
 set(BIGCITY_SOURCES
     Source/PluginProcessor.cpp
+    Source/PluginEditor.cpp
     Source/CityMacro.cpp
     Source/AirShelf.cpp
     Source/MicroShifter.cpp

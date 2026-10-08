@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "AutoGain.h"
+#include "PluginEditor.h"
 #include "SoundSpec.h"
 
 namespace
@@ -29,8 +30,9 @@ BigCityAudioProcessor::BigCityAudioProcessor()
       parameters (*this, nullptr, "BigCity", createParameterLayout())
 {
     bypassParameter = dynamic_cast<juce::AudioParameterBool*> (parameters.getParameter (bypassId));
+    citySizeParameter = dynamic_cast<juce::AudioParameterFloat*> (parameters.getParameter (citySizeId));
     citySizeValue = parameters.getRawParameterValue (citySizeId);
-    jassert (bypassParameter != nullptr && citySizeValue != nullptr);
+    jassert (bypassParameter != nullptr && citySizeParameter != nullptr && citySizeValue != nullptr);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout BigCityAudioProcessor::createParameterLayout()
@@ -209,7 +211,12 @@ void BigCityAudioProcessor::renderChunk (juce::AudioBuffer<float>& buffer, int c
 
 juce::AudioProcessorEditor* BigCityAudioProcessor::createEditor()
 {
+   #if BIGCITY_TUNING
+    // The tuning parameters have no custom UI; the generic editor is the only way to reach them.
     return new juce::GenericAudioProcessorEditor (*this);
+   #else
+    return new BigCityAudioProcessorEditor (*this);
+   #endif
 }
 
 bool BigCityAudioProcessor::hasEditor() const { return true; }
@@ -247,6 +254,11 @@ void BigCityAudioProcessor::setStateInformation (const void* data, int sizeInByt
 juce::AudioProcessorParameter* BigCityAudioProcessor::getBypassParameter() const
 {
     return bypassParameter;
+}
+
+juce::AudioParameterFloat& BigCityAudioProcessor::getCitySizeParameter() const
+{
+    return *citySizeParameter;
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()

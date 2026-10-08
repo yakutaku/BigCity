@@ -47,6 +47,9 @@ public:
 
     juce::AudioProcessorParameter* getBypassParameter() const override;
 
+    // The editor's knob and readout read and write citySize through this.
+    juce::AudioParameterFloat& getCitySizeParameter() const;
+
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
@@ -65,6 +68,7 @@ private:
 
     juce::AudioProcessorValueTreeState parameters;
     juce::AudioParameterBool* bypassParameter = nullptr;
+    juce::AudioParameterFloat* citySizeParameter = nullptr;
     std::atomic<float>* citySizeValue = nullptr;
 
    #if BIGCITY_TUNING
