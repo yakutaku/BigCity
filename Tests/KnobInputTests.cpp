@@ -1,4 +1,5 @@
 #include "KnobInput.h"
+#include "UiSpec.h"
 
 class KnobInputTests final : public juce::UnitTest
 {
@@ -36,29 +37,62 @@ public:
 
         beginTest ("Mouse wheel: 1.0 per notch, 0.1 with Shift, whatever the notch size");
         {
-            expectWithinAbsoluteError (KnobInput::valueAfterWheel (50.0f, mouseWheel (0.04f), false), 51.0f, tolerance);
-            expectWithinAbsoluteError (KnobInput::valueAfterWheel (50.0f, mouseWheel (-0.4f), false), 49.0f, tolerance);
-            expectWithinAbsoluteError (KnobInput::valueAfterWheel (50.0f, mouseWheel (0.04f), true), 50.1f, tolerance);
-            expectEquals (KnobInput::valueAfterWheel (100.0f, mouseWheel (0.04f), false), 100.0f);
-            expectEquals (KnobInput::valueAfterWheel (50.0f, mouseWheel (0.0f), false), 50.0f);
+            expectWithinAbsoluteError (KnobInput::valueAfterNotch (50.0f, mouseWheel (0.04f), false), 51.0f, tolerance);
+            expectWithinAbsoluteError (KnobInput::valueAfterNotch (50.0f, mouseWheel (-0.4f), false), 49.0f, tolerance);
+            expectWithinAbsoluteError (KnobInput::valueAfterNotch (50.0f, mouseWheel (0.04f), true), 50.1f, tolerance);
+            expectEquals (KnobInput::valueAfterNotch (100.0f, mouseWheel (0.04f), false), 100.0f);
+            expectEquals (KnobInput::valueAfterNotch (50.0f, mouseWheel (0.0f), false), 50.0f);
         }
 
         beginTest ("Mouse wheel with Shift scrolls horizontally on macOS and still moves the knob");
         {
             auto shifted = mouseWheel (0.0f);
             shifted.deltaX = -0.04f;
-            expectWithinAbsoluteError (KnobInput::valueAfterWheel (50.0f, shifted, true), 50.1f, tolerance);
+            expectWithinAbsoluteError (KnobInput::valueAfterNotch (50.0f, shifted, true), 50.1f, tolerance);
         }
 
-        beginTest ("Trackpad: a swipe moves as far as a drag of the same distance");
+        beginTest ("Trackpad: JUCE's scaled delta converts back to the swipe's pixels");
         {
-            const auto swipe100Pixels = trackpad (100.0f * 0.5f / 256.0f);
-            expectWithinAbsoluteError (KnobInput::valueAfterWheel (0.0f, swipe100Pixels, false),
-                                       KnobInput::valueAfterDrag (0.0f, 100.0f, false), tolerance);
+            expectWithinAbsoluteError (KnobInput::trackpadPixelsUp (trackpad (100.0f * juceTrackpadScale)), 100.0f, tolerance);
+        }
+
+        const auto deadZonePixels = UiSpec::Knob::trackpadDeadZonePixels;
+
+        beginTest ("Trackpad dead zone: a light brush moves nothing, even in many small pieces");
+        {
+            KnobInput::TrackpadDeadZone deadZone;
+            expectEquals (deadZone.pixelsToApply (0.2f), 0.0f);
+
+            float applied = 0.0f;
+
+            for (int i = 0; i < 30; ++i)
+                applied += deadZone.pixelsToApply (deadZonePixels / 40.0f);
+
+            expectEquals (applied, 0.0f);
+        }
+
+        beginTest ("Trackpad dead zone: a deliberate swipe passes everything beyond the dead zone, then scales normally");
+        {
+            KnobInput::TrackpadDeadZone deadZone;
+            expectWithinAbsoluteError (deadZone.pixelsToApply (deadZonePixels + 12.0f), 12.0f, tolerance);
+            expectWithinAbsoluteError (deadZone.pixelsToApply (5.0f), 5.0f, tolerance);
+            expectWithinAbsoluteError (deadZone.pixelsToApply (-3.0f), -3.0f, tolerance);
+        }
+
+        beginTest ("Trackpad dead zone: works the same downwards, and reset starts a new burst inside it");
+        {
+            KnobInput::TrackpadDeadZone deadZone;
+            expectWithinAbsoluteError (deadZone.pixelsToApply (-(deadZonePixels + 4.0f)), -4.0f, tolerance);
+
+            deadZone.reset();
+            expectEquals (deadZone.pixelsToApply (deadZonePixels / 2.0f), 0.0f);
         }
     }
 
 private:
+    // How JUCE scales a macOS trackpad's pixel deltas (juce_NSViewComponentPeer_mac.mm).
+    static constexpr float juceTrackpadScale = 0.5f / 256.0f;
+
     static juce::MouseWheelDetails mouseWheel (float deltaY)
     {
         juce::MouseWheelDetails wheel {};

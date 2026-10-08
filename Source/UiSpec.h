@@ -47,6 +47,10 @@ namespace UiSpec
         // value as far as a drag of the same distance (agreed Day 7: proportional to the swipe).
         constexpr float trackpadPixelsPerWheelUnit = 512.0f;
 
+        // "Knob" input, agreed Day 7: a light trackpad brush must not move the knob, so a scroll burst's
+        // movement is ignored until it adds up to this many pixels. Chosen Day 7; tune by feel.
+        constexpr float trackpadDeadZonePixels = 8.0f;
+
         // Wheel events carry no start or end, so a burst ends after this much quiet. Not in the spec:
         // chosen Day 7 so one flick records as one automation gesture.
         constexpr int scrollGestureEndMs = 300;

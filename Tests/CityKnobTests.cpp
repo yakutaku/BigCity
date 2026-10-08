@@ -1,6 +1,7 @@
 #include "CityKnob.h"
 #include "PluginProcessor.h"
 #include "ProcessorHarness.h"
+#include "UiSpec.h"
 
 // Drives CityKnob's mouse handlers directly, without a window, and checks what reaches the parameter.
 class CityKnobTests final : public juce::UnitTest
@@ -30,6 +31,22 @@ public:
             {
                 Fixture fixture { startPercent };
                 fixture.click (optionKey, noKeys, { { 0.0f, 2.0f }, { 0.0f, -2.0f } });
+                expectExactly50 (fixture);
+            }
+
+            beginTest ("A light trackpad brush doesn't move the value or open a gesture, from " + juce::String (startPercent));
+            {
+                Fixture fixture { startPercent };
+                fixture.brushTrackpad();
+                expectEquals (fixture.citySize.get(), startPercent);
+                expectEquals (fixture.gestures.begins, 0);
+            }
+
+            beginTest ("Option-click followed by a trackpad brush stays at exactly 50.0, from " + juce::String (startPercent));
+            {
+                Fixture fixture { startPercent };
+                fixture.click (optionKey, optionKey, {});
+                fixture.brushTrackpad();
                 expectExactly50 (fixture);
             }
 
@@ -100,6 +117,18 @@ private:
             knob.mouseUp (event (centre, noKeys, false, downTime, 2, false));
         }
 
+        // Lots of tiny trackpad movements that add up to just under the dead zone, as a resting finger makes.
+        void brushTrackpad()
+        {
+            constexpr int eventCount = 20;
+            juce::MouseWheelDetails wheel {};
+            wheel.isSmooth = true;
+            wheel.deltaY = UiSpec::Knob::trackpadDeadZonePixels * 0.9f / UiSpec::Knob::trackpadPixelsPerWheelUnit / (float) eventCount;
+
+            for (int i = 0; i < eventCount; ++i)
+                knob.mouseWheelMove (event (centre, noKeys, false, {}, 0, false), wheel);
+        }
+
         juce::MouseEvent event (juce::Point<float> position, juce::ModifierKeys keys, bool buttonDown,
                                 juce::Time downTime, int clickCount, bool dragged)
         {
@@ -107,7 +136,7 @@ private:
             return { juce::Desktop::getInstance().getMainMouseSource(), position, mods,
                      juce::MouseInputSource::defaultPressure, juce::MouseInputSource::defaultOrientation,
                      juce::MouseInputSource::defaultRotation, juce::MouseInputSource::defaultTiltX,
-                     juce::MouseInputSource::defaultTiltY, &knob, &knob, juce::Time::getCurrentTime(),
+                     juce::MouseInputSource::defaultTiltY, &knob, &knob, juce::Time (++eventTimeMs),
                      centre, downTime, clickCount, dragged };
         }
 
@@ -116,6 +145,9 @@ private:
         GestureCounter gestures { citySize };
         CityKnob knob { citySize };
         juce::Point<float> centre = knob.getLocalBounds().getCentre().toFloat();
+
+        // Each event gets its own time; the knob drops wheel events that repeat a time, as macOS duplicates do.
+        juce::int64 eventTimeMs = 0;
     };
 
     void expectExactly50 (const Fixture& fixture)

@@ -48,6 +48,8 @@ All coordinates are in points, relative to the window's top-left. Assets are exp
   - Drag: about 200 px covers the full range.
   - Shift + drag: fine control in 0.1 steps.
   - Scroll wheel or trackpad: changes the value; hold Shift for fine control.
+    - Mouse wheel: 1.0 per notch, 0.1 with Shift.
+    - Trackpad: moves as far as a drag of the same distance, after a small dead zone (8 px per scroll burst) so a light brush doesn't move the knob. A burst ends after 300 ms without scrolling, or on a click.
   - Option-click: resets to 50.
   - Double-click: opens text entry.
 

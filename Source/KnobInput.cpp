@@ -16,6 +16,13 @@ namespace
         const auto amount = std::abs (wheel.deltaX) > std::abs (wheel.deltaY) ? -wheel.deltaX : wheel.deltaY;
         return wheel.isReversed ? -amount : amount;
     }
+
+    // How far a burst's total movement reaches past the dead zone, keeping its direction.
+    float beyondDeadZone (float pixelsUp)
+    {
+        const auto beyond = std::max (0.0f, std::abs (pixelsUp) - UiSpec::Knob::trackpadDeadZonePixels);
+        return pixelsUp < 0.0f ? -beyond : beyond;
+    }
 }
 
 float KnobInput::angleRadiansFor (float citySizePercent)
@@ -32,17 +39,31 @@ float KnobInput::valueAfterDrag (float citySizePercent, float pixelsUp, bool fin
     return clampToRange (citySizePercent + pixelsUp * percentPerPixel);
 }
 
-float KnobInput::valueAfterWheel (float citySizePercent, const juce::MouseWheelDetails& wheel, bool fine)
+float KnobInput::valueAfterNotch (float citySizePercent, const juce::MouseWheelDetails& wheel, bool fine)
 {
     using namespace UiSpec::Knob;
     const auto amount = wheelAmount (wheel);
 
-    if (wheel.isSmooth)
-        return valueAfterDrag (citySizePercent, amount * trackpadPixelsPerWheelUnit, fine);
-
-    if (amount == 0.0f)
+    if (juce::exactlyEqual (amount, 0.0f))
         return citySizePercent;
 
     const auto notchPercent = fine ? fineWheelNotchPercent : wheelNotchPercent;
     return clampToRange (citySizePercent + (amount > 0.0f ? notchPercent : -notchPercent));
+}
+
+float KnobInput::trackpadPixelsUp (const juce::MouseWheelDetails& wheel)
+{
+    return wheelAmount (wheel) * UiSpec::Knob::trackpadPixelsPerWheelUnit;
+}
+
+float KnobInput::TrackpadDeadZone::pixelsToApply (float pixelsUp)
+{
+    const auto beyondBefore = beyondDeadZone (pixelsInBurst);
+    pixelsInBurst += pixelsUp;
+    return beyondDeadZone (pixelsInBurst) - beyondBefore;
+}
+
+void KnobInput::TrackpadDeadZone::reset()
+{
+    pixelsInBurst = 0.0f;
 }

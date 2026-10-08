@@ -20,7 +20,7 @@ CityKnob::~CityKnob()
 {
     // A host left with an open gesture keeps the parameter armed for automation recording.
     endDragGesture();
-    endScrollGesture();
+    endScrollBurst();
 }
 
 void CityKnob::setDisplayedPercent (float citySizePercent)
@@ -47,7 +47,7 @@ bool CityKnob::hitTest (int x, int y)
 
 void CityKnob::mouseDown (const juce::MouseEvent& e)
 {
-    endScrollGesture();
+    endScrollBurst();
 
     if (e.mods.isAltDown())
     {
@@ -85,21 +85,34 @@ void CityKnob::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheel
 
     lastWheelEventTime = e.eventTime;
 
-    if (! scrollGestureActive)
+    // Every event extends the burst, including trackpad movement still inside the dead zone.
+    startTimer (UiSpec::Knob::scrollGestureEndMs);
+
+    const auto fine = e.mods.isShiftDown();
+
+    if (wheel.isSmooth)
     {
-        citySize.beginChangeGesture();
-        scrollGestureActive = true;
-        gesturePercent = citySize.get();
+        const auto pixelsUp = trackpadDeadZone.pixelsToApply (KnobInput::trackpadPixelsUp (wheel));
+
+        // A brush that stays inside the dead zone neither moves the knob nor opens a gesture.
+        if (juce::exactlyEqual (pixelsUp, 0.0f))
+            return;
+
+        beginScrollGesture();
+        gesturePercent = KnobInput::valueAfterDrag (gesturePercent, pixelsUp, fine);
+    }
+    else
+    {
+        beginScrollGesture();
+        gesturePercent = KnobInput::valueAfterNotch (gesturePercent, wheel, fine);
     }
 
-    gesturePercent = KnobInput::valueAfterWheel (gesturePercent, wheel, e.mods.isShiftDown());
     sendToHost (gesturePercent);
-    startTimer (UiSpec::Knob::scrollGestureEndMs);
 }
 
 void CityKnob::timerCallback()
 {
-    endScrollGesture();
+    endScrollBurst();
 }
 
 void CityKnob::resetToDefault()
@@ -121,9 +134,20 @@ void CityKnob::endDragGesture()
     dragGestureActive = false;
 }
 
-void CityKnob::endScrollGesture()
+void CityKnob::beginScrollGesture()
+{
+    if (scrollGestureActive)
+        return;
+
+    citySize.beginChangeGesture();
+    scrollGestureActive = true;
+    gesturePercent = citySize.get();
+}
+
+void CityKnob::endScrollBurst()
 {
     stopTimer();
+    trackpadDeadZone.reset();
 
     if (! scrollGestureActive)
         return;

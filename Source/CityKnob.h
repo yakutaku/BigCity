@@ -1,5 +1,7 @@
 #pragma once
 
+#include "KnobInput.h"
+
 #include <juce_audio_processors/juce_audio_processors.h>
 
 // The City Size knob (docs/ui-spec.md "Knob"). It writes citySize itself, wrapping every edit in a
@@ -23,12 +25,13 @@ public:
     void mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) override;
 
 private:
-    // Ends a scroll burst's gesture once the wheel has been quiet for a moment.
+    // Ends a scroll burst once the wheel has been quiet for a moment.
     void timerCallback() override;
 
     void resetToDefault();
     void endDragGesture();
-    void endScrollGesture();
+    void beginScrollGesture();
+    void endScrollBurst();
     void sendToHost (float citySizePercent);
 
     void drawRotor (juce::Graphics& g) const;
@@ -44,6 +47,7 @@ private:
     float lastDragY = 0.0f;
     bool dragGestureActive = false;
     bool scrollGestureActive = false;
+    KnobInput::TrackpadDeadZone trackpadDeadZone;
     juce::Time lastWheelEventTime;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CityKnob)
