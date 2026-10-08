@@ -27,6 +27,19 @@ juce_add_plugin(BigCity
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
     COPY_PLUGIN_AFTER_BUILD TRUE)
 
+# The @2x UI images and the skyline window order, compiled into the binary as BinaryData.
+juce_add_binary_data(BigCityAssets
+    SOURCES
+        assets/panel.png
+        assets/knob_base.png
+        assets/knob_rotor.png
+        assets/screen_overlay.png
+        assets/skyline_colour.png
+        assets/skyline_grey.png
+        assets/switch_fx_on.png
+        assets/switch_bypassed.png
+        assets/skyline-windows.json)
+
 # Shared by the plugin and the tests, so the tests exercise the code that ships.
 set(BIGCITY_SOURCES
     Source/PluginProcessor.cpp
@@ -57,6 +70,7 @@ target_compile_definitions(BigCity
 
 target_link_libraries(BigCity
     PRIVATE
+        BigCityAssets
         juce::juce_audio_utils
         juce::juce_dsp
     PUBLIC
@@ -95,6 +109,7 @@ target_compile_definitions(BigCityTests
 
 target_link_libraries(BigCityTests
     PRIVATE
+        BigCityAssets
         juce::juce_audio_utils
         juce::juce_dsp
     PUBLIC
@@ -152,6 +167,7 @@ target_compile_definitions(AutoGainMeasure
 
 target_link_libraries(AutoGainMeasure
     PRIVATE
+        BigCityAssets
         juce::juce_audio_utils
         juce::juce_dsp
     PUBLIC
