@@ -20,6 +20,7 @@ All coordinates are in points, relative to the window's top-left. Assets are exp
   - switch track → labels: 12
   - label → LED: 8
 - Screws are at an 8 inset; each one is turned to a different angle.
+- The switch image is 136 wide; only the LED glow enters the right margin. The switch and its hit area end at 736.
 
 ## Draw order (back to front)
 
