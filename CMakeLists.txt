@@ -44,6 +44,8 @@ juce_add_binary_data(BigCityAssets
 set(BIGCITY_SOURCES
     Source/PluginProcessor.cpp
     Source/PluginEditor.cpp
+    Source/CityKnob.cpp
+    Source/KnobInput.cpp
     Source/CityMacro.cpp
     Source/AirShelf.cpp
     Source/MicroShifter.cpp
@@ -90,6 +92,7 @@ target_sources(BigCityTests
         ${BIGCITY_SOURCES}
         Tests/TestMain.cpp
         Tests/CityMacroTests.cpp
+        Tests/KnobInputTests.cpp
         Tests/AirShelfTests.cpp
         Tests/MicroShifterTests.cpp
         Tests/WetFilterTests.cpp
