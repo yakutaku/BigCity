@@ -102,6 +102,7 @@ All coordinates are in points, relative to the window's top-left. Assets are exp
 | Saturation (70% → 100%) | Draw `skyline_grey.png` on top at alpha `0.3 × (1 − s/100)`. |
 | Lit windows | Light the first `floor(353 × 0.6 × s/100)` entries of `assets/skyline-windows.json`. Each is a 3 × 3 pt square at screen-local `(x × 3, y × 3)`, colour `#FBE08A`. |
 | Window glow | Draw the lit windows again, blurred by 3 pt at 80%, on top. Cache it per lit count. |
+| Saturation of the windows | As in Figma (the saturation layer sits above the windows and glow), the windows and glow are desaturated with the skyline: their luminosity-grey copy goes on top at the same `0.3 × (1 − s/100)` alpha. Matched Day 8 against a Figma screenshot at 50. |
 
 Reference counts:
 

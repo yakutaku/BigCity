@@ -31,8 +31,18 @@ private:
         }
     };
 
+    // The normal look's lit windows with their glow, in one colour, rebuilt only when the lit count changes.
+    struct LitLayer
+    {
+        juce::Colour windowColour;
+        juce::Image glowSprite;
+        juce::Image image;
+    };
+
     Look lookFor (float citySizePercent, bool bypassed) const;
-    void rebuildLitLayer();
+    LitLayer createLitLayer (juce::Colour windowColour) const;
+    void rebuildLitLayers();
+    void rebuild (LitLayer& layer) const;
     void drawNormal (juce::Graphics& g) const;
     void drawBypassed (juce::Graphics& g) const;
     juce::Rectangle<float> windowBounds (juce::Point<int> window) const;
@@ -42,10 +52,11 @@ private:
     const juce::Image overlay;
     const std::vector<juce::Point<int>> windows;
     const int pixelsPerPoint;
-    const juce::Image glowSprite;
 
-    // The normal look's lit windows with their glow, rebuilt only when the lit count changes.
-    juce::Image litLayer;
+    // In Figma the saturation layer sits over the windows and glow too, so they're desaturated with the
+    // skyline: the grey copy goes over the yellow at the grey layer's alpha, as skyline_grey does.
+    LitLayer litLayer;
+    LitLayer greyLitLayer;
     Look look;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Skyline)
