@@ -66,6 +66,34 @@ namespace UiSpec
         constexpr float glideJumpPercent = 1.0f;
     }
 
+    namespace Skyline
+    {
+        // "Draw order" layers 2 and 3: the screen, which the skyline and screen_overlay fill
+        inline const juce::Rectangle<int> screenBounds { 240, 104, 336, 280 };
+
+        // "Draw order" layer 3, and docs/practical-ui.md D7: the bezel's inner corners, which the opaque
+        // skyline images are clipped to
+        constexpr float screenCornerRadius = 14.0f;
+
+        // "Skyline" grid: 112 × 95 logical pixels at 3 pt each; a window is one logical pixel
+        constexpr int gridWidth = 112;
+        constexpr int gridHeight = 95;
+        constexpr float pointsPerGridPixel = 3.0f;
+
+        // "Skyline" morph: lit windows reach 60% of all windows at City size 100 (D-15)
+        constexpr double maxLitFraction = 0.6;
+
+        // "Skyline" morph: skyline_grey on top at 0.3 × (1 − s/100), so saturation rises from 70% to 100%
+        constexpr float greyAlphaAtZero = 0.3f;
+
+        // "Skyline" window glow: the lit windows again, blurred by 3 pt, at 80%
+        constexpr float glowBlurPoints = 3.0f;
+        constexpr float glowAlpha = 0.8f;
+
+        // "Skyline" bypassed: skyline_grey and the lit windows at 30% over the LCD base
+        constexpr float bypassedOpacity = 0.3f;
+    }
+
     namespace Readout
     {
         // "Readout": the hit area; the LCD sits inside it

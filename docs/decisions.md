@@ -182,3 +182,12 @@ Each hard call, with its options, reasoning and evidence. This is the source for
   - The panel crop and `knob_base` are cached as one image, so each frame draws one image, the rotor, the pointer and the overlay.
 - **Why the knob tells the motion where a change came from:** a pure "more than 1.0 per frame" rule misfires both ways. A 1.0 wheel notch would never glide, and a fast drag moves more than 1.0 per frame, so it would lag. So the knob's own drags and swipes always follow, its notches and resets always glide, and only host changes are judged by size.
 - **Cost:** a fast host automation sweep (more than 1.0 per frame, e.g. 0–100 in under about 0.8 s at 120 Hz) glides and trails slightly while it moves.
+
+## D-26 · The skyline follows the knob on screen (Day 8)
+- **Context:** the PRD says the morph is "driven by the smoothed value" with "ease-in-out", but gives no duration. The audio's 30 ms smoothing is about one frame at 30 fps, so it adds nothing visible.
+- **Decision (approved):** the skyline reads the knob's on-screen value. It glides with the knob on jumps and tracks 1:1 otherwise, so the knob and skyline move as one unit (PRD §9). No separate easing.
+- **Also approved:**
+  - The skyline is clipped to a 14 pt corner radius, matching the bezel art (Practical UI exception D7).
+  - Both looks are built now, switching instantly on bypass. The 200 ms fade comes later (cut #1 if time runs short).
+- **Glow:** each lit window's glow is an exact blurred square, accumulated per lit count, rather than a blur of the whole layer. The two match where the glows don't overlap.
+- **PRD conflict:** PRD §7's "Skyline morph" row still says "smoothed value; ease-in-out".

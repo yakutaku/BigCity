@@ -94,7 +94,7 @@ All coordinates are in points, relative to the window's top-left. Assets are exp
 - **Grid:** 112 × 95 logical pixels at 3 pt each, so 6 px @2x. The screen shows the top 280 pt. Scale with **nearest neighbour** only.
 - **Generator:** `tools/skyline/skyline_gen.js` is the single source, and it is the same code that drew the Figma layers. To regenerate the window order, run `node tools/skyline/skyline_gen.js assets/skyline-windows.json`.
 
-**Morph** (driven by the smoothed City size `s`, 0–100):
+**Morph** (driven by `s`, the knob's value on screen, 0–100, so the skyline and knob move as one; D-26):
 
 | Element | Rule |
 |---|---|
@@ -111,7 +111,8 @@ Reference counts:
 
 **Bypassed:**
 - Draw `skyline_grey.png` plus the lit windows in `#E0E0E0`, at 30% opacity, over the LCD base.
-- Fade over 200 ms with ease-in-out. If time runs short, cut #1 replaces the fade with an instant switch.
+- Fade over 200 ms with ease-in-out. If time runs short, cut #1 replaces the fade with an instant switch. **Built so far:** the instant switch (Day 8); the fade comes later.
+- The screen clips the skyline to a 14 pt corner radius (Practical UI exception D7).
 
 ## Performance
 - Cache layers 1, 3 and 4. The knob caches the panel behind it and layer 4 as one image, so it can be opaque.
