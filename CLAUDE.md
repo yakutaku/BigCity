@@ -138,6 +138,7 @@ State save and restore go through the APVTS.
 
 **Performance:**
 - Repaint only when a value changes, with a timer of at most 30 fps.
+- **Exception, the knob (D-25):** it checks citySize on every display refresh (`juce::VBlankAttachment`) and repaints only when its angle moves, so motion is in sync with the display. Nothing is drawn while it's idle.
 - Cache static layers.
 
 **Design tokens:**

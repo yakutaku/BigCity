@@ -29,15 +29,25 @@ All coordinates are in points, relative to the window's top-left. Assets are exp
 | 1 | `panel.png` | Static image: background, aging, header (wordmark, サンシャワー・オーディオ with the marker doodle, model block), stripes, screws, CITY SIZE label, readout LCD with burned-in 188.8, bezel, LCD screen base | 0, 0, 768, 416 | Never (cache it) |
 | 2 | Skyline | `skyline_colour.png` + `skyline_grey.png` + lit windows | 240, 104, 336, 280 | Value or bypass changes |
 | 3 | `screen_overlay.png` | Static image: scanlines, glare, glass scratches | 240, 104, 336, 280 (corner radius 14) | Never |
-| 4 | `knob_base.png` | Static image: ticks, arc, cast shadow, skirt and face lighting | 24, 136, 192, 192 (the knob's origin minus 8) | Never |
-| 5 | `knob_rotor.png` | Rotated image: knurl, grime, rim wear, face wear, pointer | Same as `knob_base`; pivot at (96, 96) in the image, which is (120, 232) in the window | Value changes |
+| 4 | `knob_base.png` | Static image: ticks, arc, cast shadow, skirt and face lighting | 24, 136, 192, 192 (the knob's origin minus 8) | Never (cached with the panel behind it as one image) |
+| 5 | `knob_rotor.png` | Rotated image: knurl, grime, rim wear, face wear. **No pointer** (D-25) | Same as `knob_base`; pivot at (96, 96) in the image, which is (120, 232) in the window | Value changes |
+| 5b | Knob pointer | Code: a vector shape rotated with the rotor (see "Knob") | | Value changes |
 | 6 | Knob overlay | Code: the cap circle, an ellipse at 32, 32, 112, 112 relative to the knob origin (32, 144) | | Hover and press |
 | 7 | Readout digits | Code: 7-segment paths (see below), drawn in the LCD at 68, 332, 104, 40 | | Value changes |
 | 8 | `switch_fx_on.png` or `switch_bypassed.png` | One image per state | 608, 188, 136, 112 (the LED glow overflows the 128-wide switch) | Bypass changes |
 | 9 | Switch overlay | Code: a rounded rect at 0, 0, 48, 112 (radius 24) relative to the switch | | Hover and press |
 
 ## Knob
-- **Angle:** `angle = −135 + 2.7 × value` degrees, clockwise from 12 o'clock. Only `knob_rotor` rotates; the lighting in `knob_base` stays fixed.
+- **Angle:** `angle = −135 + 2.7 × value` degrees, clockwise from 12 o'clock. Only `knob_rotor` and the pointer rotate; the lighting in `knob_base` stays fixed.
+- **Pointer** (Figma `I5:101;5:51`; D-25): drawn in code as an anti-aliased path, not baked into the rotor.
+  - A 4 × 20 rounded rect, radius 2, at 12 o'clock with its inner end 30 above the centre (so 30–50 from it).
+  - Fill `ink/primary`, plus a 1 pt inner highlight along the outer end in `knob/pointerHighlight` at 25% (Figma's inset `0 1 0 0`).
+  - The fill and highlight are drawn together at 92% opacity.
+- **Motion** (D-25): only the picture eases; the parameter and the readout never do.
+  - Drags and trackpad swipes follow 1:1 on every frame, however fast.
+  - Mouse-wheel notches and Option-click glide to the new angle over 80 ms with a cubic ease-out, `1 − (1 − t)³`.
+  - Host changes glide the same way only when they move more than 1.0 in one display frame (an automation step, a preset). Smaller per-frame changes, such as automation curves, follow 1:1.
+  - A new jump mid-glide restarts from where the knob is, so it never snaps.
 - **Ticks:** 11 ticks, one per 10%. The ticks at 0, 50 and 100 are major (2 pt); the rest are 1.5 pt. They are drawn in `ink/secondary` and baked into `knob_base`.
 - **Hit area:** the cap (the skirt): a circle of radius 56 around the knob centre (120, 232). Hover, press, the cursor, clicks and scrolling apply only inside it, not over the ticks or the rest of the 176 square. Its 112 diameter clears the 48 pt minimum.
 - **Overlays:**
@@ -104,8 +114,9 @@ Reference counts:
 - Fade over 200 ms with ease-in-out. If time runs short, cut #1 replaces the fade with an instant switch.
 
 ## Performance
-- Cache layers 1, 3 and 4.
+- Cache layers 1, 3 and 4. The knob caches the panel behind it and layer 4 as one image, so it can be opaque.
 - Repaint only the screen rect on value changes and the switch image rect (608, 188, 136, 112) on bypass changes, with a timer of at most 30 fps.
+- **Exception, the knob (D-25):** it reads the value on every display refresh (`juce::VBlankAttachment`) and repaints its own rect only when its angle moves. Idle costs one read and a comparison per refresh; nothing is drawn.
 
 ## Fonts
 - **None.** Every label, including the Japanese, is baked into the images (D-18), and the readout is drawn as segments (D-21).
@@ -123,6 +134,9 @@ The knob rim (`#706248`) and the LCD edge (`#5F6B49`) are baked into the images,
 | `surface/lcd` | `#D3DCC0` |
 | `skyline/windowLit` | `#FBE08A` |
 | `skyline/windowLitBypassed` | `#E0E0E0` |
+| `knob/pointerHighlight` | `#FFFDF6`, used at 25% |
+
+The pointer's 92% opacity is also a token (`Tokens::KnobPointer::opacity`).
 
 ## Assets checklist
 Export from Figma: select `Export · JUCE assets @2x` on 02 Plugin, then Export.
@@ -134,7 +148,7 @@ Export from Figma: select `Export · JUCE assets @2x` on 02 Plugin, then Export.
 | `skyline_grey.png` | 672×560 |
 | `screen_overlay.png` | 672×560 |
 | `knob_base.png` | 384×384 |
-| `knob_rotor.png` | 384×384 |
+| `knob_rotor.png` | 384×384, with the Pointer layer hidden (the pointer is drawn in code) |
 | `switch_fx_on.png` | 272×224 |
 | `switch_bypassed.png` | 272×224 |
 

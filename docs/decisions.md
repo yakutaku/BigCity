@@ -172,3 +172,13 @@ Each hard call, with its options, reasoning and evidence. This is the source for
 - **Context:** the knob is a custom component, not a `juce::Slider`, because Slider can't do Shift fine-drag or a fine scroll wheel, and enabling its Option-click reset also makes a plain double-click reset (which tomorrow's text entry needs). A custom component loses the VoiceOver support Slider gets for free.
 - **Decision:** add an accessibility handler to the knob as a Saturday cleanup task, about 45 minutes. It exposes the value, the 0–100 range and the title "City size".
 - **If Saturday runs out of time:** it moves to the v1.1 backlog.
+
+## D-25 · Knob motion in sync with the display, with a vector pointer (Day 7–8)
+- **Context:** the knob felt "2017-ish". It repainted from a 30 Hz timer, which on a 120 Hz ProMotion display lands every 3–5 refreshes, so the rotor stepped unevenly and trailed a drag by up to about 40 ms. The pointer was part of the rotor bitmap, so its edges softened differently at each angle and shimmered.
+- **Decision:**
+  - The knob alone repaints in sync with the display (`juce::VBlankAttachment`), and only when its angle moves. Everything else stays on the 30 fps timer.
+  - The pointer is a vector path (4 × 20, radius 2, `ink/primary`, 1 pt `#FFFDF6` 25% highlight, 92% opacity). `knob_rotor.png` is re-exported without it.
+  - Visual-only easing: drags and swipes follow 1:1; notches, Option-click and host jumps of more than 1.0 per frame glide over 80 ms with a cubic ease-out. The parameter never eases.
+  - The panel crop and `knob_base` are cached as one image, so each frame draws one image, the rotor, the pointer and the overlay.
+- **Why the knob tells the motion where a change came from:** a pure "more than 1.0 per frame" rule misfires both ways. A 1.0 wheel notch would never glide, and a fast drag moves more than 1.0 per frame, so it would lag. So the knob's own drags and swipes always follow, its notches and resets always glide, and only host changes are judged by size.
+- **Cost:** a fast host automation sweep (more than 1.0 per frame, e.g. 0–100 in under about 0.8 s at 120 Hz) glides and trails slightly while it moves.
