@@ -20,6 +20,8 @@
 | 12 | 15 s video: knob sweep, skyline morph, bypass transition, with audio | Screen recording | Day 10 | ⏳ |
 | 13 | AI workflow artifact: CLAUDE.md excerpt, a plan you reviewed and changed, a moment you overrode the AI | Repo and this log | Day 10 | ⏳ |
 | 14 | Downloads and paid ratio | Gumroad | Post-launch | Later |
+| 15 | Instruments trace of CPU at 30 instances (with the CPU benchmark) | Instruments, alongside #5 | 10/9 | ⏳ |
+| 16 | pluginval strictness 5 pass on every build, as a quality gate | pluginval runs at the end of every task (CLAUDE.md "Definition of done") | Ongoing | 🟡 Passing every build so far |
 
 ## AI-direction moments worth showing (examples so far)
 - Centered the micro-shift window on the pre-delay after reviewing the AI's plan. Its version would have pushed the average delay outside the sourced range.
