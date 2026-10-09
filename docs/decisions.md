@@ -190,4 +190,4 @@ Each hard call, with its options, reasoning and evidence. This is the source for
   - The skyline is clipped to a 14 pt corner radius, matching the bezel art (Practical UI exception D7).
   - Both looks are built now, switching instantly on bypass. The 200 ms fade comes later (cut #1 if time runs short).
 - **Glow:** each lit window's glow is an exact blurred square, accumulated per lit count, rather than a blur of the whole layer. The two match where the glows don't overlap.
-- **PRD conflict:** PRD §7's "Skyline morph" row still says "smoothed value; ease-in-out".
+- **PRD:** §7's "Skyline morph" row now matches this decision (it said "smoothed value; ease-in-out").

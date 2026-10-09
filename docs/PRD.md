@@ -110,7 +110,7 @@ Every value is tagged with its source. **We don't guess.**
 | Press / drag | Ink overlay at 8% |
 | Bypass on | Skyline desaturates to greyscale at 30% opacity over 200 ms with ease-in-out. The knob and readout stay fully interactive and at full contrast (Practical UI decision D4). |
 | Host automation | Knob and skyline follow the automation in real time |
-| Skyline morph | Driven by the smoothed value; windows light up progressively and saturation rises; ease-in-out |
+| Skyline morph | Follows the knob's on-screen value, so the skyline and knob move as one: it glides with the knob on jumps and tracks 1:1 otherwise (decision D-26). Windows light up progressively and saturation rises. |
 
 ## 8. State inventory
 
