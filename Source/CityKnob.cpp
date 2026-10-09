@@ -1,7 +1,7 @@
 #include "CityKnob.h"
+#include "InteractiveOverlay.h"
 #include "KnobInput.h"
 #include "KnobPointer.h"
-#include "Tokens.h"
 #include "UiSpec.h"
 
 #include <BinaryData.h>
@@ -204,16 +204,12 @@ void CityKnob::drawRotor (juce::Graphics& g, float angleRadians) const
 
 void CityKnob::drawOverlay (juce::Graphics& g) const
 {
-    juce::Colour overlay;
+    const auto overlay = InteractiveOverlay::colourFor (*this);
 
-    if (isMouseButtonDown())
-        overlay = juce::Colour (Tokens::Colours::inkPrimary).withAlpha (Tokens::Overlay::pressAlpha);
-    else if (isMouseOver())
-        overlay = juce::Colour (Tokens::Colours::hoverOverlayBase).withAlpha (Tokens::Overlay::hoverAlpha);
-    else
+    if (! overlay.has_value())
         return;
 
     const auto capDiameter = UiSpec::Knob::capRadius * 2.0f;
-    g.setColour (overlay);
+    g.setColour (*overlay);
     g.fillEllipse (juce::Rectangle<float> (capDiameter, capDiameter).withCentre (UiSpec::Knob::centre));
 }

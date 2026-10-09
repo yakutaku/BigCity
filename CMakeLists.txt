@@ -45,6 +45,7 @@ set(BIGCITY_SOURCES
     Source/PluginProcessor.cpp
     Source/PluginEditor.cpp
     Source/CityKnob.cpp
+    Source/BypassSwitch.cpp
     Source/KnobInput.cpp
     Source/KnobMotion.cpp
     Source/KnobPointer.cpp
@@ -102,6 +103,7 @@ target_sources(BigCityTests
         Tests/KnobMotionTests.cpp
         Tests/KnobPointerTests.cpp
         Tests/CityKnobTests.cpp
+        Tests/BypassSwitchTests.cpp
         Tests/SevenSegmentTests.cpp
         Tests/SkylineMorphTests.cpp
         Tests/AirShelfTests.cpp

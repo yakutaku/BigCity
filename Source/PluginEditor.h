@@ -1,5 +1,6 @@
 #pragma once
 
+#include "BypassSwitch.h"
 #include "CityKnob.h"
 #include "PluginProcessor.h"
 #include "SevenSegmentReadout.h"
@@ -17,7 +18,7 @@ public:
     void paint (juce::Graphics& g) override;
 
 private:
-    // Polls citySize and bypass for the readout and skyline, so they repaint at no more than the spec's
+    // Polls citySize and bypass for the readout, skyline and switch, so they repaint at no more than the spec's
     // rate. The knob follows the display on its own (D-25).
     void timerCallback() override;
     bool isBypassed() const;
@@ -31,6 +32,7 @@ private:
     CityKnob knob;
     SevenSegmentReadout readout;
     Skyline skyline;
+    BypassSwitch bypassSwitch;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BigCityAudioProcessorEditor)
 };

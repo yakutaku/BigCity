@@ -94,6 +94,19 @@ namespace UiSpec
         constexpr float bypassedOpacity = 0.3f;
     }
 
+    namespace BypassSwitch
+    {
+        // "Draw order" layer 8: the state images are 136 wide so the LED glow fits; they share the switch origin
+        inline const juce::Rectangle<int> imageBounds { 608, 188, 136, 112 };
+
+        // "Bypass switch" hit area: the 128-wide switch, including both labels, but not the glow overflow
+        constexpr int hitWidth = 128;
+
+        // "Draw order" layer 9: the track's hover and press overlay, switch-local; a pill, so the radius is half its width
+        inline const juce::Rectangle<float> trackOverlay { 0.0f, 0.0f, 48.0f, 112.0f };
+        constexpr float trackCornerRadius = 24.0f;
+    }
+
     namespace Readout
     {
         // "Readout": the hit area; the LCD sits inside it

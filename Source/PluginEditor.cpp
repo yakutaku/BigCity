@@ -10,7 +10,8 @@ BigCityAudioProcessorEditor::BigCityAudioProcessorEditor (BigCityAudioProcessor&
       panel (juce::ImageCache::getFromMemory (BinaryData::panel_png, BinaryData::panel_pngSize)),
       knob (citySize),
       readout (citySize.get()),
-      skyline (knob.getShownPercent(), isBypassed())
+      skyline (knob.getShownPercent(), isBypassed()),
+      bypassSwitch (bypass)
 {
     // The panel covers every pixel, so nothing behind the editor needs drawing.
     setOpaque (true);
@@ -20,6 +21,7 @@ BigCityAudioProcessorEditor::BigCityAudioProcessorEditor (BigCityAudioProcessor&
     addAndMakeVisible (knob);
     addAndMakeVisible (readout);
     addAndMakeVisible (skyline);
+    addAndMakeVisible (bypassSwitch);
     startTimerHz (UiSpec::repaintRateHz);
 }
 
@@ -34,6 +36,7 @@ void BigCityAudioProcessorEditor::timerCallback()
 
     // The skyline follows the knob's angle on screen, so the two move as one when the knob glides.
     skyline.setState (knob.getShownPercent(), isBypassed());
+    bypassSwitch.setDisplayedBypassed (isBypassed());
 }
 
 bool BigCityAudioProcessorEditor::isBypassed() const
