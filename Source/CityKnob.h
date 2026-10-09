@@ -1,11 +1,12 @@
 #pragma once
 
 #include "KnobInput.h"
+#include "KnobMotion.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
 // The City Size knob (docs/ui-spec.md "Knob"). It writes citySize itself, wrapping every edit in a
-// parameter gesture so hosts record automation cleanly, and shows whatever value the editor hands it.
+// parameter gesture so hosts record automation cleanly, and reads it back on every display refresh (D-25).
 class CityKnob final : public juce::Component,
                        private juce::Timer
 {
@@ -13,8 +14,11 @@ public:
     explicit CityKnob (juce::AudioParameterFloat& citySizeParameter);
     ~CityKnob() override;
 
-    // Called from the editor's repaint timer; repaints only when the value moved.
-    void setDisplayedPercent (float citySizePercent);
+    // Moves the knob on by one display refresh, repainting only if its angle changed. The display calls
+    // it; tests call it directly to step frames without a window.
+    void advanceFrame (double timestampSeconds);
+
+    float getShownPercent() const { return motion.getShownPercent(); }
 
     void paint (juce::Graphics& g) override;
     bool hitTest (int x, int y) override;
@@ -32,15 +36,20 @@ private:
     void endDragGesture();
     void beginScrollGesture();
     void endScrollBurst();
-    void sendToHost (float citySizePercent);
+    void sendToHost (float citySizePercent, KnobMotion::Change change);
 
-    void drawRotor (juce::Graphics& g) const;
+    static juce::Image composeStaticLayers();
+    void drawRotor (juce::Graphics& g, float angleRadians) const;
     void drawOverlay (juce::Graphics& g) const;
 
     juce::AudioParameterFloat& citySize;
-    const juce::Image base;
+    // The panel behind the knob and knob_base, merged once so each frame starts with a single image.
+    const juce::Image staticLayers;
     const juce::Image rotor;
-    float displayedPercent;
+    KnobMotion motion;
+
+    // How the value's next change should reach the screen; the next frame takes it and resets it.
+    KnobMotion::Change nextChange = KnobMotion::Change::judgeBySize;
 
     // Unsnapped during a drag or scroll, so slow movements add up across the parameter's 0.1 steps.
     float gesturePercent = 0.0f;
@@ -49,6 +58,9 @@ private:
     bool scrollGestureActive = false;
     KnobInput::TrackpadDeadZone trackpadDeadZone;
     juce::Time lastWheelEventTime;
+
+    // Last, so it can't call advanceFrame before everything it reads exists.
+    juce::VBlankAttachment displayRefresh;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CityKnob)
 };

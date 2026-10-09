@@ -27,7 +27,5 @@ void BigCityAudioProcessorEditor::paint (juce::Graphics& g)
 
 void BigCityAudioProcessorEditor::timerCallback()
 {
-    const auto citySizePercent = citySize.get();
-    knob.setDisplayedPercent (citySizePercent);
-    readout.setDisplayedPercent (citySizePercent);
+    readout.setDisplayedPercent (citySize.get());
 }

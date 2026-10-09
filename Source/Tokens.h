@@ -18,6 +18,8 @@ namespace Tokens
         constexpr juce::uint32 skylineWindowLit = 0xfffbe08a;           // skyline/windowLit
         constexpr juce::uint32 skylineWindowLitBypassed = 0xffe0e0e0;   // skyline/windowLitBypassed
 
+        constexpr juce::uint32 knobPointerHighlight = 0xfffffdf6;       // knob/pointerHighlight
+
         // docs/practical-ui.md "Hover and press use transparent overlays": hover is white
         constexpr juce::uint32 hoverOverlayBase = 0xffffffff;
     }
@@ -27,6 +29,13 @@ namespace Tokens
     {
         constexpr float hoverAlpha = 0.10f;  // over Colours::hoverOverlayBase
         constexpr float pressAlpha = 0.08f;  // over Colours::inkPrimary
+    }
+
+    // docs/ui-spec.md "Knob" pointer, from Figma
+    namespace KnobPointer
+    {
+        constexpr float opacity = 0.92f;          // the whole pointer, fill and highlight together
+        constexpr float highlightAlpha = 0.25f;   // over Colours::knobPointerHighlight
     }
 
     // The 8 pt grid. tight4 and tight12 are only for spacing inside a component.

@@ -46,6 +46,8 @@ set(BIGCITY_SOURCES
     Source/PluginEditor.cpp
     Source/CityKnob.cpp
     Source/KnobInput.cpp
+    Source/KnobMotion.cpp
+    Source/KnobPointer.cpp
     Source/SevenSegment.cpp
     Source/SevenSegmentReadout.cpp
     Source/CityMacro.cpp
@@ -95,6 +97,8 @@ target_sources(BigCityTests
         Tests/TestMain.cpp
         Tests/CityMacroTests.cpp
         Tests/KnobInputTests.cpp
+        Tests/KnobMotionTests.cpp
+        Tests/KnobPointerTests.cpp
         Tests/CityKnobTests.cpp
         Tests/SevenSegmentTests.cpp
         Tests/AirShelfTests.cpp

@@ -1,5 +1,6 @@
 #include "CityKnob.h"
 #include "KnobInput.h"
+#include "KnobPointer.h"
 #include "Tokens.h"
 #include "UiSpec.h"
 
@@ -7,10 +8,13 @@
 
 CityKnob::CityKnob (juce::AudioParameterFloat& citySizeParameter)
     : citySize (citySizeParameter),
-      base (juce::ImageCache::getFromMemory (BinaryData::knob_base_png, BinaryData::knob_base_pngSize)),
+      staticLayers (composeStaticLayers()),
       rotor (juce::ImageCache::getFromMemory (BinaryData::knob_rotor_png, BinaryData::knob_rotor_pngSize)),
-      displayedPercent (citySizeParameter.get())
+      motion (citySizeParameter.get()),
+      displayRefresh (this, [this] (double timestampSeconds) { advanceFrame (timestampSeconds); })
 {
+    // staticLayers includes the panel, so nothing behind the knob needs redrawing on each frame.
+    setOpaque (true);
     setBounds (UiSpec::Knob::imageBounds);
     setMouseCursor (juce::MouseCursor::UpDownResizeCursor);
     setRepaintsOnMouseActivity (true);
@@ -23,19 +27,21 @@ CityKnob::~CityKnob()
     endScrollBurst();
 }
 
-void CityKnob::setDisplayedPercent (float citySizePercent)
+void CityKnob::advanceFrame (double timestampSeconds)
 {
-    if (juce::exactlyEqual (citySizePercent, displayedPercent))
-        return;
+    const auto change = std::exchange (nextChange, KnobMotion::Change::judgeBySize);
 
-    displayedPercent = citySizePercent;
-    repaint();
+    if (motion.advance (citySize.get(), timestampSeconds, change))
+        repaint();
 }
 
 void CityKnob::paint (juce::Graphics& g)
 {
-    g.drawImage (base, getLocalBounds().toFloat());
-    drawRotor (g);
+    const auto angleRadians = KnobInput::angleRadiansFor (motion.getShownPercent());
+
+    g.drawImage (staticLayers, getLocalBounds().toFloat());
+    drawRotor (g, angleRadians);
+    KnobPointer::draw (g, angleRadians);
     drawOverlay (g);
 }
 
@@ -69,7 +75,7 @@ void CityKnob::mouseDrag (const juce::MouseEvent& e)
     // Shift is read on every move, so pressing or releasing it mid-drag changes speed without a jump.
     gesturePercent = KnobInput::valueAfterDrag (gesturePercent, lastDragY - e.position.y, e.mods.isShiftDown());
     lastDragY = e.position.y;
-    sendToHost (gesturePercent);
+    sendToHost (gesturePercent, KnobMotion::Change::follow);
 }
 
 void CityKnob::mouseUp (const juce::MouseEvent&)
@@ -100,14 +106,14 @@ void CityKnob::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheel
 
         beginScrollGesture();
         gesturePercent = KnobInput::valueAfterDrag (gesturePercent, pixelsUp, fine);
+        sendToHost (gesturePercent, KnobMotion::Change::follow);
     }
     else
     {
         beginScrollGesture();
         gesturePercent = KnobInput::valueAfterNotch (gesturePercent, wheel, fine);
+        sendToHost (gesturePercent, KnobMotion::Change::glide);
     }
-
-    sendToHost (gesturePercent);
 }
 
 void CityKnob::timerCallback()
@@ -120,6 +126,7 @@ void CityKnob::resetToDefault()
     // AudioParameterFloat hides the normalised accessors; they're public on the host-facing base.
     const juce::AudioProcessorParameter& hostParameter = citySize;
 
+    nextChange = KnobMotion::Change::glide;
     citySize.beginChangeGesture();
     citySize.setValueNotifyingHost (hostParameter.getDefaultValue());
     citySize.endChangeGesture();
@@ -156,24 +163,43 @@ void CityKnob::endScrollBurst()
     scrollGestureActive = false;
 }
 
-void CityKnob::sendToHost (float citySizePercent)
+void CityKnob::sendToHost (float citySizePercent, KnobMotion::Change change)
 {
     const juce::AudioProcessorParameter& hostParameter = citySize;
     const auto normalised = citySize.convertTo0to1 (citySizePercent);
 
     // Only real steps go to the host, so automation isn't flooded with repeats of the same value.
-    if (! juce::exactlyEqual (normalised, hostParameter.getValue()))
-        citySize.setValueNotifyingHost (normalised);
+    if (juce::exactlyEqual (normalised, hostParameter.getValue()))
+        return;
+
+    nextChange = change;
+    citySize.setValueNotifyingHost (normalised);
 }
 
-void CityKnob::drawRotor (juce::Graphics& g) const
+juce::Image CityKnob::composeStaticLayers()
+{
+    const auto panel = juce::ImageCache::getFromMemory (BinaryData::panel_png, BinaryData::panel_pngSize);
+    const auto base = juce::ImageCache::getFromMemory (BinaryData::knob_base_png, BinaryData::knob_base_pngSize);
+
+    // Both images are @2x, so the panel's pixels line up with knob_base's and nothing is resampled.
+    const auto pixelsPerPoint = base.getWidth() / UiSpec::Knob::imageBounds.getWidth();
+    const auto knobOriginInPanel = UiSpec::Knob::imageBounds.getPosition() * pixelsPerPoint;
+
+    juce::Image layers (juce::Image::ARGB, base.getWidth(), base.getHeight(), true);
+    juce::Graphics g (layers);
+    g.drawImageAt (panel, -knobOriginInPanel.x, -knobOriginInPanel.y);
+    g.drawImageAt (base, 0, 0);
+    return layers;
+}
+
+void CityKnob::drawRotor (juce::Graphics& g, float angleRadians) const
 {
     const auto pointsPerImagePixel = (float) getWidth() / (float) rotor.getWidth();
     const auto pivot = UiSpec::Knob::centre;
 
     g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
     g.drawImageTransformed (rotor, juce::AffineTransform::scale (pointsPerImagePixel)
-                                       .rotated (KnobInput::angleRadiansFor (displayedPercent), pivot.x, pivot.y));
+                                       .rotated (angleRadians, pivot.x, pivot.y));
 }
 
 void CityKnob::drawOverlay (juce::Graphics& g) const

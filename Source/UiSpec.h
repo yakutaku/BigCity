@@ -14,7 +14,7 @@ namespace UiSpec
     // "Draw order" layer 1: the panel fills the window
     inline const juce::Rectangle<float> panelBounds { 0.0f, 0.0f, (float) windowWidth, (float) windowHeight };
 
-    // "Performance": repaint timer
+    // "Performance": the repaint timer for everything but the knob, which follows the display (D-25)
     constexpr int repaintRateHz = 30;
 
     namespace Knob
@@ -27,6 +27,14 @@ namespace UiSpec
 
         // "Knob": the cap (the skirt). Its circle is the hit area and the hover and press overlay (layer 6).
         constexpr float capRadius = 56.0f;
+
+        // "Knob" pointer, from Figma I5:101;5:51: a 4 × 20 rounded rect at 12 o'clock, its inner end 30
+        // above the centre. Figma's inset 0 1 0 0 is a 1 pt highlight along its outer end.
+        constexpr float pointerWidth = 4.0f;
+        constexpr float pointerLength = 20.0f;
+        constexpr float pointerCornerRadius = 2.0f;
+        constexpr float pointerInnerEndFromCentre = 30.0f;
+        constexpr float pointerHighlightThickness = 1.0f;
 
         // "Knob": angle = −135 + 2.7 × value, in degrees clockwise from 12 o'clock
         constexpr float angleAtZeroDegrees = -135.0f;
@@ -51,6 +59,11 @@ namespace UiSpec
         // Wheel events carry no start or end, so a burst ends after this much quiet. Not in the spec:
         // chosen Day 7 so one flick records as one automation gesture.
         constexpr int scrollGestureEndMs = 300;
+
+        // "Knob" motion (D-25): a jump glides to the new angle over 80 ms with a cubic ease-out. A host
+        // change counts as a jump when it moves more than 1.0 in one display frame.
+        constexpr double glideMs = 80.0;
+        constexpr float glideJumpPercent = 1.0f;
     }
 
     namespace Readout

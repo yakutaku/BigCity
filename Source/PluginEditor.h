@@ -16,7 +16,8 @@ public:
     void paint (juce::Graphics& g) override;
 
 private:
-    // Polls citySize, so host automation and the knob's own edits repaint at no more than the spec's rate.
+    // Polls citySize for the readout, so it repaints at no more than the spec's rate. The knob follows
+    // the display on its own (D-25).
     void timerCallback() override;
 
     juce::AudioParameterFloat& citySize;

@@ -77,6 +77,51 @@ public:
                 expectEquals (fixture.gestures.balance(), 0);
             }
         }
+
+        testMotion();
+    }
+
+    void testMotion()
+    {
+        constexpr double halfGlideSeconds = UiSpec::Knob::glideMs / 2000.0;
+
+        beginTest ("Motion: a fast drag (10.0 in one event) follows 1:1 on the next frame");
+        {
+            Fixture fixture { 50.0f };
+            const auto downTime = juce::Time::getCurrentTime();
+            fixture.knob.mouseDown (fixture.event (fixture.centre, noKeys, true, downTime, 1, false));
+            fixture.knob.mouseDrag (fixture.event (fixture.centre.translated (0.0f, -20.0f), noKeys, true, downTime, 1, true));
+            fixture.nextFrame (0.0);
+            expectEquals (fixture.citySize.get(), 60.0f);
+            expectEquals (fixture.knob.getShownPercent(), 60.0f);
+        }
+
+        beginTest ("Motion: Option-click sets the parameter at once, and the knob glides to it");
+        {
+            Fixture fixture { 0.0f };
+            fixture.click (optionKey, optionKey, {});
+            expectExactly50 (fixture);
+
+            fixture.nextFrame (0.0);
+            expectEquals (fixture.knob.getShownPercent(), 0.0f);
+            fixture.nextFrame (halfGlideSeconds);
+            expectWithinAbsoluteError (fixture.knob.getShownPercent(), 50.0f * 0.875f, 1.0e-3f);
+            fixture.nextFrame (halfGlideSeconds);
+            expectEquals (fixture.knob.getShownPercent(), 50.0f);
+        }
+
+        beginTest ("Motion: a 1.0 wheel notch glides");
+        {
+            Fixture fixture { 50.0f };
+            juce::MouseWheelDetails wheel {};
+            wheel.deltaY = 1.0f;
+            fixture.knob.mouseWheelMove (fixture.event (fixture.centre, noKeys, false, {}, 0, false), wheel);
+
+            fixture.nextFrame (0.0);
+            fixture.nextFrame (halfGlideSeconds);
+            const auto shown = fixture.knob.getShownPercent();
+            expect (shown > 50.0f && shown < 51.0f, "mid-glide, got " + juce::String (shown));
+        }
     }
 
 private:
@@ -109,6 +154,17 @@ private:
         explicit Fixture (float startPercent)
         {
             ProcessorHarness::setParameter (processor, "citySize", startPercent);
+
+            // The knob was built at the default value; let it land on the start value before the test.
+            nextFrame (0.0);
+            nextFrame (1.0);
+        }
+
+        // A display refresh this many seconds after the last one.
+        void nextFrame (double secondsLater)
+        {
+            frameSeconds += secondsLater;
+            knob.advanceFrame (frameSeconds);
         }
 
         // A press at the knob's centre, optional drags by the given offsets, then a release.
@@ -167,6 +223,7 @@ private:
 
         // Each event gets its own time; the knob drops wheel events that repeat a time, as macOS duplicates do.
         juce::int64 eventTimeMs = 0;
+        double frameSeconds = 0.0;
     };
 
     void expectExactly50 (const Fixture& fixture)
