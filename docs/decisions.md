@@ -176,12 +176,13 @@ Each hard call, with its options, reasoning and evidence. This is the source for
 ## D-25 · Knob motion in sync with the display, with a vector pointer (Day 7–8)
 - **Context:** the knob felt "2017-ish". It repainted from a 30 Hz timer, which on a 120 Hz ProMotion display lands every 3–5 refreshes, so the rotor stepped unevenly and trailed a drag by up to about 40 ms. The pointer was part of the rotor bitmap, so its edges softened differently at each angle and shimmered.
 - **Decision:**
-  - The knob alone repaints in sync with the display (`juce::VBlankAttachment`), and only when its angle moves. Everything else stays on the 30 fps timer.
+  - The knob alone repaints in sync with the display (`juce::VBlankAttachment`), and only when its angle moves, **at most 60 Hz** (Day 10). Everything else stays on the 30 fps timer.
   - The pointer is a vector path (4 × 20, radius 2, `ink/primary`, 1 pt `#FFFDF6` 25% highlight, 92% opacity). `knob_rotor.png` is re-exported without it.
   - Visual-only easing: drags and swipes follow 1:1; notches, Option-click and host jumps of more than 1.0 per frame glide over 80 ms with a cubic ease-out. The parameter never eases.
   - The panel crop and `knob_base` are cached as one image, so each frame draws one image, the rotor, the pointer and the overlay.
 - **Why the knob tells the motion where a change came from:** a pure "more than 1.0 per frame" rule misfires both ways. A 1.0 wheel notch would never glide, and a fast drag moves more than 1.0 per frame, so it would lag. So the knob's own drags and swipes always follow, its notches and resets always glide, and only host changes are judged by size.
 - **Cost:** a fast host automation sweep (more than 1.0 per frame, e.g. 0–100 in under about 0.8 s at 120 Hz) glides and trails slightly while it moves.
+- **Update (Day 10): at most 60 Hz.** The CPU benchmark (30 instances, editor open, City size sweeping) measured the knob's repaints at 14.4% of a core on a 120 Hz display, almost all of it macOS redrawing and compositing each frame. The knob still reads the value on every display refresh, but repaints only every other frame on a 120 Hz display (a minimum gap of 1/80 s, so 60 Hz displays still draw every frame). A skipped repaint is drawn on the next allowed frame. Measured: 63.8–65.4% → 60.7% of a core with the editor open while sweeping.
 
 ## D-26 · The skyline follows the knob on screen (Day 8)
 - **Context:** the PRD says the morph is "driven by the smoothed value" with "ease-in-out", but gives no duration. The audio's 30 ms smoothing is about one frame at 30 fps, so it adds nothing visible.

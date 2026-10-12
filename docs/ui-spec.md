@@ -124,7 +124,7 @@ Reference counts:
   | Open editors | 0 | 1 | 3 |
   |---|---|---|---|
   | UI images | 0 MB | 25.4 MB | 29.6 MB |
-- **Exception, the knob (D-25):** it reads the value on every display refresh (`juce::VBlankAttachment`) and repaints its own rect only when its angle moves. Idle costs one read and a comparison per refresh; nothing is drawn.
+- **Exception, the knob (D-25):** it reads the value on every display refresh (`juce::VBlankAttachment`) and repaints its own rect only when its angle moves, at most 60 Hz (every other frame on a 120 Hz display). Idle costs one read and a comparison per refresh; nothing is drawn.
 
 ## Fonts
 - **None.** Every label, including the Japanese, is baked into the images (D-18), and the readout is drawn as segments (D-21).
