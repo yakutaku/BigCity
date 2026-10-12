@@ -121,7 +121,7 @@ The source list below is the user's guideline list, reproduced exactly. The tabl
 | Rule | How it applies to BigCity |
 |---|---|
 | Primary, secondary and tertiary weights; one primary per screen | The knob is the primary control. The bypass switch is secondary. |
-| Avoid disabled states; validate on submit, or use a lock icon for unavailable features | Controls stay fully interactive and legible when bypassed (decision D4). Text entry accepts any input and clamps or rejects it on Enter. Nothing in v1 is locked. |
+| Avoid disabled states; validate on submit, or use a lock icon for unavailable features | Controls stay fully interactive and legible when bypassed (decision D4). Text entry accepts digits and a decimal point; clamps to 0–100 on Enter; anything else keeps the old value. Nothing in v1 is locked. |
 | Left-align buttons, ordered from most to least important | Not applicable in the plugin (no button rows). Applies to any button row in the Gumroad page or quick-start PDF. |
 | Friction for destructive actions | Not applicable; nothing in the plugin is destructive |
 | Stack fields and labels vertically in one column | Not applicable in the plugin (one field). Applies to any form we build later. |

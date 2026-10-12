@@ -74,10 +74,10 @@ All coordinates are in points, relative to the window's top-left. Assets are exp
   - Decimal point: a 4 × 4 square at (74.5, 30).
   - Segment map: 0 abcdef · 1 bc · 2 abged · 3 abgcd · 4 fgbc · 5 afgcd · 6 afgedc · 7 abc · 8 abcdefg · 9 abcdfg.
 - **Editing:**
-  - Double-click opens entry with the value selected. The selection uses `pastel/sky` at 43, 8, 63, 32 in readout-local coordinates.
-  - Typed characters render as segments.
-  - The LCD gets a 2 pt `accent/teal` focus ring outside its bounds, and the burned-in ghost is hidden.
-  - Enter commits and clamps to 0–100. Esc cancels.
+  - Double-click (on the readout or the knob) opens entry with the value selected. The selection covers the whole value, half digit included: `pastel/sky` at 24, 8, 82, 32 in readout-local coordinates.
+  - Accepts digits, one decimal point and Backspace, and only what the LCD can show: one decimal digit, and three integer digits only when the first is 1. Typed characters render as segments, right-aligned to the ones cell; the decimal point stays lit.
+  - The LCD (corner radius 6) gets a 2 pt `accent/teal` focus ring outside its bounds, outer radius 8. The burned-in ghost stays visible, as on a real LCD.
+  - Enter, or clicking anywhere else, commits and clamps to 0–100 in one automation gesture. Esc cancels. Empty or invalid input keeps the old value.
 - **Bypassed:** unchanged. Full contrast and editable (D-10).
 
 ## Bypass switch
