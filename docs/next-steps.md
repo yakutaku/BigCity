@@ -10,7 +10,7 @@
   - the knob's 60 Hz repaint cap (D-25)
   - the v1.1 review (`docs/v1.1-review.md`)
 - **The last checked build** (`e1403a1`; `be03889` only adds docs): the Release universal build succeeds, the tests pass, and pluginval passes at strictness 5. The dev build in `~/Library/Audio/Plug-Ins/VST3` matches main.
-- **Version** is still 0.9.0 (`project()` in `CMakeLists.txt`).
+- **Version** is still 0.9.0 (`project()` in `CMakeLists.txt`); launch is 1.0.0.
 
 ## P1-2 and P1-3: not run yet
 
@@ -39,7 +39,7 @@ These are the only review items that could reveal a launch bug. Decide first thi
    - mono and stereo tracks
    - 30 instances
 5. **Beta results.** The results table in `docs/beta-protocol.md` is still empty. Record what the producers reported, and fix anything that blocks launch.
-6. **Set the launch version.** Choose the version (e.g. 1.0.0). It's a build setting, so I'll ask before changing `project()`.
+6. **Set the launch version to 1.0.0** (decided Day 10). Change `project()` in `CMakeLists.txt` from 0.9.0 just before the final build.
 7. **Final build:** build Release, run the tests and pluginval at strictness 5, then commit.
 8. **Package:** run `tools/package.sh --notarize`.
 9. **Clean install.**
@@ -53,7 +53,7 @@ These are the only review items that could reveal a launch bug. Decide first thi
 - **Live CPU check (P1-1):** step 3 above. This decides whether UI CPU is a v1.1 item.
 - **Leftover branches.** Nothing has been deleted; deleting any of these needs your OK.
   - `backup-bigcity-oops`: local only
-  - `tuning`: 11 commits ahead of `origin/tuning`, unpushed
+  - `tuning`: pushed to origin as a backup; not merged
   - `wip/day7-knob-motion` and `wip/day8-skyline`: merged; also on origin
   - `wip/knob-60hz-cap`: merged; local only
   - `wip/shared-tick`: the unmerged shared-tick experiment; local only (no clear win, see D-25)
