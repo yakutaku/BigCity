@@ -92,6 +92,9 @@ namespace UiSpec
 
         // "Skyline" bypassed: the greyscale of the current blend and the lit windows at 30% over the LCD base
         constexpr float bypassedOpacity = 0.3f;
+
+        // "Skyline" bypassed and PRD §7: the two looks crossfade over 200 ms, eased in and out
+        constexpr double bypassFadeMs = 200.0;
     }
 
     namespace BypassSwitch

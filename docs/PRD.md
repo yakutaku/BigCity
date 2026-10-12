@@ -205,7 +205,7 @@ These states are designed in Figma and implemented in code:
 | 11 | Tue 10/13 | Beta fixes, final build | **Launch** |
 
 **Cuts if behind, in order:**
-1. Instant bypass desaturate instead of the 200 ms fade.
+1. ~~Instant bypass desaturate instead of the 200 ms fade.~~ Not needed: the fade is built (Day 10).
 2. ~~Two-frame skyline crossfade.~~ No longer applicable: the keyframe crossfade is the design (D-27).
 3. Case-study visuals move to after launch.
 

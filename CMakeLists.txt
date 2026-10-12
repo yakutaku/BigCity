@@ -56,6 +56,7 @@ set(BIGCITY_SOURCES
     Source/SevenSegmentReadout.cpp
     Source/ReadoutEntry.cpp
     Source/Skyline.cpp
+    Source/SkylineBypassFade.cpp
     Source/SkylineKeyframes.cpp
     Source/SkylineMorph.cpp
     Source/CityMacro.cpp
@@ -114,6 +115,7 @@ target_sources(BigCityTests
         Tests/ReadoutEditingTests.cpp
         Tests/SkylineMorphTests.cpp
         Tests/SkylineKeyframesTests.cpp
+        Tests/SkylineBypassFadeTests.cpp
         Tests/AirShelfTests.cpp
         Tests/MicroShifterTests.cpp
         Tests/WetFilterTests.cpp

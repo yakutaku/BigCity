@@ -1,5 +1,6 @@
 #pragma once
 
+#include "SkylineBypassFade.h"
 #include "SkylineKeyframes.h"
 #include "SkylineMorph.h"
 
@@ -25,18 +26,19 @@ private:
     {
         int litWindowCount = 0;
         SkylineMorph::KeyframeBlend blend;
-        bool bypassed = false;
+        float bypassedShare = 0.0f;  // eased: 0 is the normal look, 1 the bypassed one
 
         bool operator== (const Look& other) const
         {
-            return litWindowCount == other.litWindowCount && blend == other.blend && bypassed == other.bypassed;
+            return litWindowCount == other.litWindowCount && blend == other.blend
+                && juce::exactlyEqual (bypassedShare, other.bypassedShare);
         }
     };
 
-    Look lookFor (float citySizePercent, bool bypassed) const;
+    Look lookFor (float citySizePercent, float bypassedShare) const;
     void rebuildLitLayer();
     void drawKeyframeBlend (juce::Graphics& g, const SkylineKeyframes::Frames& frames) const;
-    void drawNormal (juce::Graphics& g) const;
+    void drawNormal (juce::Graphics& g, float opacity) const;
     void drawBypassed (juce::Graphics& g) const;
     juce::Rectangle<float> windowBounds (juce::Point<int> window) const;
 
@@ -49,6 +51,7 @@ private:
     // The lit windows with their glow, rebuilt only when the lit count changes.
     const juce::Image glowSprite;
     juce::Image litLayer;
+    SkylineBypassFade bypassFade;
     Look look;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Skyline)

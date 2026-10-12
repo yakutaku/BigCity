@@ -113,7 +113,7 @@ Reference counts:
 **Bypassed:**
 - Draw the greyscale of the current crossfade plus the lit windows in `#E0E0E0`, at 30% opacity, over the LCD base.
 - The grey keyframes are computed once at load, not shipped as assets: each pixel's luminosity, `0.3 R + 0.59 G + 0.11 B` (Figma's `Lum()`). Greyscale is linear, so crossfading the grey keyframes gives the greyscale of the colour crossfade.
-- Fade over 200 ms with ease-in-out. If time runs short, cut #1 replaces the fade with an instant switch. **Built so far:** the instant switch (Day 8); the fade comes later.
+- Fade over 200 ms with a cubic ease-in-out (`4t³` for the first half, `1 − (2 − 2t)³ / 2` for the second; built Day 10, so cut #1 isn't needed). The bypassed look is drawn first, then the opaque normal look over it at `1 − share`, so the two crossfade exactly. Toggling mid-fade turns back from where it is. The fade runs on the editor's 30 fps timer, so 200 ms is about 6 frames.
 - The screen clips the skyline to a 14 pt corner radius (Practical UI exception D7).
 
 ## Performance

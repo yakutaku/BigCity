@@ -68,7 +68,8 @@ Skyline::Skyline (float initialCitySizePercent, bool initiallyBypassed)
       pixelsPerPoint (keyframes->colour.front().getWidth() / UiSpec::Skyline::screenBounds.getWidth()),
       glowSprite (GlowSprite::create (pixelsPerPoint, juce::Colour (Tokens::Colours::skylineWindowLit))),
       litLayer (juce::Image::ARGB, keyframes->colour.front().getWidth(), keyframes->colour.front().getHeight(), true),
-      look (lookFor (initialCitySizePercent, initiallyBypassed))
+      bypassFade (initiallyBypassed),
+      look (lookFor (initialCitySizePercent, initiallyBypassed ? 1.0f : 0.0f))
 {
     // A display only: clicks fall through to the editor.
     setInterceptsMouseClicks (false, false);
@@ -78,7 +79,8 @@ Skyline::Skyline (float initialCitySizePercent, bool initiallyBypassed)
 
 void Skyline::setState (float citySizePercent, bool bypassed)
 {
-    const auto newLook = lookFor (citySizePercent, bypassed);
+    const auto nowSeconds = juce::Time::getMillisecondCounterHiRes() / 1000.0;
+    const auto newLook = lookFor (citySizePercent, bypassFade.advance (bypassed, nowSeconds));
 
     if (newLook == look)
         return;
@@ -101,21 +103,22 @@ void Skyline::paint (juce::Graphics& g)
     // Pixel art: nearest neighbour only, so no window or roofline ever smears.
     g.setImageResamplingQuality (juce::Graphics::lowResamplingQuality);
 
-    if (look.bypassed)
+    if (look.bypassedShare > 0.0f)
         drawBypassed (g);
-    else
-        drawNormal (g);
+
+    if (look.bypassedShare < 1.0f)
+        drawNormal (g, 1.0f - look.bypassedShare);
 
     // The glass isn't pixel art: its fine scanlines need smooth scaling on a 1x display.
     g.setImageResamplingQuality (juce::Graphics::mediumResamplingQuality);
     g.drawImage (overlay, getLocalBounds().toFloat());
 }
 
-Skyline::Look Skyline::lookFor (float citySizePercent, bool bypassed) const
+Skyline::Look Skyline::lookFor (float citySizePercent, float bypassedShare) const
 {
     return { SkylineMorph::litWindowCount (citySizePercent, (int) windows.size()),
              SkylineMorph::keyframeBlendFor (citySizePercent),
-             bypassed };
+             bypassedShare };
 }
 
 void Skyline::rebuildLitLayer()
@@ -153,10 +156,20 @@ void Skyline::drawKeyframeBlend (juce::Graphics& g, const SkylineKeyframes::Fram
     g.setOpacity (1.0f);
 }
 
-void Skyline::drawNormal (juce::Graphics& g) const
+void Skyline::drawNormal (juce::Graphics& g, float opacity) const
 {
+    // Mid-fade, the normal look goes over the bypassed one as a single layer. It's opaque, so this is an
+    // exact crossfade between the two looks.
+    const auto fading = opacity < 1.0f;
+
+    if (fading)
+        g.beginTransparencyLayer (opacity);
+
     drawKeyframeBlend (g, keyframes->colour);
     g.drawImage (litLayer, getLocalBounds().toFloat());
+
+    if (fading)
+        g.endTransparencyLayer();
 }
 
 void Skyline::drawBypassed (juce::Graphics& g) const
