@@ -34,8 +34,11 @@ juce_add_binary_data(BigCityAssets
         assets/knob_base.png
         assets/knob_rotor.png
         assets/screen_overlay.png
-        assets/skyline_colour.png
-        assets/skyline_grey.png
+        assets/skyline_tod_000.png
+        assets/skyline_tod_025.png
+        assets/skyline_tod_050.png
+        assets/skyline_tod_075.png
+        assets/skyline_tod_100.png
         assets/switch_fx_on.png
         assets/switch_bypassed.png
         assets/skyline-windows.json)
@@ -53,6 +56,7 @@ set(BIGCITY_SOURCES
     Source/SevenSegmentReadout.cpp
     Source/ReadoutEntry.cpp
     Source/Skyline.cpp
+    Source/SkylineKeyframes.cpp
     Source/SkylineMorph.cpp
     Source/CityMacro.cpp
     Source/AirShelf.cpp
@@ -109,6 +113,7 @@ target_sources(BigCityTests
         Tests/ReadoutEntryTests.cpp
         Tests/ReadoutEditingTests.cpp
         Tests/SkylineMorphTests.cpp
+        Tests/SkylineKeyframesTests.cpp
         Tests/AirShelfTests.cpp
         Tests/MicroShifterTests.cpp
         Tests/WetFilterTests.cpp

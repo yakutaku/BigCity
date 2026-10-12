@@ -22,16 +22,6 @@ namespace
         return 0.5f * (std::erf (x * scale) - std::erf ((x - windowWidth) * scale));
     }
 
-    // The grey Figma's saturation blend leaves at full strength: the colour's luminosity with no hue
-    // (Lum() in the W3C compositing spec, which Figma follows).
-    juce::Colour withoutSaturation (juce::Colour colour)
-    {
-        constexpr float redWeight = 0.3f, greenWeight = 0.59f, blueWeight = 0.11f;
-        const auto luminosity = redWeight * colour.getFloatRed() + greenWeight * colour.getFloatGreen()
-                              + blueWeight * colour.getFloatBlue();
-        return juce::Colour::fromFloatRGBA (luminosity, luminosity, luminosity, colour.getFloatAlpha());
-    }
-
     // One window's glow, in image pixels. The window itself sits at (margin, margin).
     struct GlowSprite
     {
@@ -72,20 +62,18 @@ namespace
 }
 
 Skyline::Skyline (float initialCitySizePercent, bool initiallyBypassed)
-    : colour (loadImage (BinaryData::skyline_colour_png, BinaryData::skyline_colour_pngSize)),
-      grey (loadImage (BinaryData::skyline_grey_png, BinaryData::skyline_grey_pngSize)),
-      overlay (loadImage (BinaryData::screen_overlay_png, BinaryData::screen_overlay_pngSize)),
+    : overlay (loadImage (BinaryData::screen_overlay_png, BinaryData::screen_overlay_pngSize)),
       windows (SkylineMorph::parseWindows (juce::String::fromUTF8 (BinaryData::skylinewindows_json,
                                                                    BinaryData::skylinewindows_jsonSize))),
-      pixelsPerPoint (colour.getWidth() / UiSpec::Skyline::screenBounds.getWidth()),
-      litLayer (createLitLayer (juce::Colour (Tokens::Colours::skylineWindowLit))),
-      greyLitLayer (createLitLayer (withoutSaturation (juce::Colour (Tokens::Colours::skylineWindowLit)))),
+      pixelsPerPoint (keyframes->colour.front().getWidth() / UiSpec::Skyline::screenBounds.getWidth()),
+      glowSprite (GlowSprite::create (pixelsPerPoint, juce::Colour (Tokens::Colours::skylineWindowLit))),
+      litLayer (juce::Image::ARGB, keyframes->colour.front().getWidth(), keyframes->colour.front().getHeight(), true),
       look (lookFor (initialCitySizePercent, initiallyBypassed))
 {
     // A display only: clicks fall through to the editor.
     setInterceptsMouseClicks (false, false);
     setBounds (UiSpec::Skyline::screenBounds);
-    rebuildLitLayers();
+    rebuildLitLayer();
 }
 
 void Skyline::setState (float citySizePercent, bool bypassed)
@@ -99,7 +87,7 @@ void Skyline::setState (float citySizePercent, bool bypassed)
     look = newLook;
 
     if (litCountChanged)
-        rebuildLitLayers();
+        rebuildLitLayer();
 
     repaint();
 }
@@ -126,56 +114,49 @@ void Skyline::paint (juce::Graphics& g)
 Skyline::Look Skyline::lookFor (float citySizePercent, bool bypassed) const
 {
     return { SkylineMorph::litWindowCount (citySizePercent, (int) windows.size()),
-             SkylineMorph::greyLayerAlpha (citySizePercent),
+             SkylineMorph::keyframeBlendFor (citySizePercent),
              bypassed };
 }
 
-Skyline::LitLayer Skyline::createLitLayer (juce::Colour windowColour) const
-{
-    return { windowColour,
-             GlowSprite::create (pixelsPerPoint, windowColour),
-             juce::Image (juce::Image::ARGB, colour.getWidth(), colour.getHeight(), true) };
-}
-
-void Skyline::rebuildLitLayers()
-{
-    rebuild (litLayer);
-    rebuild (greyLitLayer);
-}
-
-void Skyline::rebuild (LitLayer& layer) const
+void Skyline::rebuildLitLayer()
 {
     // Drawn in the image's own pixels, so every window and glow lands on whole pixels with no resampling.
-    layer.image.clear (layer.image.getBounds());
-    juce::Graphics g (layer.image);
+    litLayer.clear (litLayer.getBounds());
+    juce::Graphics g (litLayer);
     const auto windowPixels = (int) UiSpec::Skyline::pointsPerGridPixel * pixelsPerPoint;
     const auto margin = GlowSprite::marginPixels (pixelsPerPoint);
     const auto lit = std::span (windows).first ((size_t) look.litWindowCount);
 
-    g.setColour (layer.windowColour);
+    g.setColour (juce::Colour (Tokens::Colours::skylineWindowLit));
 
     for (const auto window : lit)
         g.fillRect (window.x * windowPixels, window.y * windowPixels, windowPixels, windowPixels);
 
     // The glow goes on top of the windows, as in Figma.
     for (const auto window : lit)
-        g.drawImageAt (layer.glowSprite, window.x * windowPixels - margin, window.y * windowPixels - margin);
+        g.drawImageAt (glowSprite, window.x * windowPixels - margin, window.y * windowPixels - margin);
+}
+
+void Skyline::drawKeyframeBlend (juce::Graphics& g, const SkylineKeyframes::Frames& frames) const
+{
+    const auto bounds = getLocalBounds().toFloat();
+    const auto lower = (size_t) look.blend.lowerIndex;
+
+    // The keyframes are opaque, so the upper one at this alpha over the lower is a linear crossfade.
+    g.drawImage (frames[lower], bounds);
+
+    if (look.blend.upperAlpha <= 0.0f)
+        return;
+
+    g.setOpacity (look.blend.upperAlpha);
+    g.drawImage (frames[lower + 1], bounds);
+    g.setOpacity (1.0f);
 }
 
 void Skyline::drawNormal (juce::Graphics& g) const
 {
-    const auto bounds = getLocalBounds().toFloat();
-
-    g.drawImage (colour, bounds);
-
-    g.setOpacity (look.greyLayerAlpha);
-    g.drawImage (grey, bounds);
-    g.setOpacity (1.0f);
-
-    g.drawImage (litLayer.image, bounds);
-
-    g.setOpacity (look.greyLayerAlpha);
-    g.drawImage (greyLitLayer.image, bounds);
+    drawKeyframeBlend (g, keyframes->colour);
+    g.drawImage (litLayer, getLocalBounds().toFloat());
 }
 
 void Skyline::drawBypassed (juce::Graphics& g) const
@@ -183,7 +164,7 @@ void Skyline::drawBypassed (juce::Graphics& g) const
     // One layer, so the grey windows don't show the grey skyline through them.
     g.beginTransparencyLayer (UiSpec::Skyline::bypassedOpacity);
 
-    g.drawImage (grey, getLocalBounds().toFloat());
+    drawKeyframeBlend (g, keyframes->grey);
     g.setColour (juce::Colour (Tokens::Colours::skylineWindowLitBypassed));
 
     for (const auto window : std::span (windows).first ((size_t) look.litWindowCount))

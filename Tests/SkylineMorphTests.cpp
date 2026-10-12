@@ -21,19 +21,28 @@ public:
             expectEquals (SkylineMorph::litWindowCount (100.0f, windowCount), 211);
         }
 
-        beginTest ("Grey layer: 0.3 at 0 (70% saturated), 0.15 at 50, none at 100");
+        beginTest ("Keyframes: each one shows alone at 0, 25, 50, 75 and 100");
         {
-            expectWithinAbsoluteError (SkylineMorph::greyLayerAlpha (0.0f), 0.3f, 1.0e-6f);
-            expectWithinAbsoluteError (SkylineMorph::greyLayerAlpha (50.0f), 0.15f, 1.0e-6f);
-            expectEquals (SkylineMorph::greyLayerAlpha (100.0f), 0.0f);
+            expectBlend (0.0f, 0, 0.0f);
+            expectBlend (25.0f, 1, 0.0f);
+            expectBlend (50.0f, 2, 0.0f);
+            expectBlend (75.0f, 3, 0.0f);
+            expectBlend (100.0f, 3, 1.0f);
+        }
+
+        beginTest ("Keyframes: linear between neighbours");
+        {
+            expectBlend (12.5f, 0, 0.5f);
+            expectBlend (30.0f, 1, 0.2f);
+            expectBlend (99.9f, 3, 0.996f);
         }
 
         beginTest ("Out-of-range City Size is clamped");
         {
             expectEquals (SkylineMorph::litWindowCount (-5.0f, windowCount), 0);
             expectEquals (SkylineMorph::litWindowCount (150.0f, windowCount), 211);
-            expectEquals (SkylineMorph::greyLayerAlpha (-5.0f), UiSpec::Skyline::greyAlphaAtZero);
-            expectEquals (SkylineMorph::greyLayerAlpha (150.0f), 0.0f);
+            expectBlend (-5.0f, 0, 0.0f);
+            expectBlend (150.0f, 3, 1.0f);
         }
 
         beginTest ("The shipped window order: 353 windows on the grid, starting at (109, 53)");
@@ -54,6 +63,15 @@ public:
             expect (SkylineMorph::parseWindows (R"({"windows":[[1,2],[3,-1]]})").empty(), "y off the grid");
             expectEquals ((int) SkylineMorph::parseWindows (R"({"windows":[[0,0],[111,94]]})").size(), 2);
         }
+    }
+
+private:
+    void expectBlend (float citySizePercent, int lowerIndex, float upperAlpha)
+    {
+        const auto blend = SkylineMorph::keyframeBlendFor (citySizePercent);
+        const auto at = " at " + juce::String (citySizePercent);
+        expectEquals (blend.lowerIndex, lowerIndex, "lower keyframe" + at);
+        expectWithinAbsoluteError (blend.upperAlpha, upperAlpha, 1.0e-4f, "upper alpha" + at);
     }
 };
 

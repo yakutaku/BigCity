@@ -83,14 +83,14 @@ namespace UiSpec
         // "Skyline" morph: lit windows reach 60% of all windows at City size 100 (D-15)
         constexpr double maxLitFraction = 0.6;
 
-        // "Skyline" morph: skyline_grey on top at 0.3 × (1 − s/100), so saturation rises from 70% to 100%
-        constexpr float greyAlphaAtZero = 0.3f;
+        // "Skyline" morph (D-27): time of day, from midday at 0 to dusk at 100, in keyframes at 0, 25, 50, 75 and 100
+        constexpr int keyframeCount = 5;
 
         // "Skyline" window glow: the lit windows again, blurred by 3 pt, at 80%
         constexpr float glowBlurPoints = 3.0f;
         constexpr float glowAlpha = 0.8f;
 
-        // "Skyline" bypassed: skyline_grey and the lit windows at 30% over the LCD base
+        // "Skyline" bypassed: the greyscale of the current blend and the lit windows at 30% over the LCD base
         constexpr float bypassedOpacity = 0.3f;
     }
 

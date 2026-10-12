@@ -23,9 +23,13 @@ int SkylineMorph::litWindowCount (float citySizePercent, int windowCount)
     return (int) std::floor (windowCount * UiSpec::Skyline::maxLitFraction * fractionOfRange (citySizePercent));
 }
 
-float SkylineMorph::greyLayerAlpha (float citySizePercent)
+SkylineMorph::KeyframeBlend SkylineMorph::keyframeBlendFor (float citySizePercent)
 {
-    return UiSpec::Skyline::greyAlphaAtZero * (float) (1.0 - fractionOfRange (citySizePercent));
+    constexpr int gapCount = UiSpec::Skyline::keyframeCount - 1;
+    const auto position = fractionOfRange (citySizePercent) * gapCount;
+    const auto lowerIndex = std::min ((int) std::floor (position), gapCount - 1);
+
+    return { lowerIndex, (float) (position - lowerIndex) };
 }
 
 std::vector<juce::Point<int>> SkylineMorph::parseWindows (const juce::String& json)
