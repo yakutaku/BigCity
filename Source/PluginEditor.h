@@ -9,8 +9,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 // The fixed-size BigCity window. It draws the static panel and lays out one component per control.
-class BigCityAudioProcessorEditor final : public juce::AudioProcessorEditor,
-                                          private juce::Timer
+class BigCityAudioProcessorEditor final : public juce::AudioProcessorEditor
 {
 public:
     explicit BigCityAudioProcessorEditor (BigCityAudioProcessor& bigCityProcessor);
@@ -18,9 +17,10 @@ public:
     void paint (juce::Graphics& g) override;
 
 private:
-    // Polls citySize and bypass for the readout, skyline and switch, so they repaint at no more than the spec's
-    // rate. The knob follows the display on its own (D-25).
-    void timerCallback() override;
+    // One display-synced tick for every control, so their repaints share a frame (D-25): the knob on every
+    // tick, the readout, skyline and switch on every other one.
+    void tick (double timestampSeconds);
+    void updateDisplays();
     bool isBypassed() const;
 
     juce::AudioParameterFloat& citySize;
@@ -33,6 +33,12 @@ private:
     SevenSegmentReadout readout;
     Skyline skyline;
     BypassSwitch bypassSwitch;
+
+    double lastTickSeconds = 0.0;
+    int tickCount = 0;
+
+    // Last, so it can't tick before everything it drives exists.
+    juce::VBlankAttachment displayRefresh;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BigCityAudioProcessorEditor)
 };

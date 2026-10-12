@@ -10,8 +10,7 @@ CityKnob::CityKnob (juce::AudioParameterFloat& citySizeParameter)
     : citySize (citySizeParameter),
       staticLayers (composeStaticLayers()),
       rotor (juce::ImageCache::getFromMemory (BinaryData::knob_rotor_png, BinaryData::knob_rotor_pngSize)),
-      motion (citySizeParameter.get()),
-      displayRefresh (this, [this] (double timestampSeconds) { advanceFrame (timestampSeconds); })
+      motion (citySizeParameter.get())
 {
     // staticLayers includes the panel, so nothing behind the knob needs redrawing on each frame.
     setOpaque (true);
@@ -32,17 +31,7 @@ void CityKnob::advanceFrame (double timestampSeconds)
     const auto change = std::exchange (nextChange, KnobMotion::Change::judgeBySize);
 
     if (motion.advance (citySize.get(), timestampSeconds, change))
-        angleMovedSinceRepaint = true;
-
-    // Motion advances on every refresh, but a 120 Hz display redraws the knob only every other frame: each
-    // repaint costs Core Animation a full redraw of the knob, and 60 Hz looks just as smooth. A skipped
-    // repaint is drawn on the next frame allowed, so the knob always lands where it should.
-    if (! angleMovedSinceRepaint || timestampSeconds - lastRepaintSeconds < UiSpec::Knob::minRepaintIntervalSeconds)
-        return;
-
-    angleMovedSinceRepaint = false;
-    lastRepaintSeconds = timestampSeconds;
-    repaint();
+        repaint();
 }
 
 void CityKnob::paint (juce::Graphics& g)

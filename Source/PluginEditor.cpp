@@ -11,7 +11,8 @@ BigCityAudioProcessorEditor::BigCityAudioProcessorEditor (BigCityAudioProcessor&
       knob (citySize),
       readout (citySize),
       skyline (knob.getShownPercent(), isBypassed()),
-      bypassSwitch (bypass)
+      bypassSwitch (bypass),
+      displayRefresh (this, [this] (double timestampSeconds) { tick (timestampSeconds); })
 {
     // The panel covers every pixel, so nothing behind the editor needs drawing.
     setOpaque (true);
@@ -28,7 +29,6 @@ BigCityAudioProcessorEditor::BigCityAudioProcessorEditor (BigCityAudioProcessor&
     addAndMakeVisible (readout);
     addAndMakeVisible (skyline);
     addAndMakeVisible (bypassSwitch);
-    startTimerHz (UiSpec::repaintRateHz);
 }
 
 void BigCityAudioProcessorEditor::paint (juce::Graphics& g)
@@ -36,7 +36,19 @@ void BigCityAudioProcessorEditor::paint (juce::Graphics& g)
     g.drawImage (panel, UiSpec::panelBounds);
 }
 
-void BigCityAudioProcessorEditor::timerCallback()
+void BigCityAudioProcessorEditor::tick (double timestampSeconds)
+{
+    if (timestampSeconds - lastTickSeconds < UiSpec::minTickIntervalSeconds)
+        return;
+
+    lastTickSeconds = timestampSeconds;
+    knob.advanceFrame (timestampSeconds);
+
+    if (++tickCount % UiSpec::ticksPerDisplayUpdate == 0)
+        updateDisplays();
+}
+
+void BigCityAudioProcessorEditor::updateDisplays()
 {
     readout.setDisplayedPercent (citySize.get());
 

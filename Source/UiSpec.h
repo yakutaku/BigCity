@@ -14,8 +14,13 @@ namespace UiSpec
     // "Draw order" layer 1: the panel fills the window
     inline const juce::Rectangle<float> panelBounds { 0.0f, 0.0f, (float) windowWidth, (float) windowHeight };
 
-    // "Performance": the repaint timer for everything but the knob, which follows the display (D-25)
-    constexpr int repaintRateHz = 30;
+    // "Performance" (D-25, Day 10): one display-synced tick drives every repaint, so they all land in the
+    // same frame. It runs at most about 60 Hz: the minimum gap is halfway between a 120 Hz and a 60 Hz frame,
+    // so a 120 Hz display ticks every other frame and a 60 Hz display still ticks every frame despite jitter.
+    constexpr double minTickIntervalSeconds = 1.0 / 80.0;
+
+    // Everything but the knob updates on every other tick, so at most 30 fps (CLAUDE.md "UI rules").
+    constexpr int ticksPerDisplayUpdate = 2;
 
     namespace Knob
     {
@@ -64,11 +69,6 @@ namespace UiSpec
         // change counts as a jump when it moves more than 1.0 in one display frame.
         constexpr double glideMs = 80.0;
         constexpr float glideJumpPercent = 1.0f;
-
-        // "Performance" (Day 10, trial): the knob redraws at most about 60 times a second. The minimum gap is
-        // halfway between a 120 Hz and a 60 Hz frame, so a 120 Hz display draws every other frame and a 60 Hz
-        // display still draws every frame despite timestamp jitter.
-        constexpr double minRepaintIntervalSeconds = 1.0 / 80.0;
     }
 
     namespace Skyline

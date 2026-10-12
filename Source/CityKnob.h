@@ -6,7 +6,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 // The City Size knob (docs/ui-spec.md "Knob"). It writes citySize itself, wrapping every edit in a
-// parameter gesture so hosts record automation cleanly, and reads it back on every display refresh (D-25).
+// parameter gesture so hosts record automation cleanly, and reads it back on the editor's display tick (D-25).
 class CityKnob final : public juce::Component,
                        private juce::Timer
 {
@@ -14,7 +14,7 @@ public:
     explicit CityKnob (juce::AudioParameterFloat& citySizeParameter);
     ~CityKnob() override;
 
-    // Moves the knob on by one display refresh, repainting only if its angle changed. The display calls
+    // Moves the knob on by one frame, repainting only if its angle changed. The editor's display tick calls
     // it; tests call it directly to step frames without a window.
     void advanceFrame (double timestampSeconds);
 
@@ -52,10 +52,6 @@ private:
     const juce::Image rotor;
     KnobMotion motion;
 
-    // The 60 Hz repaint cap: whether the angle has moved since the last repaint, and when that was.
-    bool angleMovedSinceRepaint = false;
-    double lastRepaintSeconds = 0.0;
-
     // How the value's next change should reach the screen; the next frame takes it and resets it.
     KnobMotion::Change nextChange = KnobMotion::Change::judgeBySize;
 
@@ -66,9 +62,6 @@ private:
     bool scrollGestureActive = false;
     KnobInput::TrackpadDeadZone trackpadDeadZone;
     juce::Time lastWheelEventTime;
-
-    // Last, so it can't call advanceFrame before everything it reads exists.
-    juce::VBlankAttachment displayRefresh;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CityKnob)
 };
