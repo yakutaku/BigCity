@@ -64,6 +64,11 @@ namespace UiSpec
         // change counts as a jump when it moves more than 1.0 in one display frame.
         constexpr double glideMs = 80.0;
         constexpr float glideJumpPercent = 1.0f;
+
+        // "Performance" (Day 10, trial): the knob redraws at most about 60 times a second. The minimum gap is
+        // halfway between a 120 Hz and a 60 Hz frame, so a 120 Hz display draws every other frame and a 60 Hz
+        // display still draws every frame despite timestamp jitter.
+        constexpr double minRepaintIntervalSeconds = 1.0 / 80.0;
     }
 
     namespace Skyline

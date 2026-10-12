@@ -52,6 +52,10 @@ private:
     const juce::Image rotor;
     KnobMotion motion;
 
+    // The 60 Hz repaint cap: whether the angle has moved since the last repaint, and when that was.
+    bool angleMovedSinceRepaint = false;
+    double lastRepaintSeconds = 0.0;
+
     // How the value's next change should reach the screen; the next frame takes it and resets it.
     KnobMotion::Change nextChange = KnobMotion::Change::judgeBySize;
 
