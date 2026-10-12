@@ -203,3 +203,7 @@ Each hard call, with its options, reasoning and evidence. This is the source for
 - **Checked:** the keyframes redraw the middle of the skyline (the pink twin towers became lower buildings and a spire), but all 353 windows in `skyline-windows.json` still land on an unlit-window pixel in every keyframe, so the window order didn't change.
 - **Moved out:** water shimmer moves to BC-02 (PRD §5 "Out of v1").
 - **PRD:** §7's "Skyline morph" row now says time of day; §12 cut #2 (two-frame crossfade) no longer applies.
+
+## D-29 · Header doodle redrawn by hand (Day 10)
+- **Decision:** Sunshower doodle redrawn by hand after beta feedback that it looked AI-generated; lilac-to-peach sunset sun.
+- **Asset:** `assets/panel.png` (1536×832) re-exported from Figma; nothing else on the panel changed.
