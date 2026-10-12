@@ -20,12 +20,16 @@ public:
 
     float getShownPercent() const { return motion.getShownPercent(); }
 
+    // Called on a double-click, which opens text entry in the readout (docs/ui-spec.md "Knob" input).
+    std::function<void()> onDoubleClick;
+
     void paint (juce::Graphics& g) override;
     bool hitTest (int x, int y) override;
 
     void mouseDown (const juce::MouseEvent& e) override;
     void mouseDrag (const juce::MouseEvent& e) override;
     void mouseUp (const juce::MouseEvent& e) override;
+    void mouseDoubleClick (const juce::MouseEvent& e) override;
     void mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) override;
 
 private:

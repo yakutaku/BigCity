@@ -83,6 +83,15 @@ void CityKnob::mouseUp (const juce::MouseEvent&)
     endDragGesture();
 }
 
+void CityKnob::mouseDoubleClick (const juce::MouseEvent& e)
+{
+    // A quick double Option-click is two resets, not a request to type.
+    if (e.mods.isAltDown() || onDoubleClick == nullptr)
+        return;
+
+    onDoubleClick();
+}
+
 void CityKnob::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel)
 {
     // macOS sometimes delivers the same wheel event twice; juce::Slider ignores repeats the same way.

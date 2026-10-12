@@ -9,7 +9,7 @@ BigCityAudioProcessorEditor::BigCityAudioProcessorEditor (BigCityAudioProcessor&
       bypass (*bigCityProcessor.getBypassParameter()),
       panel (juce::ImageCache::getFromMemory (BinaryData::panel_png, BinaryData::panel_pngSize)),
       knob (citySize),
-      readout (citySize.get()),
+      readout (citySize),
       skyline (knob.getShownPercent(), isBypassed()),
       bypassSwitch (bypass)
 {
@@ -17,6 +17,12 @@ BigCityAudioProcessorEditor::BigCityAudioProcessorEditor (BigCityAudioProcessor&
     setOpaque (true);
     setResizable (false, false);
     setSize (UiSpec::windowWidth, UiSpec::windowHeight);
+
+    // JUCE moves focus before the clicked control acts, so a click anywhere in the window takes focus from
+    // the readout and commits its entry first: a knob drag then starts from the typed value. Keys nobody
+    // handles still pass up to the host, as before.
+    setWantsKeyboardFocus (true);
+    knob.onDoubleClick = [this] { readout.beginEditing(); };
 
     addAndMakeVisible (knob);
     addAndMakeVisible (readout);

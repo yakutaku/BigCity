@@ -111,7 +111,13 @@ namespace UiSpec
     {
         // "Readout": the hit area; the LCD sits inside it
         inline const juce::Rectangle<int> hitArea { 60, 328, 120, 48 };
-        inline const juce::Point<float> lcdOrigin { 68.0f, 332.0f };
+        inline const juce::Rectangle<float> lcdBounds { 68.0f, 332.0f, 104.0f, 40.0f };
+        constexpr float lcdCornerRadius = 6.0f;
+
+        // "Readout" editing: the selection covers the whole value, half digit included (readout-local), and a
+        // 2 pt focus ring sits outside the LCD, so its outer radius is the LCD's plus 2
+        inline const juce::Rectangle<float> selection { 24.0f, 8.0f, 82.0f, 32.0f };
+        constexpr float focusRingThickness = 2.0f;
 
         // "Readout" geometry, the exact constants from the Figma script. Cell-local points: each cell is
         // 16 wide × 28 tall; ht is half the 4.5 segment thickness; L/R are the vertical segments' centre

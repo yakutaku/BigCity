@@ -1,4 +1,5 @@
 #include "CityKnob.h"
+#include "GestureCounter.h"
 #include "PluginProcessor.h"
 #include "ProcessorHarness.h"
 #include "UiSpec.h"
@@ -78,6 +79,19 @@ public:
             }
         }
 
+        beginTest ("Double-click asks for text entry once; a double Option-click only resets");
+        {
+            Fixture fixture { 37.3f };
+            int entryRequests = 0;
+            fixture.knob.onDoubleClick = [&entryRequests] { ++entryRequests; };
+
+            fixture.doubleClick();
+            expectEquals (entryRequests, 1);
+
+            fixture.doubleClick (optionKey);
+            expectEquals (entryRequests, 1);
+        }
+
         testMotion();
     }
 
@@ -128,27 +142,6 @@ private:
     static inline const juce::ModifierKeys noKeys {};
     static inline const juce::ModifierKeys optionKey { juce::ModifierKeys::altModifier };
 
-    // Counts gesture starts and ends, so a test can check every begin has its end.
-    struct GestureCounter final : private juce::AudioProcessorParameter::Listener
-    {
-        explicit GestureCounter (juce::AudioProcessorParameter& parameterToWatch) : parameter (parameterToWatch)
-        {
-            parameter.addListener (this);
-        }
-
-        ~GestureCounter() override { parameter.removeListener (this); }
-
-        int balance() const { return begins - ends; }
-
-        int begins = 0, ends = 0;
-
-    private:
-        void parameterValueChanged (int, float) override {}
-        void parameterGestureChanged (int, bool starting) override { ++(starting ? begins : ends); }
-
-        juce::AudioProcessorParameter& parameter;
-    };
-
     struct Fixture
     {
         explicit Fixture (float startPercent)
@@ -182,14 +175,14 @@ private:
         }
 
         // The order JUCE delivers a double-click in: down, up, down, double-click, up.
-        void doubleClick()
+        void doubleClick (juce::ModifierKeys keys = noKeys)
         {
-            click (noKeys, noKeys, {}, 1);
+            click (keys, keys, {}, 1);
 
             const auto downTime = juce::Time::getCurrentTime();
-            knob.mouseDown (event (centre, noKeys, true, downTime, 2, false));
-            knob.mouseDoubleClick (event (centre, noKeys, true, downTime, 2, false));
-            knob.mouseUp (event (centre, noKeys, false, downTime, 2, false));
+            knob.mouseDown (event (centre, keys, true, downTime, 2, false));
+            knob.mouseDoubleClick (event (centre, keys, true, downTime, 2, false));
+            knob.mouseUp (event (centre, keys, false, downTime, 2, false));
         }
 
         // Lots of tiny trackpad movements that add up to just under the dead zone, as a resting finger makes.

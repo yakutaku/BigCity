@@ -107,6 +107,7 @@ target_sources(BigCityTests
         Tests/BypassSwitchTests.cpp
         Tests/SevenSegmentTests.cpp
         Tests/ReadoutEntryTests.cpp
+        Tests/ReadoutEditingTests.cpp
         Tests/SkylineMorphTests.cpp
         Tests/AirShelfTests.cpp
         Tests/MicroShifterTests.cpp
