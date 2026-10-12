@@ -27,7 +27,7 @@ All coordinates are in points, relative to the window's top-left. Assets are exp
 | # | Layer | Source | Position (x, y, w, h) | Repaints when |
 |---|---|---|---|---|
 | 1 | `panel.png` | Static image: background, aging, header (wordmark, サンシャワー・オーディオ with the marker doodle, model block), stripes, screws, CITY SIZE label, readout LCD with burned-in 188.8, bezel, LCD screen base | 0, 0, 768, 416 | Never (cache it) |
-| 2 | Skyline | `skyline_colour.png` + `skyline_grey.png` + lit windows | 240, 104, 336, 280 | Value or bypass changes |
+| 2 | Skyline | Crossfade of two `skyline_tod_*.png` keyframes + lit windows | 240, 104, 336, 280 | Value or bypass changes |
 | 3 | `screen_overlay.png` | Static image: scanlines, glare, glass scratches | 240, 104, 336, 280 (corner radius 14) | Never |
 | 4 | `knob_base.png` | Static image: ticks, arc, cast shadow, skirt and face lighting | 24, 136, 192, 192 (the knob's origin minus 8) | Never (cached with the panel behind it as one image) |
 | 5 | `knob_rotor.png` | Rotated image: knurl, grime, rim wear, face wear. **No pointer** (D-25) | Same as `knob_base`; pivot at (96, 96) in the image, which is (120, 232) in the window | Value changes |
@@ -94,15 +94,15 @@ All coordinates are in points, relative to the window's top-left. Assets are exp
 - **Grid:** 112 × 95 logical pixels at 3 pt each, so 6 px @2x. The screen shows the top 280 pt. Scale with **nearest neighbour** only.
 - **Generator:** `tools/skyline/skyline_gen.js` is the single source, and it is the same code that drew the Figma layers. To regenerate the window order, run `node tools/skyline/skyline_gen.js assets/skyline-windows.json`.
 
-**Morph** (driven by `s`, the knob's value on screen, 0–100, so the skyline and knob move as one; D-26):
+**Morph** (driven by `s`, the knob's value on screen, 0–100, so the skyline and knob move as one; D-26). The knob is the time of day, from midday at 0 to dusk at 100 (D-27):
 
 | Element | Rule |
 |---|---|
-| Base | Draw `skyline_colour.png`. |
-| Saturation (70% → 100%) | Draw `skyline_grey.png` on top at alpha `0.3 × (1 − s/100)`. |
+| Time of day | Keyframes `skyline_tod_000/025/050/075/100.png` sit at s = 0, 25, 50, 75, 100. Draw the keyframe at or below `s`, then the next one on top at alpha `(s − its s) / 25`: a linear crossfade. At 100 the last keyframe shows alone. The keyframes are opaque. |
 | Lit windows | Light the first `floor(353 × 0.6 × s/100)` entries of `assets/skyline-windows.json`. Each is a 3 × 3 pt square at screen-local `(x × 3, y × 3)`, colour `#FBE08A`. |
 | Window glow | Draw the lit windows again, blurred by 3 pt at 80%, on top. Cache it per lit count. |
-| Saturation of the windows | As in Figma (the saturation layer sits above the windows and glow), the windows and glow are desaturated with the skyline: their luminosity-grey copy goes on top at the same `0.3 × (1 − s/100)` alpha. Matched Day 8 against a Figma screenshot at 50. |
+
+The window order still fits the keyframes: all 353 windows land on an unlit-window pixel in every keyframe (checked Day 10).
 
 Reference counts:
 
@@ -111,13 +111,19 @@ Reference counts:
 | Windows lit | 0 | 52 | 105 | 158 | 211 |
 
 **Bypassed:**
-- Draw `skyline_grey.png` plus the lit windows in `#E0E0E0`, at 30% opacity, over the LCD base.
+- Draw the greyscale of the current crossfade plus the lit windows in `#E0E0E0`, at 30% opacity, over the LCD base.
+- The grey keyframes are computed once at load, not shipped as assets: each pixel's luminosity, `0.3 R + 0.59 G + 0.11 B` (Figma's `Lum()`). Greyscale is linear, so crossfading the grey keyframes gives the greyscale of the colour crossfade.
 - Fade over 200 ms with ease-in-out. If time runs short, cut #1 replaces the fade with an instant switch. **Built so far:** the instant switch (Day 8); the fade comes later.
 - The screen clips the skyline to a 14 pt corner radius (Practical UI exception D7).
 
 ## Performance
 - Cache layers 1, 3 and 4. The knob caches the panel behind it and layer 4 as one image, so it can be opaque.
 - Repaint only the screen rect on value changes and the switch image rect (608, 188, 136, 112) on bypass changes, with a timer of at most 30 fps.
+- **Memory:** the 5 keyframes and their 5 grey copies (15.1 MB) are decoded once and shared by every open editor (`juce::SharedResourcePointer`). The first editor to open loads them and the last to close frees them. Each open editor adds its lit-window layer (1.5 MB) and the knob's cached static layers (0.6 MB). The panel, knob, switch and glass images (8.3 MB) are shared through `juce::ImageCache`, which drops them 5 s after the last editor closes.
+
+  | Open editors | 0 | 1 | 3 |
+  |---|---|---|---|
+  | UI images | 0 MB | 25.4 MB | 29.6 MB |
 - **Exception, the knob (D-25):** it reads the value on every display refresh (`juce::VBlankAttachment`) and repaints its own rect only when its angle moves. Idle costs one read and a comparison per refresh; nothing is drawn.
 
 ## Fonts
@@ -146,8 +152,7 @@ Export from Figma: select `Export · JUCE assets @2x` on 02 Plugin, then Export.
 | File | Size (px) |
 |---|---|
 | `panel.png` | 1536×832 |
-| `skyline_colour.png` | 672×560 |
-| `skyline_grey.png` | 672×560 |
+| `skyline_tod_000.png` … `skyline_tod_100.png` (5 keyframes: 0, 25, 50, 75, 100) | 672×560 each |
 | `screen_overlay.png` | 672×560 |
 | `knob_base.png` | 384×384 |
 | `knob_rotor.png` | 384×384, with the Pointer layer hidden (the pointer is drawn in code) |

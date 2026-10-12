@@ -55,6 +55,7 @@ BigCity does one job, costs little CPU, and needs no learning.
 - Arrow-key control (Ableton doesn't reliably pass keys to plugins; scroll wheel replaces it)
 - Resizable window
 - Buildings growing or animating
+- Water shimmer: moves to BC-02 (D-27)
 
 **v1.1 backlog**
 - Matched (analog-like) shelf design for the air shelf, so its response no longer depends on sample rate (see the §6 shelf check finding)
@@ -110,7 +111,7 @@ Every value is tagged with its source. **We don't guess.**
 | Press / drag | Ink overlay at 8% |
 | Bypass on | Skyline desaturates to greyscale at 30% opacity over 200 ms with ease-in-out. The knob and readout stay fully interactive and at full contrast (Practical UI decision D4). |
 | Host automation | Knob and skyline follow the automation in real time |
-| Skyline morph | Follows the knob's on-screen value, so the skyline and knob move as one: it glides with the knob on jumps and tracks 1:1 otherwise (decision D-26). Windows light up progressively and saturation rises. |
+| Skyline morph | Follows the knob's on-screen value, so the skyline and knob move as one: it glides with the knob on jumps and tracks 1:1 otherwise (decision D-26). The knob is the time of day, midday at 0 to dusk at 100: a linear crossfade between keyframes at 0, 25, 50, 75 and 100, while windows light up progressively (decision D-27). |
 
 ## 8. State inventory
 
@@ -205,7 +206,7 @@ These states are designed in Figma and implemented in code:
 
 **Cuts if behind, in order:**
 1. Instant bypass desaturate instead of the 200 ms fade.
-2. Two-frame skyline crossfade.
+2. ~~Two-frame skyline crossfade.~~ No longer applicable: the keyframe crossfade is the design (D-27).
 3. Case-study visuals move to after launch.
 
 ## 13. Open items

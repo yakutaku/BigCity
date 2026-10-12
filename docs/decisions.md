@@ -191,3 +191,14 @@ Each hard call, with its options, reasoning and evidence. This is the source for
   - Both looks are built now, switching instantly on bypass. The 200 ms fade comes later (cut #1 if time runs short).
 - **Glow:** each lit window's glow is an exact blurred square, accumulated per lit count, rather than a blur of the whole layer. The two match where the glows don't overlap.
 - **PRD:** §7's "Skyline morph" row now matches this decision (it said "smoothed value; ease-in-out").
+
+## D-27 · The knob is the time of day: midday at 0 to dusk at 100 (Day 10)
+- **Decision:** the skyline morph becomes a time of day. Five keyframes (`skyline_tod_000/025/050/075/100.png`) sit at 0, 25, 50, 75 and 100, and the skyline crossfades linearly between the two either side of the knob's on-screen value. The lit windows and their glow stay as they are, so the city lights up as it gets dark.
+- **Replaces:**
+  - D-15's saturation rule (70% → 100%). `skyline_colour.png` and `skyline_grey.png` are gone.
+  - The window desaturation that matched Figma's saturation layer (ui-spec, Day 8). It has no job without that layer.
+- **Bypassed:** the greyscale of the current crossfade, with the windows in `#E0E0E0`, at 30%. The grey keyframes are computed once at load from each pixel's luminosity, not shipped as assets.
+- **Memory:** the 10 decoded keyframes (15.1 MB) are shared by every open editor and freed when the last one closes, so closed plugins hold no UI images. UI images: 0 / 25.4 / 29.6 MB with 0 / 1 / 3 editors open, calculated from the image sizes; the keyframes' 15,052,800 bytes are measured in the tests.
+- **Checked:** the keyframes redraw the middle of the skyline (the pink twin towers became lower buildings and a spire), but all 353 windows in `skyline-windows.json` still land on an unlit-window pixel in every keyframe, so the window order didn't change.
+- **Moved out:** water shimmer moves to BC-02 (PRD §5 "Out of v1").
+- **PRD:** §7's "Skyline morph" row now says time of day; §12 cut #2 (two-frame crossfade) no longer applies.
