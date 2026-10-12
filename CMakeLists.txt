@@ -51,6 +51,7 @@ set(BIGCITY_SOURCES
     Source/KnobPointer.cpp
     Source/SevenSegment.cpp
     Source/SevenSegmentReadout.cpp
+    Source/ReadoutEntry.cpp
     Source/Skyline.cpp
     Source/SkylineMorph.cpp
     Source/CityMacro.cpp
@@ -105,6 +106,7 @@ target_sources(BigCityTests
         Tests/CityKnobTests.cpp
         Tests/BypassSwitchTests.cpp
         Tests/SevenSegmentTests.cpp
+        Tests/ReadoutEntryTests.cpp
         Tests/SkylineMorphTests.cpp
         Tests/AirShelfTests.cpp
         Tests/MicroShifterTests.cpp
