@@ -200,3 +200,26 @@ target_link_libraries(AutoGainMeasure
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)
+
+# CPU benchmark: hosts the installed BigCity.vst3 many times on one real-time thread and reports the load,
+# with or without an editor open. A measuring tool, so it isn't a CTest test.
+juce_add_console_app(CpuBenchmark
+    PRODUCT_NAME "CpuBenchmark")
+
+target_sources(CpuBenchmark
+    PRIVATE
+        Tests/CpuBenchmark.cpp)
+
+target_compile_definitions(CpuBenchmark
+    PRIVATE
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+        JUCE_PLUGINHOST_VST3=1
+        JUCE_MODAL_LOOPS_PERMITTED=1)
+
+target_link_libraries(CpuBenchmark
+    PRIVATE
+        juce::juce_audio_utils
+    PUBLIC
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags)
