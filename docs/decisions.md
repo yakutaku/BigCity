@@ -216,5 +216,15 @@ Each hard call, with its options, reasoning and evidence. This is the source for
   - Up to 8 one-pixel sparkles, `round(8 × s/100)`, each fading 0 → 60% → 0 over 1.5 s at a hashed phase, then moving to a new hashed spot on the water (rows 59–80).
   - At 0 nothing is drawn, so the water matches the approved keyframes exactly.
   - macOS "Reduce motion" with City size above 0: one frozen frame (t = 0), no sparkles. Bypassed: the motion stops and the last frame fades out with the normal look.
-- **Cost:** an 8 fps timer that runs only while there's motion to show, repainting only the water rect (336 × 66 pt). Gate: no more than 3% of a core added, whole process, 1 instance with the editor open. Measured in the branch's commit.
+- **Cost:** an 8 fps timer that runs only while there's motion to show, repainting only the water rect (336 × 66 pt). Gate: no more than 3% of a core added, whole process, 1 instance with the editor open and idle.
+  - Measured with `CpuBenchmark --instances=1 --editor --city-size=…`, window in front, 20 s × 3 runs each, whole-process CPU as % of one core:
+
+    | City size | 0 | 50 | 100 |
+    |---|---|---|---|
+    | Before (main) | 6.7 / 6.8 / 6.2 | 6.8 / 6.8 / 6.8 | 6.7 / 6.8 / 7.1 |
+    | After | 6.8 / 6.8 / 6.7 | 9.3 / 9.2 / 9.1 | 9.0 / 9.4 / 8.9 |
+    | Added (means) | +0.2 (noise: no timer at 0) | +2.4 | +2.2 |
+
+  - Passes, with about 0.6% to spare. A run with the window behind other windows gave the same picture (+0.4 / +2.5 / +2.6), so covered windows weren't skewing it. The audio thread is unchanged (mean 1.1–1.2% of the buffer).
+  - As with the knob (D-25), most of the cost is likely macOS redrawing and compositing each repaint rather than the drawing itself; not profiled.
 - **Not done:** pausing when the window is fully covered by other windows. `isShowing()` covers hidden and minimised only. Logged in the PRD's v1.1 backlog.
