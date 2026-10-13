@@ -21,6 +21,21 @@ namespace
 
         float at (int sampleIndex) const { return start + step * (float) (sampleIndex + 1); }
     };
+
+    // JUCE reads a saved "nan" as NaN, which its range clamp passes straight through to the audio.
+    // Such a parameter is dropped, so it resets to its default, as a parameter missing from the state does.
+    void removeNonFiniteValues (juce::XmlElement& state)
+    {
+        constexpr auto valueAttribute = "value";   // where AudioProcessorValueTreeState saves each value
+        juce::Array<juce::XmlElement*> nonFinite;
+
+        for (auto* parameter : state.getChildIterator())
+            if (! std::isfinite (parameter->getDoubleAttribute (valueAttribute)))
+                nonFinite.add (parameter);
+
+        for (auto* parameter : nonFinite)
+            state.removeChildElement (parameter, true);
+    }
 }
 
 BigCityAudioProcessor::BigCityAudioProcessor()
@@ -247,8 +262,13 @@ void BigCityAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 void BigCityAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // Ignore state that isn't ours rather than replacing the tree with something malformed.
-    if (auto xml = getXmlFromBinary (data, sizeInBytes); xml != nullptr && xml->hasTagName (parameters.state.getType()))
-        parameters.replaceState (juce::ValueTree::fromXml (*xml));
+    auto xml = getXmlFromBinary (data, sizeInBytes);
+
+    if (xml == nullptr || ! xml->hasTagName (parameters.state.getType()))
+        return;
+
+    removeNonFiniteValues (*xml);
+    parameters.replaceState (juce::ValueTree::fromXml (*xml));
 }
 
 juce::AudioProcessorParameter* BigCityAudioProcessor::getBypassParameter() const

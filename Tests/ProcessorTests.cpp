@@ -4,6 +4,7 @@
 
 #include <array>
 #include <cmath>
+#include <optional>
 
 using namespace ProcessorHarness;
 
@@ -79,6 +80,16 @@ namespace
         return true;
     }
 
+    bool allFinite (const juce::AudioBuffer<float>& audio)
+    {
+        for (int channel = 0; channel < audio.getNumChannels(); ++channel)
+            for (int i = 0; i < audio.getNumSamples(); ++i)
+                if (! std::isfinite (audio.getSample (channel, i)))
+                    return false;
+
+        return true;
+    }
+
     // CLAUDE.md "Handle any buffer size and sample rates from 44.1 to 192 kHz".
     constexpr std::array sampleRatesHz { 44100.0, 48000.0, 88200.0, 96000.0, 176400.0, 192000.0 };
 
@@ -102,6 +113,34 @@ namespace
         cases.push_back ({ "varying sizes", [] (int blockIndex) { return varying[(size_t) blockIndex % varying.size()]; }, 4097 });
         return cases;
     }
+
+    juce::MemoryBlock stateOf (juce::AudioProcessor& processor)
+    {
+        juce::MemoryBlock state;
+        processor.getStateInformation (state);
+        return state;
+    }
+
+    void restore (juce::AudioProcessor& processor, const juce::MemoryBlock& state)
+    {
+        processor.setStateInformation (state.getData(), (int) state.getSize());
+    }
+
+    // Edits a saved state the way a damaged or hand-edited session file might be.
+    juce::MemoryBlock editedState (const juce::MemoryBlock& state, const std::function<void (juce::XmlElement&)>& edit)
+    {
+        auto xml = juce::AudioProcessor::getXmlFromBinary (state.getData(), (int) state.getSize());
+        edit (*xml);
+
+        juce::MemoryBlock edited;
+        juce::AudioProcessor::copyXmlToBinary (*xml, edited);
+        return edited;
+    }
+
+    juce::MemoryBlock withSavedValue (const juce::MemoryBlock& state, const juce::String& parameterId, const juce::String& savedValue)
+    {
+        return editedState (state, [&] (juce::XmlElement& xml) { xml.getChildByAttribute ("id", parameterId)->setAttribute ("value", savedValue); });
+    }
 }
 
 class ProcessorTests final : public juce::UnitTest
@@ -115,6 +154,11 @@ public:
         testNullAfterTurningDownToZero();
         testBypassIsClickFree();
         testBypassPathsShareOneCrossfade();
+        testStateRoundTrip();
+        testUnreadableStateIsIgnored();
+        testMissingParameterFallsBackToDefault();
+        testOutOfRangeValuesAreClamped();
+        testNonNumericValuesNeverReachTheAudio();
     }
 
 private:
@@ -296,6 +340,138 @@ private:
         expect (samplesMatch (viaBoth, viaParameter, 0, input.getNumSamples()), "parameter plus processBlockBypassed fades differently from either alone");
     }
 
+    // CLAUDE.md "Handle invalid states at the boundary (text entry, state restore)".
+    void testStateRoundTrip()
+    {
+        beginTest ("State restores City size and bypass exactly");
+
+        BigCityAudioProcessor saved;
+        setParameter (saved, "citySize", 73.4f);
+        setParameter (saved, "bypass", 1.0f);
+
+        BigCityAudioProcessor restored;
+        restore (restored, stateOf (saved));
+
+        expectWithinAbsoluteError (restored.getCitySizeParameter().get(), 73.4f, 0.001f);
+        expect (restored.getBypassParameter()->getValue() >= 0.5f, "bypass not restored");
+    }
+
+    void testUnreadableStateIsIgnored()
+    {
+        beginTest ("State that isn't ours or can't be read leaves the parameters as they were");
+
+        BigCityAudioProcessor source;
+        setParameter (source, "citySize", 80.0f);
+        const auto valid = stateOf (source);
+
+        juce::MemoryBlock randomBytes (256);
+        juce::Random (7).fillBitsRandomly (randomBytes.getData(), randomBytes.getSize());
+
+        const std::vector<std::pair<juce::String, juce::MemoryBlock>> unreadable {
+            { "another plugin's tag", editedState (valid, [] (juce::XmlElement& xml) { xml.setTagName ("SomeOtherPlugin"); }) },
+            { "truncated to half", juce::MemoryBlock (valid.getData(), valid.getSize() / 2) },
+            { "header only", juce::MemoryBlock (valid.getData(), 8) },
+            { "random bytes", randomBytes },
+            { "empty", juce::MemoryBlock() },
+        };
+
+        for (const auto& [name, state] : unreadable)
+        {
+            BigCityAudioProcessor processor;
+            setParameter (processor, "citySize", 30.0f);
+            restore (processor, state);
+
+            logMessage ("  " + name + ": City size " + juce::String (processor.getCitySizeParameter().get()));
+            expectEquals (processor.getCitySizeParameter().get(), 30.0f, name);
+            expect (processor.getBypassParameter()->getValue() < 0.5f, name + ": bypass changed");
+        }
+    }
+
+    void testMissingParameterFallsBackToDefault()
+    {
+        beginTest ("A state missing a parameter restores the rest and resets that one to its default");
+
+        BigCityAudioProcessor source;
+        setParameter (source, "bypass", 1.0f);
+        const auto withoutCitySize = editedState (stateOf (source), [] (juce::XmlElement& xml)
+        {
+            xml.removeChildElement (xml.getChildByAttribute ("id", "citySize"), true);
+        });
+
+        BigCityAudioProcessor processor;
+        setParameter (processor, "citySize", 30.0f);
+        restore (processor, withoutCitySize);
+
+        expectEquals (processor.getCitySizeParameter().get(), SoundSpec::citySizeDefaultPercent);
+        expect (processor.getBypassParameter()->getValue() >= 0.5f, "bypass not restored");
+    }
+
+    void testOutOfRangeValuesAreClamped()
+    {
+        beginTest ("Out-of-range City size is clamped to 0–100");
+
+        BigCityAudioProcessor source;
+        const auto valid = stateOf (source);
+
+        for (const auto& [savedValue, expectedPercent] : { std::pair { "250", 100.0f }, std::pair { "-40", 0.0f }, std::pair { "100.05", 100.0f } })
+        {
+            BigCityAudioProcessor processor;
+            restore (processor, withSavedValue (valid, "citySize", savedValue));
+            expectEquals (processor.getCitySizeParameter().get(), expectedPercent, savedValue);
+        }
+    }
+
+    void testNonNumericValuesNeverReachTheAudio()
+    {
+        beginTest ("nan, inf and non-numeric saved values never reach the audio");
+
+        constexpr double sampleRate = 48000.0;
+        constexpr int blockSize = 256;
+        constexpr float citySizeBeforePercent = 30.0f;
+        const auto input = makeSine (2, (int) sampleRate / 10, 1000.0, sampleRate, 0.5f);
+
+        BigCityAudioProcessor source;
+        const auto valid = stateOf (source);
+
+        // A non-finite value is treated as missing, so it resets to the default.
+        // JUCE reads text that isn't a number as 0, which is already safe.
+        constexpr auto defaultPercent = SoundSpec::citySizeDefaultPercent;
+        const std::vector<std::pair<juce::String, std::optional<float>>> savedValues {
+            { "nan", defaultPercent }, { "NaN", defaultPercent }, { "-nan", defaultPercent },
+            { "inf", defaultPercent }, { "-inf", defaultPercent }, { "1e999", defaultPercent },
+            { "abc", std::nullopt }, { "", std::nullopt },
+        };
+
+        for (const auto& [savedValue, expectedPercent] : savedValues)
+        {
+            const auto label = "\"" + savedValue + "\"";
+
+            // Restored after prepareToPlay and some audio, as when a host loads a preset during playback.
+            BigCityAudioProcessor processor;
+            setParameter (processor, "citySize", citySizeBeforePercent);
+            processor.prepareToPlay (sampleRate, blockSize);
+
+            auto before = input;
+            render (processor, before, blockSize);
+
+            restore (processor, withSavedValue (withSavedValue (valid, "citySize", savedValue), "bypass", savedValue));
+
+            auto after = input;
+            render (processor, after, blockSize);
+
+            const auto citySize = processor.getCitySizeParameter().get();
+            logMessage ("  " + label + ": City size " + juce::String (citySize) + ", bypass " + juce::String (processor.getBypassParameter()->getValue()));
+            expect (std::isfinite (citySize) && citySize >= 0.0f && citySize <= 100.0f, label + ": City size " + juce::String (citySize));
+            expect (std::isfinite (processor.getBypassParameter()->getValue()), label + ": bypass not finite");
+            expect (allFinite (after), label + ": output not finite");
+
+            if (expectedPercent.has_value())
+            {
+                expectEquals (citySize, *expectedPercent, label + ": City size not reset to its default");
+                expect (processor.getBypassParameter()->getValue() < 0.5f, label + ": bypass not reset to its default (off)");
+            }
+        }
+    }
 };
 
 static ProcessorTests processorTests;
