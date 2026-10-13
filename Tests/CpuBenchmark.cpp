@@ -3,7 +3,7 @@
 // each buffer's time budget, and the whole process's CPU, with or without one editor open. A measuring tool
 // for the CPU benchmark, so it isn't a CTest test.
 //
-//   CpuBenchmark [--instances=30] [--buffer=128] [--rate=48000] [--seconds=20] [--editor] [--sweep] [--plugin=path]
+//   CpuBenchmark [--instances=30] [--buffer=128] [--rate=48000] [--seconds=20] [--editor] [--sweep] [--city-size=50] [--plugin=path]
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -24,6 +24,7 @@ namespace
         double seconds = 20.0;
         bool openEditor = false;
         bool sweep = false;
+        float citySizePercent = 50.0f;   // held still unless --sweep
         juce::String pluginPath = juce::File::getSpecialLocation (juce::File::userHomeDirectory)
                                       .getChildFile ("Library/Audio/Plug-Ins/VST3/BigCity.vst3").getFullPathName();
     };
@@ -37,6 +38,7 @@ namespace
         options.seconds = args.containsOption ("--seconds") ? args.getValueForOption ("--seconds").getDoubleValue() : options.seconds;
         options.openEditor = args.containsOption ("--editor");
         options.sweep = args.containsOption ("--sweep");
+        options.citySizePercent = args.containsOption ("--city-size") ? args.getValueForOption ("--city-size").getFloatValue() : options.citySizePercent;
         options.pluginPath = args.containsOption ("--plugin") ? args.getValueForOption ("--plugin") : options.pluginPath;
         return options;
     }
@@ -186,6 +188,10 @@ int main (int argc, char* argv[])
         stereo.inputBuses.add (juce::AudioChannelSet::stereo());
         stereo.outputBuses.add (juce::AudioChannelSet::stereo());
         plugin->setBusesLayout (stereo);
+
+        if (auto* citySize = findCitySize (*plugin))
+            citySize->setValueNotifyingHost (options.citySizePercent / 100.0f);
+
         plugin->prepareToPlay (options.sampleRate, options.blockSize);
         plugins.add (std::move (plugin));
     }
@@ -200,6 +206,9 @@ int main (int argc, char* argv[])
         window->setUsingNativeTitleBar (true);
         window->setContentNonOwned (editor.get(), true);
         window->setVisible (true);
+
+        // In front, so macOS composites every repaint: a covered window can cost less than one in use.
+        window->toFront (true);
     }
 
     AudioLoop audioLoop (options, plugins);
@@ -229,7 +238,7 @@ int main (int argc, char* argv[])
 
     std::cout << juce::String::formatted ("instances %d, %.0f Hz, buffer %d (%.2f ms), editor %s, %s, %.0f s, %d blocks\n",
                                           options.instances, options.sampleRate, options.blockSize, blockMs,
-                                          options.openEditor ? "open" : "closed", options.sweep ? "sweeping City size" : "City size 50",
+                                          options.openEditor ? "open" : "closed", options.sweep ? juce::String ("sweeping City size").toRawUTF8() : ("City size " + juce::String (options.citySizePercent)).toRawUTF8(),
                                           wallSeconds, (int) blocks.size())
               << juce::String::formatted ("  audio thread load (all instances, one core): mean %.1f%%, p99 %.1f%%, max %.1f%% of the buffer; %d overruns\n",
                                           toLoad (totalSeconds / (double) std::max<size_t> (1, blocks.size())),
