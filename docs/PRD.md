@@ -63,6 +63,7 @@ BigCity does one job, costs little CPU, and needs no learning.
 - Matched (analog-like) shelf design for the air shelf, so its response no longer depends on sample rate (see the §6 shelf check finding)
 - Optional output ceiling or soft clip, so a hot input doesn't leave the plugin above 0 dBFS (§6 "Peaks above 0 dBFS"; v1.0 has none, by decision on 10/13)
 - Recalibrate auto gain on music-like material. The IEC programme noise has less top end than modern mixes, so on the 10/13 beta loop every City Size read 0.2–1.2 LU louder than bypass.
+- 75–100 feels slightly flat: the knob response's bend slope is only 0.2 near 100 (§6 "Knob response"). Try a bend of 0.6, or a small lift at the top end (Ableton check, 10/13).
 
 ## 6. Sound spec
 
