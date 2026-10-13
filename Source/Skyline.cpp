@@ -1,4 +1,5 @@
 #include "Skyline.h"
+#include "ReduceMotion.h"
 #include "SkylineMorph.h"
 #include "Tokens.h"
 #include "UiSpec.h"
@@ -79,6 +80,8 @@ Skyline::Skyline (float initialCitySizePercent, bool initiallyBypassed)
 
 void Skyline::setState (float citySizePercent, bool bypassed)
 {
+    updateShimmer (citySizePercent, bypassed);
+
     const auto nowSeconds = juce::Time::getMillisecondCounterHiRes() / 1000.0;
     const auto newLook = lookFor (citySizePercent, bypassFade.advance (bypassed, nowSeconds));
 
@@ -112,6 +115,43 @@ void Skyline::paint (juce::Graphics& g)
     // The glass isn't pixel art: its fine scanlines need smooth scaling on a 1x display.
     g.setImageResamplingQuality (juce::Graphics::mediumResamplingQuality);
     g.drawImage (overlay, getLocalBounds().toFloat());
+}
+
+void Skyline::updateShimmer (float citySizePercent, bool bypassed)
+{
+    shimmerCitySizePercent = citySizePercent;
+
+    if (bypassed)
+    {
+        stopTimer();
+        return;
+    }
+
+    if (citySizePercent > 0.0f && isShowing() && ! ReduceMotion::isOn())
+    {
+        if (! isTimerRunning())
+            startTimerHz (UiSpec::Skyline::shimmerRateHz);
+
+        return;
+    }
+
+    // At 0 this is the empty frame, so the water matches the keyframes exactly.
+    stopTimer();
+    showShimmer (WaterShimmer::stillFrame (citySizePercent));
+}
+
+void Skyline::timerCallback()
+{
+    showShimmer (WaterShimmer::frameAt (juce::Time::getMillisecondCounterHiRes() / 1000.0, shimmerCitySizePercent));
+}
+
+void Skyline::showShimmer (const WaterShimmer::Frame& frame)
+{
+    if (frame == shimmer)
+        return;
+
+    shimmer = frame;
+    repaint (pointsFor (WaterShimmer::waterCells()).toNearestInt());
 }
 
 Skyline::Look Skyline::lookFor (float citySizePercent, float bypassedShare) const
@@ -167,6 +207,7 @@ void Skyline::drawNormal (juce::Graphics& g, float opacity) const
 
     drawKeyframeBlend (g, keyframes->colour);
     g.drawImage (litLayer, getLocalBounds().toFloat());
+    drawShimmer (g);
 
     if (fading)
         g.endTransparencyLayer();
@@ -181,13 +222,31 @@ void Skyline::drawBypassed (juce::Graphics& g) const
     g.setColour (juce::Colour (Tokens::Colours::skylineWindowLitBypassed));
 
     for (const auto window : std::span (windows).first ((size_t) look.litWindowCount))
-        g.fillRect (windowBounds (window));
+        g.fillRect (pointsFor ({ window.x, window.y, 1, 1 }));
 
     g.endTransparencyLayer();
 }
 
-juce::Rectangle<float> Skyline::windowBounds (juce::Point<int> window) const
+void Skyline::drawShimmer (juce::Graphics& g) const
 {
-    const auto size = UiSpec::Skyline::pointsPerGridPixel;
-    return { (float) window.x * size, (float) window.y * size, size, size };
+    const juce::Colour highlight (Tokens::Colours::skylineWaterHighlight);
+
+    if (shimmer.glintAlpha > 0.0f)
+    {
+        g.setColour (highlight.withAlpha (shimmer.glintAlpha));
+
+        for (size_t glint = 0; glint < WaterShimmer::glintCount; ++glint)
+            g.fillRect (pointsFor (WaterShimmer::glintCells (glint, shimmer.glintOffsets[glint])));
+    }
+
+    for (const auto& sparkle : std::span (shimmer.sparkles).first ((size_t) shimmer.sparkleCount))
+    {
+        g.setColour (highlight.withAlpha (sparkle.alpha));
+        g.fillRect (pointsFor ({ sparkle.cell.x, sparkle.cell.y, 1, 1 }));
+    }
+}
+
+juce::Rectangle<float> Skyline::pointsFor (juce::Rectangle<int> gridCells)
+{
+    return gridCells.toFloat() * UiSpec::Skyline::pointsPerGridPixel;
 }

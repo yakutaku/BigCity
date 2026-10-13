@@ -17,6 +17,7 @@ namespace Tokens
         constexpr juce::uint32 surfaceLcd = 0xffd3dcc0;                 // surface/lcd
         constexpr juce::uint32 skylineWindowLit = 0xfffbe08a;           // skyline/windowLit
         constexpr juce::uint32 skylineWindowLitBypassed = 0xffe0e0e0;   // skyline/windowLitBypassed
+        constexpr juce::uint32 skylineWaterHighlight = 0xfffff3c4;      // skyline/waterHighlight (D-28)
 
         constexpr juce::uint32 knobPointerHighlight = 0xfffffdf6;       // knob/pointerHighlight
 

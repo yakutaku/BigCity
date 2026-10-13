@@ -207,3 +207,14 @@ Each hard call, with its options, reasoning and evidence. This is the source for
 ## D-29 · Header doodle redrawn by hand (Day 10)
 - **Decision:** Sunshower doodle redrawn by hand after beta feedback that it looked AI-generated; lilac-to-peach sunset sun.
 - **Asset:** `assets/panel.png` (1536×832) re-exported from Figma; nothing else on the panel changed.
+
+## D-28 · Water shimmer pulled forward from BC-02 (Day 10; `wip/water-shimmer`, gated on QA)
+- **Context:** D-27 moved water shimmer to BC-02. It's pulled forward on a branch that merges only if tomorrow's QA and an Ableton check pass.
+- **Decision:** procedural, no new assets, snapped to the 3 pt skyline grid (docs/ui-spec.md "Water shimmer").
+  - The sun's reflection glints get a `#FFF3C4` highlight that drifts ±1 grid pixel on a 1.5 s sine, each row out of phase.
+  - The drift is always ±1 when City size is above 0: snapped to the grid, a scaled amplitude below 1 pixel would round to no motion below 50. The highlight's alpha scales instead, `0.6 × s/100`.
+  - Up to 8 one-pixel sparkles, `round(8 × s/100)`, each fading 0 → 60% → 0 over 1.5 s at a hashed phase, then moving to a new hashed spot on the water (rows 59–80).
+  - At 0 nothing is drawn, so the water matches the approved keyframes exactly.
+  - macOS "Reduce motion" with City size above 0: one frozen frame (t = 0), no sparkles. Bypassed: the motion stops and the last frame fades out with the normal look.
+- **Cost:** an 8 fps timer that runs only while there's motion to show, repainting only the water rect (336 × 66 pt). Gate: no more than 3% of a core added, whole process, 1 instance with the editor open. Measured in the branch's commit.
+- **Not done:** pausing when the window is fully covered by other windows. `isShowing()` covers hidden and minimised only. Logged in the PRD's v1.1 backlog.

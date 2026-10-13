@@ -59,6 +59,8 @@ set(BIGCITY_SOURCES
     Source/SkylineBypassFade.cpp
     Source/SkylineKeyframes.cpp
     Source/SkylineMorph.cpp
+    Source/WaterShimmer.cpp
+    Source/ReduceMotion.mm
     Source/CityMacro.cpp
     Source/AirShelf.cpp
     Source/MicroShifter.cpp
@@ -116,6 +118,7 @@ target_sources(BigCityTests
         Tests/SkylineMorphTests.cpp
         Tests/SkylineKeyframesTests.cpp
         Tests/SkylineBypassFadeTests.cpp
+        Tests/WaterShimmerTests.cpp
         Tests/AirShelfTests.cpp
         Tests/MicroShifterTests.cpp
         Tests/WetFilterTests.cpp

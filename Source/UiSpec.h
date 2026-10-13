@@ -2,6 +2,8 @@
 
 #include <juce_graphics/juce_graphics.h>
 
+#include <array>
+
 // Every UI position, size and interaction constant BigCity uses. Each comment names its section in
 // docs/ui-spec.md (or, where stated, docs/PRD.md §7). Change a value here only after changing the spec.
 // All positions are in points, relative to the window's top-left unless stated otherwise.
@@ -100,6 +102,27 @@ namespace UiSpec
 
         // "Skyline" bypassed and PRD §7: the two looks crossfade over 200 ms, eased in and out
         constexpr double bypassFadeMs = 200.0;
+
+        // "Water shimmer" (D-28): the water's grid rows, and the sun's reflection glints in the keyframes. Glint i
+        // covers columns [glintCentreX − glintHalfWidths[i], glintCentreX + glintHalfWidths[i]) of row glintRows[i].
+        constexpr int waterTopRow = 59;
+        constexpr int waterBottomRow = 80;
+        constexpr std::array glintRows { 61, 64, 67, 70, 73 };
+        constexpr std::array glintHalfWidths { 16, 12, 8, 5, 2 };
+        constexpr int glintCentreX = 57;
+
+        // "Water shimmer": the glints' highlight drifts ±1 grid pixel on a sine, each row out of phase. Its alpha
+        // rises with City size to 60% at 100, so the water is still and unchanged at 0.
+        constexpr int shimmerRateHz = 8;
+        constexpr double glintDriftPeriodSeconds = 1.5;
+        constexpr int glintDriftGridPixels = 1;
+        constexpr float glintHighlightMaxAlpha = 0.6f;
+
+        // "Water shimmer": one-grid-pixel sparkles anywhere on the water, round (8 × City size / 100) of them.
+        // Each fades up to 60% and back over its cycle, then moves to a new spot.
+        constexpr int maxSparkles = 8;
+        constexpr double sparkleCycleSeconds = 1.5;
+        constexpr float sparklePeakAlpha = 0.6f;
     }
 
     namespace BypassSwitch

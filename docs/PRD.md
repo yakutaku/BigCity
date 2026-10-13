@@ -55,9 +55,10 @@ BigCity does one job, costs little CPU, and needs no learning.
 - Arrow-key control (Ableton doesn't reliably pass keys to plugins; scroll wheel replaces it)
 - Resizable window
 - Buildings growing or animating
-- Water shimmer: moves to BC-02 (D-27)
+- Water shimmer: moves to BC-02 (D-27). Pulled forward on `wip/water-shimmer` (D-28), in v1 only if tomorrow's QA passes.
 
 **v1.1 backlog**
+- Water shimmer: also pause when the window is fully covered by other windows (macOS occlusion state). v1 pauses only when the editor is hidden or minimised (D-28).
 - Matched (analog-like) shelf design for the air shelf, so its response no longer depends on sample rate (see the §6 shelf check finding)
 
 ## 6. Sound spec

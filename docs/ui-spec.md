@@ -28,6 +28,7 @@ All coordinates are in points, relative to the window's top-left. Assets are exp
 |---|---|---|---|---|
 | 1 | `panel.png` | Static image: background, aging, header (wordmark, サンシャワー・オーディオ with the marker doodle, model block), stripes, screws, CITY SIZE label, readout LCD with burned-in 188.8, bezel, LCD screen base | 0, 0, 768, 416 | Never (cache it) |
 | 2 | Skyline | Crossfade of two `skyline_tod_*.png` keyframes + lit windows | 240, 104, 336, 280 | Value or bypass changes |
+| 2b | Water shimmer | Code: glint highlights and sparkles on the water (see "Water shimmer"), inside the skyline's normal look | Water rows 59–80: 240, 281, 336, 66 | 8 fps while City size > 0, not bypassed, the editor showing and Reduce motion off |
 | 3 | `screen_overlay.png` | Static image: scanlines, glare, glass scratches | 240, 104, 336, 280 (corner radius 14) | Never |
 | 4 | `knob_base.png` | Static image: ticks, arc, cast shadow, skirt and face lighting | 24, 136, 192, 192 (the knob's origin minus 8) | Never (cached with the panel behind it as one image) |
 | 5 | `knob_rotor.png` | Rotated image: knurl, grime, rim wear, face wear. **No pointer** (D-25) | Same as `knob_base`; pivot at (96, 96) in the image, which is (120, 232) in the window | Value changes |
@@ -116,6 +117,19 @@ Reference counts:
 - Fade over 200 ms with a cubic ease-in-out (`4t³` for the first half, `1 − (2 − 2t)³ / 2` for the second; built Day 10, so cut #1 isn't needed). The bypassed look is drawn first, then the opaque normal look over it at `1 − share`, so the two crossfade exactly. Toggling mid-fade turns back from where it is. The fade runs on the editor's 30 fps timer, so 200 ms is about 6 frames.
 - The screen clips the skyline to a 14 pt corner radius (Practical UI exception D7).
 
+**Water shimmer** (D-28; `wip/water-shimmer`, gated on QA). Procedural, no assets, snapped to the 3 pt grid. Grid coordinates below are logical pixels.
+
+| Element | Rule |
+|---|---|
+| Glints | The sun's reflection glints sit on rows y 61, 64, 67, 70, 73, centre x 57, half-widths 16, 12, 8, 5, 2; each covers x from `57 − hw` up to but not including `57 + hw`, the same in every keyframe. Each gets a `#FFF3C4` highlight at alpha `0.6 × s/100`. |
+| Drift | Each highlight moves `round(sin(2π t / 1.5 s + 2π row / 5))` grid pixels: ±1, the same at every `s` > 0, each row out of phase. |
+| Sparkles | `round(8 × s/100)` sparkles, each one grid pixel of `#FFF3C4` anywhere on the water rows y 59–80. Each fades from 0 to 60% and back over a 1.5 s cycle, starting at its own hashed phase, and moves to a new hashed spot each cycle. |
+| At 0 | Nothing is drawn, so the water matches the keyframes exactly. |
+| Reduce motion | With macOS "Reduce motion" on and `s` > 0: one frozen frame (t = 0), no sparkles. |
+| Bypassed | The motion stops; the last frame fades out with the normal look. |
+
+The water repaints at 8 fps, its rect only, and only while the editor is showing (`isShowing()`: not hidden or minimised; a window covered by others still animates, see PRD §5 v1.1 backlog).
+
 ## Performance
 - Cache layers 1, 3 and 4. The knob caches the panel behind it and layer 4 as one image, so it can be opaque.
 - Repaint only the screen rect on value changes and the switch image rect (608, 188, 136, 112) on bypass changes, with a timer of at most 30 fps.
@@ -142,6 +156,7 @@ The knob rim (`#706248`) and the LCD edge (`#5F6B49`) are baked into the images,
 | `surface/lcd` | `#D3DCC0` |
 | `skyline/windowLit` | `#FBE08A` |
 | `skyline/windowLitBypassed` | `#E0E0E0` |
+| `skyline/waterHighlight` | `#FFF3C4`: glint highlights up to 60%, sparkles up to 60% (D-28) |
 | `knob/pointerHighlight` | `#FFFDF6`, used at 25% |
 
 The pointer's 92% opacity is also a token (`Tokens::KnobPointer::opacity`).
