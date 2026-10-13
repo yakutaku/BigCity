@@ -8,7 +8,13 @@
 //
 // --close-at and --reopen-at close the editor and open it again at those times, as a host does when the
 // window is closed and reopened, so memory can be checked in each state.
+//
+//   CpuBenchmark --render=in.wav --output=out.wav [--city-size=50] [--voicing=A] [--buffer=128] [--plugin=path]
+//
+// --render skips the benchmark and renders a file through one instance as fast as it can, for listening
+// tests, to 32-bit float WAV so nothing above 0 dBFS is cut off. --voicing needs a BIGCITY_TUNING build.
 
+#include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -31,6 +37,7 @@ namespace
         float citySizePercent = 50.0f;   // held still unless --sweep
         double closeAtSeconds = 0.0;     // 0: never
         double reopenAtSeconds = 0.0;    // 0: never
+        juce::String renderInputPath, renderOutputPath, voicing;   // empty: benchmark, current voicing
         juce::String pluginPath = juce::File::getSpecialLocation (juce::File::userHomeDirectory)
                                       .getChildFile ("Library/Audio/Plug-Ins/VST3/BigCity.vst3").getFullPathName();
     };
@@ -48,6 +55,9 @@ namespace
         options.reopenAtSeconds = args.containsOption ("--reopen-at") ? args.getValueForOption ("--reopen-at").getDoubleValue() : 0.0;
         options.citySizePercent = args.containsOption ("--city-size") ? args.getValueForOption ("--city-size").getFloatValue() : options.citySizePercent;
         options.pluginPath = args.containsOption ("--plugin") ? args.getValueForOption ("--plugin") : options.pluginPath;
+        options.renderInputPath = args.getValueForOption ("--render");
+        options.renderOutputPath = args.getValueForOption ("--output");
+        options.voicing = args.getValueForOption ("--voicing");
         return options;
     }
 
@@ -59,13 +69,18 @@ namespace
         return toSeconds (usage.ru_utime) + toSeconds (usage.ru_stime);
     }
 
-    juce::AudioProcessorParameter* findCitySize (juce::AudioPluginInstance& plugin)
+    juce::AudioProcessorParameter* findParameter (juce::AudioPluginInstance& plugin, const juce::String& name)
     {
         for (auto* parameter : plugin.getParameters())
-            if (parameter->getName (64) == "City size")
+            if (parameter->getName (64) == name)
                 return parameter;
 
         return nullptr;
+    }
+
+    juce::AudioProcessorParameter* findCitySize (juce::AudioPluginInstance& plugin)
+    {
+        return findParameter (plugin, "City size");
     }
 
     // Processes every instance, block by block, paced to the sample rate like an audio device callback.
@@ -147,6 +162,101 @@ namespace
         std::vector<juce::AudioProcessorParameter*> citySizeParameters;
     };
 
+    // Picks the voicing as a host's text entry would, and checks the plugin took it.
+    bool setVoicing (juce::AudioPluginInstance& plugin, const juce::String& voicing)
+    {
+        auto* parameter = findParameter (plugin, "Tuning: voicing");
+
+        if (parameter == nullptr)
+            return false;
+
+        parameter->setValueNotifyingHost (parameter->getValueForText (voicing));
+        return parameter->getCurrentValueAsText() == voicing;
+    }
+
+    int renderOffline (const Options& options, juce::AudioPluginFormatManager& formatManager, const juce::PluginDescription& type)
+    {
+        juce::AudioFormatManager audioFormats;
+        audioFormats.registerBasicFormats();
+        const std::unique_ptr<juce::AudioFormatReader> reader (audioFormats.createReaderFor (juce::File (options.renderInputPath)));
+
+        if (reader == nullptr || reader->numChannels < 1 || reader->numChannels > 2)
+        {
+            std::cerr << "Can't read a mono or stereo file at " << options.renderInputPath << std::endl;
+            return 1;
+        }
+
+        const auto numChannels = (int) reader->numChannels;
+        juce::AudioBuffer<float> audio (numChannels, (int) reader->lengthInSamples);
+        reader->read (&audio, 0, audio.getNumSamples(), 0, true, true);
+
+        juce::String error;
+        auto plugin = formatManager.createPluginInstance (type, reader->sampleRate, options.blockSize, error);
+
+        if (plugin == nullptr)
+        {
+            std::cerr << "The plugin failed to load: " << error << std::endl;
+            return 1;
+        }
+
+        const auto channelSet = juce::AudioChannelSet::canonicalChannelSet (numChannels);
+        juce::AudioProcessor::BusesLayout layout;
+        layout.inputBuses.add (channelSet);
+        layout.outputBuses.add (channelSet);
+        plugin->setBusesLayout (layout);
+
+        if (auto* citySize = findCitySize (*plugin))
+            citySize->setValueNotifyingHost (options.citySizePercent / 100.0f);
+
+        if (options.voicing.isNotEmpty() && ! setVoicing (*plugin, options.voicing))
+        {
+            std::cerr << "This plugin has no voicing " << options.voicing << "; is it a BIGCITY_TUNING build?" << std::endl;
+            return 1;
+        }
+
+        plugin->prepareToPlay (reader->sampleRate, options.blockSize);
+        juce::MidiBuffer midi;
+
+        const auto processInBlocks = [&] (juce::AudioBuffer<float>& buffer)
+        {
+            for (int start = 0; start < buffer.getNumSamples(); start += options.blockSize)
+            {
+                juce::AudioBuffer<float> block (buffer.getArrayOfWritePointers(), numChannels, start,
+                                                std::min (options.blockSize, buffer.getNumSamples() - start));
+                plugin->processBlock (block, midi);
+            }
+        };
+
+        // A hosted VST3 receives parameter changes with its next block, so silence goes first: the
+        // render then starts at the set values instead of gliding to them from the defaults.
+        juce::AudioBuffer<float> preRoll (numChannels, (int) (0.1 * reader->sampleRate));
+        preRoll.clear();
+        processInBlocks (preRoll);
+        processInBlocks (audio);
+        plugin->releaseResources();
+
+        const juce::File outputFile (options.renderOutputPath);
+        outputFile.deleteFile();   // a FileOutputStream appends to an existing file
+
+        std::unique_ptr<juce::OutputStream> stream = std::make_unique<juce::FileOutputStream> (outputFile);
+        const auto writerOptions = juce::AudioFormatWriterOptions{}
+                                       .withSampleRate (reader->sampleRate)
+                                       .withNumChannels (numChannels)
+                                       .withBitsPerSample (32)
+                                       .withSampleFormat (juce::AudioFormatWriterOptions::SampleFormat::floatingPoint);
+        const auto writer = juce::WavAudioFormat().createWriterFor (stream, writerOptions);
+
+        if (writer == nullptr || ! writer->writeFromAudioSampleBuffer (audio, 0, audio.getNumSamples()))
+        {
+            std::cerr << "Can't write " << options.renderOutputPath << std::endl;
+            return 1;
+        }
+
+        std::cout << "rendered " << options.renderOutputPath << " (City size " << options.citySizePercent
+                  << ", voicing " << (options.voicing.isEmpty() ? "current" : options.voicing) << ")" << std::endl;
+        return 0;
+    }
+
     double percentile (std::vector<double> values, double fraction)
     {
         if (values.empty())
@@ -178,6 +288,9 @@ int main (int argc, char* argv[])
         std::cerr << "No VST3 plugin found at " << options.pluginPath << std::endl;
         return 1;
     }
+
+    if (options.renderInputPath.isNotEmpty())
+        return renderOffline (options, formatManager, *types.getFirst());
 
     juce::OwnedArray<juce::AudioPluginInstance> plugins;
 
