@@ -73,7 +73,7 @@ The source list below is the user's guideline list, reproduced exactly. The tabl
 | Keep related actions close; touch targets at least 48 × 48 pt | The knob hit area is at least 48 pt. The bypass switch hit area is at least 48 pt and includes its labels. The value readout is at least 48 pt tall. |
 | Reduce cognitive load; use familiar patterns | Vertical drag, Shift for fine control, double-click to type, Option-click to reset. These are the plugin-industry conventions. |
 | Prioritize with the 80/20 rule | One knob and one switch. Nothing else competes for attention. |
-| Meet WCAG 2.1 AA | 4.5:1 for text; 3:1 for large text and UI components; state is never shown by color alone. |
+| Meet WCAG 2.1 AA | 4.5:1 for text; 3:1 for large text and UI components; state is never shown by color alone. Exceptions: the water shimmer and 2.2.2 (decision D9); VoiceOver support and 4.1.2, planned for v1.1 (decision D10). |
 
 ## Layout and spacing
 
@@ -90,9 +90,11 @@ The source list below is the user's guideline list, reproduced exactly. The tabl
 | Rule | How it applies to BigCity |
 |---|---|
 | One sans-serif typeface | Jost for every label. The value readout uses no font: it is a 7-segment LCD drawn as paths (decision log D-21, which replaces D2). Japanese text uses Zen Kaku Gothic New (decision D5). The logo is a brand mark and is exempt. |
-| Two weights: regular and bold | Jost Regular 400 and Semi Bold 600 |
+| Two weights: regular and bold | Jost Regular 400 and Semi Bold 600. **Exception:** the katakana use Zen Kaku Gothic New Medium 500 (decision D8). |
 | Body text at least 18 px with at least 1.5 line height | Applies to the quick-start PDF and the Gumroad page. The plugin has no body text. |
 | Line length of 40–80 characters | Quick-start PDF and Gumroad page |
+
+**Quick-start PDF:** follows Practical UI (18px body, ≤80-char lines, sentence case).
 | No pure black on white, no very light grey | Inks are deep indigo tones on cream. The mockup's pale greys are replaced. |
 
 ## Color
@@ -143,6 +145,9 @@ These resolve toward the book unless the user approved an exception. Each except
 | D2 | The mockup's readout uses a second typeface | **Replaced by decision log D-21:** a 7-segment LCD drawn as paths, with burned-in "188.8" digits. No font is used. |
 | D3 | Short labels are centered over the round knob | **Exception, approved by the user (Day 6): CITY SIZE is centered over the knob.** |
 | D4 | The v1.0 PRD said "the knob dims" when bypassed | **No dimming below contrast minimums.** Bypass is shown by the switch, its label, the LED and the skyline. The knob and readout stay at full contrast. |
-| D5 | The book asks for one typeface, but Jost has no Japanese glyphs, and the header has Japanese text (ビッグシティ, エアー＆レジャー) | **Exception, approved by the user: Zen Kaku Gothic New for Japanese text only.** *Reason:* Jost can't render Japanese. Everything else stays in Jost. See decision log D-12. |
+| D5 | The book asks for one typeface, but Jost has no Japanese glyphs, and the header has Japanese text (サンシャワー・オーディオ, エアー＆レジャー) | **Exception, approved by the user: Zen Kaku Gothic New for Japanese text only.** *Reason:* Jost can't render Japanese. Everything else stays in Jost. See decision log D-12. |
 | D6 | The book asks for a 12-column grid, but no 12-column grid on the 8 pt scale fits the knob (176), the bezel (352) and the switch (128) with equal gaps | **Exception: symmetric 8 pt zones,** 32 \| 176 \| 24 \| 352 \| 24 \| 128 \| 32, with one shared centre line. *Reason:* it keeps what the rule is for, consistent alignment and predictable spacing, in a fixed-size instrument panel. See decision log D-23. |
 | D7 | The starter kit's corner radii are 8, 16 and 32, but the screen's corners are 14 | **Exception, approved by the user (Day 8): the skyline is clipped to a 14 pt corner radius.** *Reason:* the skyline images are opaque rectangles, and 14 matches the bezel's inner corners baked into `panel.png`. 16 would leave a sliver of skyline showing at each corner. It applies to the screen clip only. |
+| D8 | The book allows two weights (regular and bold), but the header's katakana (サンシャワー・オーディオ, エアー＆レジャー) are set in Zen Kaku Gothic New Medium 500 | **Exception, approved by the user (Day 10): Zen Kaku Gothic New 500 for the katakana only.** *Reason:* Jost has no Japanese glyphs (D5), so the Japanese text uses a second typeface. Its weight is an exception to the two-weight rule. Jost keeps to 400 and 600. The text is baked into `panel.png` (D-18). |
+| D9 | WCAG 2.2.2 (Pause, Stop, Hide) asks for a way to pause or stop motion that starts on its own and lasts over 5 s. The water shimmer (D-28) runs while City size is above 0, with no pause control of its own. | **Exception, approved by the user (Day 10).** The shimmer stops at City size 0, when bypassed, and with macOS "Reduce motion" on, which shows one still frame. *Reason:* it's decorative and confined to the water, and Reduce motion is the system-wide way to ask for no motion. The sparkles are one 3 pt grid pixel at 8 fps, far below the flash thresholds (WCAG 2.3.1). |
+| D10 | WCAG 4.1.2 (Name, Role, Value): VoiceOver can't read or set the knob or the bypass switch, because the custom components have no accessibility handler (decision log D-24) | **Known gap in 1.0.0, not a permanent exception.** *v1.1 plan (v1.1 review P1-4):* `createAccessibilityHandler()` with a value interface on the knob (0–100, title "City size") and a toggle on the switch, checked with VoiceOver. |
