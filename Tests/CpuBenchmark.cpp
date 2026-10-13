@@ -3,7 +3,11 @@
 // each buffer's time budget, and the whole process's CPU, with or without one editor open. A measuring tool
 // for the CPU benchmark, so it isn't a CTest test.
 //
-//   CpuBenchmark [--instances=30] [--buffer=128] [--rate=48000] [--seconds=20] [--editor] [--sweep] [--city-size=50] [--plugin=path]
+//   CpuBenchmark [--instances=30] [--buffer=128] [--rate=48000] [--seconds=20] [--editor] [--sweep] [--city-size=50]
+//                [--close-at=s --reopen-at=s] [--plugin=path]
+//
+// --close-at and --reopen-at close the editor and open it again at those times, as a host does when the
+// window is closed and reopened, so memory can be checked in each state.
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -25,6 +29,8 @@ namespace
         bool openEditor = false;
         bool sweep = false;
         float citySizePercent = 50.0f;   // held still unless --sweep
+        double closeAtSeconds = 0.0;     // 0: never
+        double reopenAtSeconds = 0.0;    // 0: never
         juce::String pluginPath = juce::File::getSpecialLocation (juce::File::userHomeDirectory)
                                       .getChildFile ("Library/Audio/Plug-Ins/VST3/BigCity.vst3").getFullPathName();
     };
@@ -38,6 +44,8 @@ namespace
         options.seconds = args.containsOption ("--seconds") ? args.getValueForOption ("--seconds").getDoubleValue() : options.seconds;
         options.openEditor = args.containsOption ("--editor");
         options.sweep = args.containsOption ("--sweep");
+        options.closeAtSeconds = args.containsOption ("--close-at") ? args.getValueForOption ("--close-at").getDoubleValue() : 0.0;
+        options.reopenAtSeconds = args.containsOption ("--reopen-at") ? args.getValueForOption ("--reopen-at").getDoubleValue() : 0.0;
         options.citySizePercent = args.containsOption ("--city-size") ? args.getValueForOption ("--city-size").getFloatValue() : options.citySizePercent;
         options.pluginPath = args.containsOption ("--plugin") ? args.getValueForOption ("--plugin") : options.pluginPath;
         return options;
@@ -199,7 +207,7 @@ int main (int argc, char* argv[])
     std::unique_ptr<juce::AudioProcessorEditor> editor;
     std::unique_ptr<juce::DocumentWindow> window;
 
-    if (options.openEditor)
+    const auto openEditor = [&]
     {
         editor.reset (plugins.getFirst()->createEditorAndMakeActive());
         window = std::make_unique<juce::DocumentWindow> ("BigCity benchmark", juce::Colours::black, 0);
@@ -209,7 +217,17 @@ int main (int argc, char* argv[])
 
         // In front, so macOS composites every repaint: a covered window can cost less than one in use.
         window->toFront (true);
-    }
+    };
+
+    // As a host closes a plugin window: the window goes, then the editor is deleted.
+    const auto closeEditor = [&]
+    {
+        window.reset();
+        editor.reset();
+    };
+
+    if (options.openEditor)
+        openEditor();
 
     AudioLoop audioLoop (options, plugins);
     const auto blockMs = 1000.0 * options.blockSize / options.sampleRate;
@@ -217,14 +235,34 @@ int main (int argc, char* argv[])
     const auto wallBefore = juce::Time::getMillisecondCounterHiRes();
 
     audioLoop.startRealtimeThread (juce::Thread::RealtimeOptions{}.withPeriodMs (blockMs));
-    juce::MessageManager::getInstance()->runDispatchLoopUntil ((int) (options.seconds * 1000.0));
+    // Runs the message loop until this many seconds after the start, so editor changes land on time.
+    const auto runUntil = [wallBefore] (double seconds)
+    {
+        const auto remainingMs = seconds * 1000.0 - (juce::Time::getMillisecondCounterHiRes() - wallBefore);
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (std::max (0, (int) remainingMs));
+    };
+
+    if (options.openEditor && options.closeAtSeconds > 0.0)
+    {
+        runUntil (options.closeAtSeconds);
+        closeEditor();
+        std::cout << "editor closed at " << options.closeAtSeconds << " s" << std::endl;
+
+        if (options.reopenAtSeconds > options.closeAtSeconds)
+        {
+            runUntil (options.reopenAtSeconds);
+            openEditor();
+            std::cout << "editor reopened at " << options.reopenAtSeconds << " s" << std::endl;
+        }
+    }
+
+    runUntil (options.seconds);
     audioLoop.stopThread (2000);
 
     const auto wallSeconds = (juce::Time::getMillisecondCounterHiRes() - wallBefore) / 1000.0;
     const auto cpuPercentOfOneCore = 100.0 * (processCpuSeconds() - cpuBefore) / wallSeconds;
 
-    window.reset();
-    editor.reset();
+    closeEditor();
 
     const auto& blocks = audioLoop.blockSeconds;
     const auto budgetSeconds = blockMs / 1000.0;
