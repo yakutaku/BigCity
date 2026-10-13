@@ -228,4 +228,5 @@ Each hard call, with its options, reasoning and evidence. This is the source for
 
   - Passes, with about 0.6% to spare. A run with the window behind other windows gave the same picture (+0.4 / +2.5 / +2.6), so covered windows weren't skewing it. The audio thread is unchanged (mean 1.1–1.2% of the buffer).
   - As with the knob (D-25), most of the cost is likely macOS redrawing and compositing each repaint rather than the drawing itself; not profiled.
+- **Memory (Day 10):** while it runs with the editor open, the host holds about 200 MB of graphics memory. That's JUCE's macOS renderer, which does the same for any continuous repaint, automation included, and the memory is released when the editor closes. Kept for 1.0.0 (v1.1 review, audit A2).
 - **Not done:** pausing when the window is fully covered by other windows. `isShowing()` covers hidden and minimised only. Logged in the PRD's v1.1 backlog.

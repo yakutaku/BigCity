@@ -58,6 +58,7 @@ BigCity does one job, costs little CPU, and needs no learning.
 - Buildings growing or animating
 
 **v1.1 backlog**
+- JUCE's macOS renderer: with the editor open, any continuous repaint (the water shimmer, or automation moving City size) makes the host hold about 200–240 MB of graphics memory, released when the editor closes. Try JUCE's other macOS rendering path or a newer JUCE (v1.1 review, audit A2).
 - Water shimmer: also pause when the window is fully covered by other windows (macOS occlusion state). v1 pauses only when the editor is hidden or minimised (D-28).
 - Matched (analog-like) shelf design for the air shelf, so its response no longer depends on sample rate (see the §6 shelf check finding)
 
