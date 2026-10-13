@@ -154,6 +154,7 @@ public:
         testNullAfterTurningDownToZero();
         testBypassIsClickFree();
         testBypassPathsShareOneCrossfade();
+        testHotInputIsNeverHardClipped();
         testStateRoundTrip();
         testUnreadableStateIsIgnored();
         testMissingParameterFallsBackToDefault();
@@ -222,6 +223,40 @@ private:
             logMessage ("  " + juce::String (numChannels) + " ch: residual " + juce::String (nullDb) + " dB");
             expect (nullDb < nullLimitDb, juce::String (numChannels) + " ch: residual " + juce::String (nullDb) + " dB");
         }
+    }
+
+    void testHotInputIsNeverHardClipped()
+    {
+        beginTest ("A hot input at 100 stays finite and passes above 0 dBFS without being hard clipped (44.1–192 kHz)");
+
+        // PRD §6 "Peaks above 0 dBFS": noise peaking near +12 dBFS, so a clamp anywhere up there would show.
+        constexpr float hotInputGain = 8.0f;
+
+        for (auto sampleRate : sampleRatesHz)
+            for (auto numChannels : { 1, 2 })
+            {
+                BigCityAudioProcessor processor;
+                useChannelCount (processor, numChannels);
+                setParameter (processor, "citySize", 100.0f);
+                processor.prepareToPlay (sampleRate, oddBlockSize);
+
+                auto output = makeNoise (numChannels, (int) sampleRate);
+                output.applyGain (hotInputGain);
+                render (processor, output, oddBlockSize);
+
+                // Hard clipping flattens the tops: many samples sit at exactly the peak. Noise has one.
+                const auto peak = output.getMagnitude (0, output.getNumSamples());
+                int samplesAtPeak = 0;
+
+                for (int channel = 0; channel < numChannels; ++channel)
+                    for (int i = 0; i < output.getNumSamples(); ++i)
+                        samplesAtPeak += juce::exactlyEqual (std::abs (output.getSample (channel, i)), peak) ? 1 : 0;
+
+                const auto label = juce::String (numChannels) + " ch at " + juce::String (sampleRate) + " Hz";
+                expect (allFinite (output), label + ": output not finite");
+                expectGreaterThan (peak, 1.0f, label + ": output held at 0 dBFS");
+                expectLessOrEqual (samplesAtPeak, 2, label + ": " + juce::String (samplesAtPeak) + " samples at the peak, so flat-topped");
+            }
     }
 
     void testBypassIsClickFree()

@@ -2,7 +2,6 @@
 
 #include "MicroShifter.h"
 #include "SoundSpec.h"
-#include "Voicing.h"
 #include "WetFilter.h"
 
 // The values the City Size curves scale to, and the wet path's fixed settings. Shipping builds
@@ -18,5 +17,4 @@ struct SoundTuning
     MicroShifter::Modulation wetModulation { SoundSpec::modulationRateHz, SoundSpec::modulationDepthMs };
     WetFilter::Cutoffs wetFilterCutoffs { SoundSpec::wetHighPassHz, SoundSpec::wetLowPassHz };
     float wetDriveDb = SoundSpec::wetDriveDb;
-    Voicing voicing = Voicing::current;
 };

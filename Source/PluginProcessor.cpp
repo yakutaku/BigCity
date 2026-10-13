@@ -166,7 +166,7 @@ void BigCityAudioProcessor::applyCitySize (float citySizePercent, const SoundTun
     gains.wet = juce::Decibels::decibelsToGain (settings.wetLevelDb, -std::numeric_limits<float>::infinity());
 
     // 0 dB gives a gain of exactly 1, so City Size 0 still nulls bit for bit.
-    gains.output = juce::Decibels::decibelsToGain (AutoGain::gainDbFor (citySizePercent, tuning.voicing));
+    gains.output = juce::Decibels::decibelsToGain (AutoGain::gainDbFor (citySizePercent));
 }
 
 void BigCityAudioProcessor::applyWetPathTuning (const SoundTuning& tuning)

@@ -9,10 +9,10 @@
 // --close-at and --reopen-at close the editor and open it again at those times, as a host does when the
 // window is closed and reopened, so memory can be checked in each state.
 //
-//   CpuBenchmark --render=in.wav --output=out.wav [--city-size=50] [--voicing=A] [--buffer=128] [--plugin=path]
+//   CpuBenchmark --render=in.wav --output=out.wav [--city-size=50] [--buffer=128] [--plugin=path]
 //
 // --render skips the benchmark and renders a file through one instance as fast as it can, for listening
-// tests, to 32-bit float WAV so nothing above 0 dBFS is cut off. --voicing needs a BIGCITY_TUNING build.
+// tests, to 32-bit float WAV so nothing above 0 dBFS is cut off.
 
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -37,7 +37,7 @@ namespace
         float citySizePercent = 50.0f;   // held still unless --sweep
         double closeAtSeconds = 0.0;     // 0: never
         double reopenAtSeconds = 0.0;    // 0: never
-        juce::String renderInputPath, renderOutputPath, voicing;   // empty: benchmark, current voicing
+        juce::String renderInputPath, renderOutputPath;   // empty: run the benchmark
         juce::String pluginPath = juce::File::getSpecialLocation (juce::File::userHomeDirectory)
                                       .getChildFile ("Library/Audio/Plug-Ins/VST3/BigCity.vst3").getFullPathName();
     };
@@ -57,7 +57,6 @@ namespace
         options.pluginPath = args.containsOption ("--plugin") ? args.getValueForOption ("--plugin") : options.pluginPath;
         options.renderInputPath = args.getValueForOption ("--render");
         options.renderOutputPath = args.getValueForOption ("--output");
-        options.voicing = args.getValueForOption ("--voicing");
         return options;
     }
 
@@ -69,18 +68,13 @@ namespace
         return toSeconds (usage.ru_utime) + toSeconds (usage.ru_stime);
     }
 
-    juce::AudioProcessorParameter* findParameter (juce::AudioPluginInstance& plugin, const juce::String& name)
+    juce::AudioProcessorParameter* findCitySize (juce::AudioPluginInstance& plugin)
     {
         for (auto* parameter : plugin.getParameters())
-            if (parameter->getName (64) == name)
+            if (parameter->getName (64) == "City size")
                 return parameter;
 
         return nullptr;
-    }
-
-    juce::AudioProcessorParameter* findCitySize (juce::AudioPluginInstance& plugin)
-    {
-        return findParameter (plugin, "City size");
     }
 
     // Processes every instance, block by block, paced to the sample rate like an audio device callback.
@@ -162,18 +156,6 @@ namespace
         std::vector<juce::AudioProcessorParameter*> citySizeParameters;
     };
 
-    // Picks the voicing as a host's text entry would, and checks the plugin took it.
-    bool setVoicing (juce::AudioPluginInstance& plugin, const juce::String& voicing)
-    {
-        auto* parameter = findParameter (plugin, "Tuning: voicing");
-
-        if (parameter == nullptr)
-            return false;
-
-        parameter->setValueNotifyingHost (parameter->getValueForText (voicing));
-        return parameter->getCurrentValueAsText() == voicing;
-    }
-
     int renderOffline (const Options& options, juce::AudioPluginFormatManager& formatManager, const juce::PluginDescription& type)
     {
         juce::AudioFormatManager audioFormats;
@@ -207,12 +189,6 @@ namespace
 
         if (auto* citySize = findCitySize (*plugin))
             citySize->setValueNotifyingHost (options.citySizePercent / 100.0f);
-
-        if (options.voicing.isNotEmpty() && ! setVoicing (*plugin, options.voicing))
-        {
-            std::cerr << "This plugin has no voicing " << options.voicing << "; is it a BIGCITY_TUNING build?" << std::endl;
-            return 1;
-        }
 
         plugin->prepareToPlay (reader->sampleRate, options.blockSize);
         juce::MidiBuffer midi;
@@ -252,8 +228,7 @@ namespace
             return 1;
         }
 
-        std::cout << "rendered " << options.renderOutputPath << " (City size " << options.citySizePercent
-                  << ", voicing " << (options.voicing.isEmpty() ? "current" : options.voicing) << ")" << std::endl;
+        std::cout << "rendered " << options.renderOutputPath << " (City size " << options.citySizePercent << ")" << std::endl;
         return 0;
     }
 

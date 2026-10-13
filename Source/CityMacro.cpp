@@ -26,42 +26,16 @@ namespace
         return (citySize - SoundSpec::citySizeMinPercent) / (SoundSpec::citySizeMaxPercent - SoundSpec::citySizeMinPercent);
     }
 
-    // A parabola through 0, the bent midpoint and 100, so the bend has no corner. It stays rising
-    // as long as the bent midpoint is below 75.
-    float bentCitySize (float citySize, Voicing voicing)
+    // PRD §6 "Knob response": a parabola through 0, the bent midpoint and 100, so the bend has no
+    // corner. It keeps rising as long as the bent midpoint is below 75.
+    float bentCitySize (float citySize)
     {
         using namespace SoundSpec;
 
-        if (voicing != Voicing::a && voicing != Voicing::b)
-            return citySize;
-
         const auto proportion = proportionOfRange (citySize);
-        const auto bendAmount = 4.0f * (proportionOfRange (voicingBentMidpointPercent) - 0.5f);
+        const auto bendAmount = 4.0f * (proportionOfRange (bentMidpointPercent) - 0.5f);
         const auto bentProportion = proportion + bendAmount * proportion * (1.0f - proportion);
         return citySizeMinPercent + bentProportion * (citySizeMaxPercent - citySizeMinPercent);
-    }
-
-    // Exactly 1 for the current voicing, so it leaves the PRD curves untouched.
-    float intensityFor (float citySize, Voicing voicing)
-    {
-        switch (voicing)
-        {
-            case Voicing::b: return 1.0f + (SoundSpec::voicingBIntensityAtMax - 1.0f) * proportionOfRange (citySize);
-            case Voicing::c: return SoundSpec::voicingCIntensity;
-            case Voicing::a:
-            case Voicing::current: break;
-        }
-
-        return 1.0f;
-    }
-
-    // The wet level scales in amplitude, so off stays off.
-    CitySettings intensified (CitySettings settings, float intensity)
-    {
-        settings.airGainDb *= intensity;
-        settings.detuneCents *= intensity;
-        settings.wetLevelDb += juce::Decibels::gainToDecibels (intensity);
-        return settings;
     }
 }
 
@@ -69,8 +43,7 @@ CitySettings CityMacro::map (float citySizePercent, const SoundTuning& tuning)
 {
     using namespace SoundSpec;
 
-    const auto knobPosition = juce::jlimit (citySizeMinPercent, citySizeMaxPercent, citySizePercent);
-    const auto citySize = bentCitySize (knobPosition, tuning.voicing);
+    const auto citySize = bentCitySize (juce::jlimit (citySizeMinPercent, citySizeMaxPercent, citySizePercent));
     const auto inLowerHalf = citySize < curveMidpointPercent;
     const auto proportionOfHalf = inLowerHalf
         ? (citySize - citySizeMinPercent) / (curveMidpointPercent - citySizeMinPercent)
@@ -97,5 +70,5 @@ CitySettings CityMacro::map (float citySizePercent, const SoundTuning& tuning)
         settings.wetLevelDb = interpolate (wetLevelDbAtMidpoint + wetOffsetDb, wetLevelDbAtMax + wetOffsetDb, proportionOfHalf);
     }
 
-    return intensified (settings, intensityFor (knobPosition, tuning.voicing));
+    return settings;
 }
