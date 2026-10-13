@@ -25,22 +25,37 @@ namespace ProcessorHarness
         processor.setBusesLayout (layout);
     }
 
-    // Renders in place, block by block. beforeBlock lets a test change parameters or pick the bypassed path.
-    inline void render (BigCityAudioProcessor& processor, juce::AudioBuffer<float>& audio, int blockSize,
-                        const std::function<bool (int blockIndex)>& beforeBlock = {})
+    struct BlockPosition
+    {
+        int index, startSample;
+    };
+
+    using BlockSizeSchedule = std::function<int (int blockIndex)>;
+    using BeforeBlock = std::function<bool (BlockPosition)>;
+
+    // Renders in place, block by block, with a block size that may change from call to call as in a host.
+    // beforeBlock lets a test change parameters or pick the bypassed path.
+    inline void render (BigCityAudioProcessor& processor, juce::AudioBuffer<float>& audio,
+                        const BlockSizeSchedule& blockSizeAt, const BeforeBlock& beforeBlock = {})
     {
         juce::MidiBuffer midi;
 
-        for (int start = 0, blockIndex = 0; start < audio.getNumSamples(); start += blockSize, ++blockIndex)
+        for (int start = 0, blockIndex = 0; start < audio.getNumSamples(); start += blockSizeAt (blockIndex), ++blockIndex)
         {
-            const auto length = std::min (blockSize, audio.getNumSamples() - start);
+            const auto length = std::min (blockSizeAt (blockIndex), audio.getNumSamples() - start);
             juce::AudioBuffer<float> block (audio.getArrayOfWritePointers(), audio.getNumChannels(), start, length);
-            const auto useBypassedPath = beforeBlock ? beforeBlock (blockIndex) : false;
+            const auto useBypassedPath = beforeBlock ? beforeBlock ({ blockIndex, start }) : false;
 
             if (useBypassedPath)
                 processor.processBlockBypassed (block, midi);
             else
                 processor.processBlock (block, midi);
         }
+    }
+
+    inline void render (BigCityAudioProcessor& processor, juce::AudioBuffer<float>& audio, int blockSize,
+                        const BeforeBlock& beforeBlock = {})
+    {
+        render (processor, audio, [blockSize] (int) { return blockSize; }, beforeBlock);
     }
 }

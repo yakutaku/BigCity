@@ -2,6 +2,7 @@
 #include "ProcessorHarness.h"
 #include "SoundSpec.h"
 
+#include <array>
 #include <cmath>
 
 using namespace ProcessorHarness;
@@ -77,6 +78,30 @@ namespace
 
         return true;
     }
+
+    // CLAUDE.md "Handle any buffer size and sample rates from 44.1 to 192 kHz".
+    constexpr std::array sampleRatesHz { 44100.0, 48000.0, 88200.0, 96000.0, 176400.0, 192000.0 };
+
+    struct BlockSizes
+    {
+        juce::String name;
+        BlockSizeSchedule sizeAt;
+        int largest;
+    };
+
+    // Sizes that aren't multiples of the 32-sample control interval, and sizes that change from call to
+    // call, including the empty blocks some hosts send, as in automation and offline bounce.
+    std::vector<BlockSizes> awkwardBlockSizes()
+    {
+        static constexpr std::array varying { 512, 1, 33, 0, 4097, 7, 31, 256 };
+        std::vector<BlockSizes> cases;
+
+        for (auto size : { 1, 7, 31, 33, 511, 4097 })
+            cases.push_back ({ juce::String (size), [size] (int) { return size; }, size });
+
+        cases.push_back ({ "varying sizes", [] (int blockIndex) { return varying[(size_t) blockIndex % varying.size()]; }, 4097 });
+        return cases;
+    }
 }
 
 class ProcessorTests final : public juce::UnitTest
@@ -98,23 +123,31 @@ private:
 
     void testNullAtZero()
     {
-        beginTest ("At 0 the output nulls against the input (stereo and mono, 44.1/48/96 kHz)");
+        beginTest ("At 0 the output nulls against the input (stereo and mono, 44.1–192 kHz, awkward block sizes)");
 
-        for (auto sampleRate : { 44100.0, 48000.0, 96000.0 })
+        for (auto sampleRate : sampleRatesHz)
             for (auto numChannels : { 1, 2 })
             {
-                BigCityAudioProcessor processor;
-                useChannelCount (processor, numChannels);
-                setParameter (processor, "citySize", 0.0f);
-                processor.prepareToPlay (sampleRate, oddBlockSize);
-
                 const auto input = makeNoise (numChannels, (int) sampleRate);
-                auto output = input;
-                render (processor, output, oddBlockSize);
+                auto worstNullDb = -std::numeric_limits<double>::infinity();
 
-                const auto nullDb = residualDb (output, input, 0);
-                logMessage ("  " + juce::String (numChannels) + " ch at " + juce::String (sampleRate) + " Hz: residual " + juce::String (nullDb) + " dB");
-                expect (nullDb < nullLimitDb, juce::String (numChannels) + " ch at " + juce::String (sampleRate) + " Hz: residual " + juce::String (nullDb) + " dB");
+                for (const auto& blockSizes : awkwardBlockSizes())
+                {
+                    BigCityAudioProcessor processor;
+                    useChannelCount (processor, numChannels);
+                    setParameter (processor, "citySize", 0.0f);
+                    processor.prepareToPlay (sampleRate, blockSizes.largest);
+
+                    auto output = input;
+                    render (processor, output, blockSizes.sizeAt);
+
+                    const auto nullDb = residualDb (output, input, 0);
+                    worstNullDb = std::max (worstNullDb, nullDb);
+                    expect (nullDb < nullLimitDb, juce::String (numChannels) + " ch at " + juce::String (sampleRate) + " Hz, blocks of "
+                                                      + blockSizes.name + ": residual " + juce::String (nullDb) + " dB");
+                }
+
+                logMessage ("  " + juce::String (numChannels) + " ch at " + juce::String (sampleRate) + " Hz: worst residual " + juce::String (worstNullDb) + " dB");
             }
     }
 
@@ -134,9 +167,9 @@ private:
 
             const auto input = makeNoise (numChannels, (int) sampleRate);
             auto output = input;
-            render (processor, output, oddBlockSize, [&] (int blockIndex)
+            render (processor, output, oddBlockSize, [&] (BlockPosition block)
             {
-                if (blockIndex == 10)
+                if (block.index == 10)
                     setParameter (processor, "citySize", 0.0f);
                 return false;
             });
@@ -149,49 +182,82 @@ private:
 
     void testBypassIsClickFree()
     {
-        beginTest ("Bypass on and off is click-free and lands exactly on dry, then processed");
+        beginTest ("Bypass on and off is click-free and lands exactly on dry, then processed (44.1–192 kHz, awkward block sizes)");
 
-        constexpr double sampleRate = 48000.0;
-        constexpr int blockSize = 256;
-        constexpr int bypassOnBlock = 100, bypassOffBlock = 150;
-        constexpr int bypassOnSample = bypassOnBlock * blockSize, bypassOffSample = bypassOffBlock * blockSize;
-        const auto crossfadeSamples = (int) (sampleRate * SoundSpec::bypassCrossfadeSeconds);
+        for (auto sampleRate : sampleRatesHz)
+        {
+            // City Size 100 makes the processed signal differ most from the dry one, the hardest case.
+            const auto input = makeSine (2, (int) sampleRate, 1000.0, sampleRate, 0.5f);
+            auto worstStepRatio = 0.0f;
 
-        // City Size 100 makes the processed signal differ most from the dry one, the hardest case.
-        const auto input = makeSine (2, 48000, 1000.0, sampleRate, 0.5f);
+            for (const auto& blockSizes : awkwardBlockSizes())
+            {
+                const auto where = juce::String (sampleRate) + " Hz, blocks of " + blockSizes.name + ": ";
+                const auto result = renderBypassToggle (input, sampleRate, blockSizes);
+                const auto crossfadeSamples = (int) (sampleRate * SoundSpec::bypassCrossfadeSeconds);
+
+                // A crossfade can't move faster than the faster of the two signals it fades between.
+                const auto stepLimit = std::max (largestStep (input), largestStep (result.processed)) * 1.01f;
+                worstStepRatio = std::max (worstStepRatio, largestStep (result.toggled) / stepLimit);
+                expect (largestStep (result.toggled) <= stepLimit,
+                        where + "largest step " + juce::String (largestStep (result.toggled)) + " exceeds " + juce::String (stepLimit));
+
+                expect (samplesMatch (result.toggled, input, result.bypassOnSample + crossfadeSamples, result.bypassOffSample),
+                        where + "not exactly dry after the fade in");
+                expect (samplesMatch (result.toggled, result.processed, result.bypassOffSample + crossfadeSamples, input.getNumSamples()),
+                        where + "not exactly processed after the fade out");
+
+                // Proves the step check can catch a click: an instant switch at the same samples must fail it.
+                expect (largestStepOfInstantSwitch (result.processed, input, result.bypassOnSample, result.bypassOffSample) > stepLimit,
+                        where + "the step check would not have caught an instant switch");
+            }
+
+            logMessage ("  " + juce::String (sampleRate) + " Hz: largest step is " + juce::String (worstStepRatio, 3) + " of the limit");
+        }
+    }
+
+    struct BypassToggleRender
+    {
+        juce::AudioBuffer<float> toggled, processed;
+        int bypassOnSample = -1, bypassOffSample = -1;   // the first block starting at or after each target
+    };
+
+    static BypassToggleRender renderBypassToggle (const juce::AudioBuffer<float>& input, double sampleRate, const BlockSizes& blockSizes)
+    {
+        const auto bypassOnTarget = (int) (0.4 * sampleRate), bypassOffTarget = (int) (0.7 * sampleRate);
+        BypassToggleRender result;
 
         const auto renderWithBypass = [&] (bool toggleBypass)
         {
             BigCityAudioProcessor processor;
             setParameter (processor, "citySize", 100.0f);
-            processor.prepareToPlay (sampleRate, blockSize);
+            processor.prepareToPlay (sampleRate, blockSizes.largest);
 
             auto output = input;
-            render (processor, output, blockSize, [&] (int blockIndex)
+            render (processor, output, blockSizes.sizeAt, [&] (BlockPosition block)
             {
-                if (toggleBypass && (blockIndex == bypassOnBlock || blockIndex == bypassOffBlock))
-                    setParameter (processor, "bypass", blockIndex == bypassOnBlock ? 1.0f : 0.0f);
+                if (! toggleBypass)
+                    return false;
+
+                if (result.bypassOnSample < 0 && block.startSample >= bypassOnTarget)
+                {
+                    setParameter (processor, "bypass", 1.0f);
+                    result.bypassOnSample = block.startSample;
+                }
+                else if (result.bypassOffSample < 0 && block.startSample >= bypassOffTarget)
+                {
+                    setParameter (processor, "bypass", 0.0f);
+                    result.bypassOffSample = block.startSample;
+                }
+
                 return false;
             });
             return output;
         };
 
-        const auto toggled = renderWithBypass (true);
-        const auto processed = renderWithBypass (false);
-
-        // A crossfade can't move faster than the faster of the two signals it fades between.
-        const auto stepLimit = std::max (largestStep (input), largestStep (processed)) * 1.01f;
-        logMessage ("  largest step: toggled " + juce::String (largestStep (toggled)) + ", limit " + juce::String (stepLimit)
-                    + ", instant switch " + juce::String (largestStepOfInstantSwitch (processed, input, bypassOnSample, bypassOffSample)));
-        expect (largestStep (toggled) <= stepLimit,
-                "largest step " + juce::String (largestStep (toggled)) + " exceeds " + juce::String (stepLimit));
-
-        expect (samplesMatch (toggled, input, bypassOnSample + crossfadeSamples, bypassOffSample), "not exactly dry after the fade in");
-        expect (samplesMatch (toggled, processed, bypassOffSample + crossfadeSamples, toggled.getNumSamples()), "not exactly processed after the fade out");
-
-        // Proves the step check can catch a click: an instant switch at the same samples must fail it.
-        expect (largestStepOfInstantSwitch (processed, input, bypassOnSample, bypassOffSample) > stepLimit,
-                "the step check would not have caught an instant switch");
+        result.toggled = renderWithBypass (true);
+        result.processed = renderWithBypass (false);
+        return result;
     }
 
     void testBypassPathsShareOneCrossfade()
@@ -213,11 +279,11 @@ private:
             processor.prepareToPlay (sampleRate, blockSize);
 
             auto output = input;
-            render (processor, output, blockSize, [&] (int blockIndex)
+            render (processor, output, blockSize, [&] (BlockPosition block)
             {
-                if (useParameter && (blockIndex == bypassOnBlock || blockIndex == bypassOffBlock))
-                    setParameter (processor, "bypass", inBypassSpan (blockIndex) ? 1.0f : 0.0f);
-                return useBypassedPath && inBypassSpan (blockIndex);
+                if (useParameter && (block.index == bypassOnBlock || block.index == bypassOffBlock))
+                    setParameter (processor, "bypass", inBypassSpan (block.index) ? 1.0f : 0.0f);
+                return useBypassedPath && inBypassSpan (block.index);
             });
             return output;
         };
@@ -229,6 +295,7 @@ private:
         expect (samplesMatch (viaBypassedPath, viaParameter, 0, input.getNumSamples()), "processBlockBypassed fades differently from the parameter");
         expect (samplesMatch (viaBoth, viaParameter, 0, input.getNumSamples()), "parameter plus processBlockBypassed fades differently from either alone");
     }
+
 };
 
 static ProcessorTests processorTests;
