@@ -43,6 +43,7 @@ BigCity does one job, costs little CPU, and needs no learning.
 **In v1**
 - One macro knob and a bypass switch
 - Pixel skyline that responds to the knob
+- Water shimmer on the skyline's reflection (D-28; was BC-02)
 - VST3 only, macOS 12+, universal binary
 - Signed and notarized installer
 - Quick-start PDF
@@ -55,7 +56,6 @@ BigCity does one job, costs little CPU, and needs no learning.
 - Arrow-key control (Ableton doesn't reliably pass keys to plugins; scroll wheel replaces it)
 - Resizable window
 - Buildings growing or animating
-- Water shimmer: moves to BC-02 (D-27). Pulled forward on `wip/water-shimmer` (D-28), in v1 only if tomorrow's QA passes.
 
 **v1.1 backlog**
 - Water shimmer: also pause when the window is fully covered by other windows (macOS occlusion state). v1 pauses only when the editor is hidden or minimised (D-28).

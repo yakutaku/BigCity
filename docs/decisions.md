@@ -208,8 +208,9 @@ Each hard call, with its options, reasoning and evidence. This is the source for
 - **Decision:** Sunshower doodle redrawn by hand after beta feedback that it looked AI-generated; lilac-to-peach sunset sun.
 - **Asset:** `assets/panel.png` (1536×832) re-exported from Figma; nothing else on the panel changed.
 
-## D-28 · Water shimmer pulled forward from BC-02 (Day 10; `wip/water-shimmer`, gated on QA)
-- **Context:** D-27 moved water shimmer to BC-02. It's pulled forward on a branch that merges only if tomorrow's QA and an Ableton check pass.
+## D-28 · Water shimmer pulled forward from BC-02 into v1.0 (Day 10)
+- **Context:** D-27 moved water shimmer to BC-02. It was pulled forward on `wip/water-shimmer`, to merge only if it passed QA and an Ableton check.
+- **Status:** passed the Ableton check and merged into main for v1.0 (Day 10). It is no longer a BC-02 item.
 - **Decision:** procedural, no new assets, snapped to the 3 pt skyline grid (docs/ui-spec.md "Water shimmer").
   - The sun's reflection glints get a `#FFF3C4` highlight that drifts ±1 grid pixel on a 1.5 s sine, each row out of phase.
   - The drift is always ±1 when City size is above 0: snapped to the grid, a scaled amplitude below 1 pixel would round to no motion below 50. The highlight's alpha scales instead, `0.6 × s/100`.

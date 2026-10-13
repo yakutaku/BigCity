@@ -117,7 +117,7 @@ Reference counts:
 - Fade over 200 ms with a cubic ease-in-out (`4t³` for the first half, `1 − (2 − 2t)³ / 2` for the second; built Day 10, so cut #1 isn't needed). The bypassed look is drawn first, then the opaque normal look over it at `1 − share`, so the two crossfade exactly. Toggling mid-fade turns back from where it is. The fade runs on the editor's 30 fps timer, so 200 ms is about 6 frames.
 - The screen clips the skyline to a 14 pt corner radius (Practical UI exception D7).
 
-**Water shimmer** (D-28; `wip/water-shimmer`, gated on QA). Procedural, no assets, snapped to the 3 pt grid. Grid coordinates below are logical pixels.
+**Water shimmer** (D-28, in v1.0). Procedural, no assets, snapped to the 3 pt grid. Grid coordinates below are logical pixels.
 
 | Element | Rule |
 |---|---|
