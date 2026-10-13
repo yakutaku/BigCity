@@ -99,6 +99,14 @@ void Skyline::setState (float citySizePercent, bool bypassed)
 
 void Skyline::paint (juce::Graphics& g)
 {
+    // A shimmer frame repaints only the water. Mid-fade the normal look is a transparency layer that the
+    // cached strip can't reproduce, so the fade always takes the full path below.
+    if (look.bypassedShare <= 0.0f && waterBounds().contains (g.getClipBounds()))
+    {
+        paintWaterOnly (g);
+        return;
+    }
+
     juce::Path screen;
     screen.addRoundedRectangle (getLocalBounds().toFloat(), UiSpec::Skyline::screenCornerRadius);
     g.reduceClipRegion (screen);
@@ -151,7 +159,7 @@ void Skyline::showShimmer (const WaterShimmer::Frame& frame)
         return;
 
     shimmer = frame;
-    repaint (pointsFor (WaterShimmer::waterCells()).toNearestInt());
+    repaint (waterBounds());
 }
 
 Skyline::Look Skyline::lookFor (float citySizePercent, float bypassedShare) const
@@ -205,12 +213,67 @@ void Skyline::drawNormal (juce::Graphics& g, float opacity) const
     if (fading)
         g.beginTransparencyLayer (opacity);
 
-    drawKeyframeBlend (g, keyframes->colour);
-    g.drawImage (litLayer, getLocalBounds().toFloat());
+    drawNormalLook (g);
     drawShimmer (g);
 
     if (fading)
         g.endTransparencyLayer();
+}
+
+void Skyline::drawNormalLook (juce::Graphics& g) const
+{
+    drawKeyframeBlend (g, keyframes->colour);
+    g.drawImage (litLayer, getLocalBounds().toFloat());
+}
+
+void Skyline::paintWaterOnly (juce::Graphics& g)
+{
+    const auto pixelScale = g.getInternalContext().getPhysicalPixelScaleFactor();
+
+    if (! (waterStrip.look == look) || ! juce::exactlyEqual (waterStrip.pixelScale, pixelScale))
+        rebuildWaterStrip (pixelScale);
+
+    // Each strip pixel is one display pixel, so this is a straight copy.
+    const auto water = waterBounds().toFloat();
+    g.setImageResamplingQuality (juce::Graphics::lowResamplingQuality);
+    g.drawImage (waterStrip.below, water);
+    drawShimmer (g);
+    g.drawImage (waterStrip.glass, water);
+}
+
+void Skyline::rebuildWaterStrip (float pixelScale)
+{
+    // Drawn with the same calls and scale as paint(), so the strip matches the full path pixel for pixel.
+    const auto water = waterBounds();
+    const auto toStrip = juce::AffineTransform::translation (0.0f, (float) -water.getY()).scaled (pixelScale);
+    const auto width = juce::roundToInt ((float) water.getWidth() * pixelScale);
+    const auto height = juce::roundToInt ((float) water.getHeight() * pixelScale);
+
+    waterStrip.below = juce::Image (juce::Image::ARGB, width, height, true);
+    {
+        juce::Graphics below (waterStrip.below);
+        below.addTransform (toStrip);
+        below.setImageResamplingQuality (juce::Graphics::lowResamplingQuality);
+        drawNormalLook (below);
+    }
+
+    // The glass never changes, so it's only redrawn when the display's scale does.
+    if (! juce::exactlyEqual (waterStrip.pixelScale, pixelScale))
+    {
+        waterStrip.glass = juce::Image (juce::Image::ARGB, width, height, true);
+        juce::Graphics glass (waterStrip.glass);
+        glass.addTransform (toStrip);
+        glass.setImageResamplingQuality (juce::Graphics::mediumResamplingQuality);
+        glass.drawImage (overlay, getLocalBounds().toFloat());
+    }
+
+    waterStrip.look = look;
+    waterStrip.pixelScale = pixelScale;
+}
+
+juce::Rectangle<int> Skyline::waterBounds() const
+{
+    return pointsFor (WaterShimmer::waterCells()).toNearestInt();
 }
 
 void Skyline::drawBypassed (juce::Graphics& g) const

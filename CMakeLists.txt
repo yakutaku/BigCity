@@ -119,6 +119,7 @@ target_sources(BigCityTests
         Tests/SkylineKeyframesTests.cpp
         Tests/SkylineBypassFadeTests.cpp
         Tests/WaterShimmerTests.cpp
+        Tests/SkylineTests.cpp
         Tests/AirShelfTests.cpp
         Tests/MicroShifterTests.cpp
         Tests/WetFilterTests.cpp

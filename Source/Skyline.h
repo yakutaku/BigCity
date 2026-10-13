@@ -47,6 +47,10 @@ private:
     void rebuildLitLayer();
     void drawKeyframeBlend (juce::Graphics& g, const SkylineKeyframes::Frames& frames) const;
     void drawNormal (juce::Graphics& g, float opacity) const;
+    void drawNormalLook (juce::Graphics& g) const;
+    void paintWaterOnly (juce::Graphics& g);
+    void rebuildWaterStrip (float pixelScale);
+    juce::Rectangle<int> waterBounds() const;
     void drawBypassed (juce::Graphics& g) const;
     void drawShimmer (juce::Graphics& g) const;
     static juce::Rectangle<float> pointsFor (juce::Rectangle<int> gridCells);
@@ -66,6 +70,18 @@ private:
     // Bypassed, the water keeps its last frame, which fades out with the normal look.
     WaterShimmer::Frame shimmer;
     float shimmerCitySizePercent = 0.0f;
+
+    // The water under the shimmer and the glass over it, at the display's pixel scale. A shimmer frame draws
+    // these two small images rather than the whole skyline: redrawing the full-size images at 8 fps made
+    // macOS hold about 200 MB of graphics memory (v1.1 review, audit A2).
+    struct WaterStrip
+    {
+        juce::Image below, glass;
+        Look look;
+        float pixelScale = 0.0f;
+    };
+
+    WaterStrip waterStrip;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Skyline)
 };
