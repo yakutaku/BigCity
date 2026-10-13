@@ -53,6 +53,18 @@ private:
             expectWithinAbsoluteError (stereoDb, 0.0, loudnessToleranceDb, "stereo at City Size " + juce::String (citySize, 0));
             expectWithinAbsoluteError (monoDb, 0.0, loudnessToleranceDb, "mono at City Size " + juce::String (citySize, 0));
         }
+
+       #if BIGCITY_TUNING
+        beginTest ("Each voicing candidate is within 0.5 dB of bypass too (stereo)");
+
+        for (const auto voicing : { Voicing::a, Voicing::b, Voicing::c })
+            for (size_t point = 1; point < SoundSpec::autoGainDb.size(); ++point)
+            {
+                const auto citySize = (float) point * SoundSpec::autoGainStepPercent;
+                expectWithinAbsoluteError (LoudnessMeasurement::differenceFromBypassDb (citySize, stereo, voicing), 0.0, loudnessToleranceDb,
+                                           "voicing " + juce::String ((int) voicing) + " at City Size " + juce::String (citySize, 0));
+            }
+       #endif
     }
 };
 

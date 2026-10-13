@@ -1,3 +1,4 @@
+#include "AutoGain.h"
 #include "CityMacro.h"
 
 #include <juce_core/juce_core.h>
@@ -74,6 +75,51 @@ public:
             expect (juce::exactlyEqual (atMax.wetLevelDb, SoundSpec::wetLevelDbAtMax));
             expect (juce::exactlyEqual (atMax.airCornerHz, SoundSpec::airCornerHz));
             expect (juce::exactlyEqual (atMax.airShelfQ, SoundSpec::airShelfQ));
+        }
+
+        beginTest ("Every voicing keeps City Size 0 off and holds 0 dB auto gain there");
+        {
+            for (const auto voicing : { Voicing::current, Voicing::a, Voicing::b, Voicing::c })
+            {
+                SoundTuning tuning;
+                tuning.voicing = voicing;
+                const auto atZero = CityMacro::map (0.0f, tuning);
+                expectEquals (atZero.airGainDb, 0.0f);
+                expect (std::isinf (atZero.wetLevelDb) && atZero.wetLevelDb < 0.0f, "wet level should be off at 0");
+                expect (juce::exactlyEqual (AutoGain::gainDbFor (0.0f, voicing), 0.0f), "auto gain not exactly 0 dB at 0");
+            }
+        }
+
+        beginTest ("Voicing A: 50 is today's 70, 0 and 100 unchanged");
+        {
+            SoundTuning a;
+            a.voicing = Voicing::a;
+            const auto today = CityMacro::map (70.0f);
+            const auto atMidpoint = CityMacro::map (50.0f, a);
+            expectWithinAbsoluteError (atMidpoint.airGainDb, today.airGainDb, tolerance);
+            expectWithinAbsoluteError (atMidpoint.detuneCents, today.detuneCents, tolerance);
+            expectWithinAbsoluteError (atMidpoint.wetLevelDb, today.wetLevelDb, tolerance);
+            expectWithinAbsoluteError (CityMacro::map (100.0f, a).airGainDb, 7.8f, tolerance);
+
+            // The bend keeps rising, so the knob never turns the effect down.
+            for (float citySize = 1.0f; citySize <= 100.0f; citySize += 1.0f)
+                expectGreaterThan (CityMacro::map (citySize, a).airGainDb, CityMacro::map (citySize - 1.0f, a).airGainDb);
+        }
+
+        beginTest ("Voicing B is A plus 15% at 100; voicing C is 25% everywhere");
+        {
+            SoundTuning b, c;
+            b.voicing = Voicing::b;
+            c.voicing = Voicing::c;
+            const auto bAtMax = CityMacro::map (100.0f, b);
+            expectWithinAbsoluteError (bAtMax.airGainDb, 7.8f * 1.15f, tolerance);
+            expectWithinAbsoluteError (bAtMax.detuneCents, 11.0f * 1.15f, tolerance);
+            expectWithinAbsoluteError (bAtMax.wetLevelDb, -3.0f + juce::Decibels::gainToDecibels (1.15f), tolerance);
+
+            const auto cAtMidpoint = CityMacro::map (50.0f, c);
+            expectWithinAbsoluteError (cAtMidpoint.airGainDb, 3.9f * 1.25f, tolerance);
+            expectWithinAbsoluteError (cAtMidpoint.detuneCents, 7.7f * 1.25f, tolerance);
+            expectWithinAbsoluteError (cAtMidpoint.wetLevelDb, -9.0f + juce::Decibels::gainToDecibels (1.25f), tolerance);
         }
 
         beginTest ("Out-of-range input is clamped");

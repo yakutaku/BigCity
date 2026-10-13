@@ -14,6 +14,7 @@ struct CitySettings
 
 namespace CityMacro
 {
-    // Maps citySize (0–100, clamped) to the PRD §6 curves, each scaled to the tuning's maximum.
+    // Maps citySize (0–100, clamped) to the PRD §6 curves, each scaled to the tuning's maximum,
+    // then shaped by the tuning's voicing.
     CitySettings map (float citySizePercent, const SoundTuning& tuning = {});
 }

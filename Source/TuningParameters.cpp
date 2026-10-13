@@ -25,6 +25,10 @@ namespace
     constexpr TuningRange wetLowPass      { "tuningWetLowPassHz",      "Tuning: wet low-pass",     4000.0f, 16000.0f, 10.0f, (float) SoundSpec::wetLowPassHz,     "Hz" };
     constexpr TuningRange wetDrive        { "tuningWetDriveDb",        "Tuning: wet drive",        0.0f,    12.0f,    0.1f,  SoundSpec::wetDriveDb,                "dB" };
 
+    // In the order of the Voicing enum, so a choice index is its value.
+    constexpr auto voicingId = "tuningVoicing";
+    const juce::StringArray voicingNames { "Current", "A", "B", "C" };
+
     void add (juce::AudioProcessorValueTreeState::ParameterLayout& layout, const TuningRange& range)
     {
         layout.add (std::make_unique<juce::AudioParameterFloat> (
@@ -41,6 +45,9 @@ void TuningParameters::addTo (juce::AudioProcessorValueTreeState::ParameterLayou
     for (const auto* range : { &airMaxGain, &airCorner, &airQ, &maxWetLevel, &maxDetune,
                                &modulationRate, &modulationDepth, &wetHighPass, &wetLowPass, &wetDrive })
         add (layout, *range);
+
+    layout.add (std::make_unique<juce::AudioParameterChoice> (
+        juce::ParameterID { voicingId, parameterVersion }, "Tuning: voicing", voicingNames, (int) Voicing::current));
 }
 
 TuningParameters::Reader::Reader (juce::AudioProcessorValueTreeState& parameters)
@@ -53,12 +60,13 @@ TuningParameters::Reader::Reader (juce::AudioProcessorValueTreeState& parameters
       modulationDepthMs (parameters.getRawParameterValue (modulationDepth.id)),
       wetHighPassHz (parameters.getRawParameterValue (wetHighPass.id)),
       wetLowPassHz (parameters.getRawParameterValue (wetLowPass.id)),
-      wetDriveDb (parameters.getRawParameterValue (wetDrive.id))
+      wetDriveDb (parameters.getRawParameterValue (wetDrive.id)),
+      voicing (parameters.getRawParameterValue (voicingId))
 {
     jassert (airMaxGainDb != nullptr && airCornerHz != nullptr && airShelfQ != nullptr
              && wetLevelDbAtMax != nullptr && detuneCentsAtMax != nullptr
              && modulationRateHz != nullptr && modulationDepthMs != nullptr
-             && wetHighPassHz != nullptr && wetLowPassHz != nullptr && wetDriveDb != nullptr);
+             && wetHighPassHz != nullptr && wetLowPassHz != nullptr && wetDriveDb != nullptr && voicing != nullptr);
 }
 
 SoundTuning TuningParameters::Reader::read() const
@@ -72,5 +80,6 @@ SoundTuning TuningParameters::Reader::read() const
     tuning.wetModulation = MicroShifter::Modulation { modulationRateHz->load(), modulationDepthMs->load() };
     tuning.wetFilterCutoffs = WetFilter::Cutoffs { wetHighPassHz->load(), wetLowPassHz->load() };
     tuning.wetDriveDb = wetDriveDb->load();
+    tuning.voicing = (Voicing) juce::jlimit (0, voicingNames.size() - 1, juce::roundToInt (voicing->load()));
     return tuning;
 }

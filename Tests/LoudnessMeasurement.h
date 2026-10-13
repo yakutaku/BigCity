@@ -111,12 +111,14 @@ namespace LoudnessMeasurement
         return loudnessOffsetDb + 10.0 * std::log10 (weightedPowerSum);
     }
 
-    // Loudness through the plugin at this City Size minus the loudness of bypass, in dB.
-    inline double differenceFromBypassDb (float citySizePercent, int numChannels)
+    // Loudness through the plugin at this City Size minus the loudness of bypass, in dB. Only a
+    // BIGCITY_TUNING build has a voicing parameter; other builds always measure the current voicing.
+    inline double differenceFromBypassDb (float citySizePercent, int numChannels, Voicing voicing = Voicing::current)
     {
         BigCityAudioProcessor processor;
         ProcessorHarness::useChannelCount (processor, numChannels);
         ProcessorHarness::setParameter (processor, "citySize", citySizePercent);
+        ProcessorHarness::setParameter (processor, "tuningVoicing", (float) voicing);
         processor.prepareToPlay (sampleRate, blockSize);
 
         const auto input = makeProgrammeNoise (numChannels, settleSamples + measuredSamples);
