@@ -230,3 +230,10 @@ Each hard call, with its options, reasoning and evidence. This is the source for
   - As with the knob (D-25), most of the cost is likely macOS redrawing and compositing each repaint rather than the drawing itself; not profiled.
 - **Memory (Day 10):** while it runs with the editor open, the host holds about 200 MB of graphics memory. That's JUCE's macOS renderer, which does the same for any continuous repaint, automation included, and the memory is released when the editor closes. Kept for 1.0.0 (v1.1 review, audit A2).
 - **Not done:** pausing when the window is fully covered by other windows. `isShowing()` covers hidden and minimised only. Logged in the PRD's v1.1 backlog.
+
+## D-30 · More character in the middle of the knob (Beta 10/13)
+- **Feedback:** the effect felt too subtle at 50, and a bit at 100. The design was well loved, with no blockers.
+- **Decision:** variant A. The knob position is bent, `p = s + 0.8 × s(100 − s)/100`, so 50 sounds like the old 70 and 0 and 100 don't move. The auto gain is re-measured for the new curve.
+- **Not chosen:** B (A plus up to +15% at 100) and C (+25% everywhere). All three were rendered on the beta loop at 25 / 50 / 75 / 100 with `CpuBenchmark --render` and compared by ear.
+- **Peaks:** no output stage in v1.0. Overs above 0 dBFS are fine in a float host; the rules are no internal hard clipping, no NaN or inf, and an exact null at 0. A ceiling and an auto gain recalibration on music are on the v1.1 backlog.
+- **PRD:** §6 "Knob response", "Peaks above 0 dBFS" and "Voicing change"; §5 v1.1 backlog.

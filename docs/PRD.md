@@ -61,6 +61,8 @@ BigCity does one job, costs little CPU, and needs no learning.
 - JUCE's macOS renderer: with the editor open, any continuous repaint (the water shimmer, or automation moving City size) makes the host hold about 200–240 MB of graphics memory, released when the editor closes. Try JUCE's other macOS rendering path or a newer JUCE (v1.1 review, audit A2).
 - Water shimmer: also pause when the window is fully covered by other windows (macOS occlusion state). v1 pauses only when the editor is hidden or minimised (D-28).
 - Matched (analog-like) shelf design for the air shelf, so its response no longer depends on sample rate (see the §6 shelf check finding)
+- Optional output ceiling or soft clip, so a hot input doesn't leave the plugin above 0 dBFS (§6 "Peaks above 0 dBFS"; v1.0 has none, by decision on 10/13)
+- Recalibrate auto gain on music-like material. The IEC programme noise has less top end than modern mixes, so on the 10/13 beta loop every City Size read 0.2–1.2 LU louder than bypass.
 
 ## 6. Sound spec
 
@@ -70,31 +72,39 @@ Every value is tagged with its source. **We don't guess.**
 - **Measure:** set by our own measurement.
 - **Test:** a starting point, confirmed or changed by blind A/B in beta.
 - **Tuned by ear 10/2:** set by listening in the developer tuning build on 2026-10-02. Still open to change by blind A/B in beta.
+- **Beta 10/13:** changed after beta feedback and picked by ear from rendered candidates on 2026-10-13 (D-30).
 
 | Element | Value | Status | Basis |
 |---|---|---|---|
 | Signal flow | Dry at unity gain, plus an air shelf and a micro-shift wet signal. The macro scales both, and auto gain levels the result. | — | Design decision |
 | At 0 | Fully transparent (identical to bypass) | — | Design decision |
 | Default | 50 | — | Industry convention (NI, Kilohearts) |
+| Knob response | The knob position *s* is bent before every curve below: *p* = *s* + 0.8 × *s* × (100 − *s*) / 100. So 0 → 0, 25 → 40, 50 → 70, 75 → 90, 100 → 100. The air, detune and wet curves are all read at *p*. | Beta 10/13 | Beta feedback: too subtle at 50, and a bit at 100. A parabola through 0, 70 and 100 lifts the middle most and leaves both ends where they were; it keeps rising, so turning up never turns the effect down. |
 | **Air:** filter | RBJ high-shelf biquad, one per channel | Decided v1 (user research) | RBJ Audio EQ Cookbook |
 | **Air:** corner frequency | 10 kHz | Tuned by ear 10/2 | The low end of the v1.0 PRD's 10–12 kHz range |
 | **Air:** Q | Fixed 0.707 | Tuned by ear 10/2 (A/B listen: Q 0.707 had more top end) | Broad "air" shelves are the reference sound (Mäag Air Band) |
-| **Air:** gain curve | 0 dB at 0 → +7.8 dB at 100; `gainDb = 7.8 × citySize / 100` | Tuned by ear 10/2 | dB is perceptually close to linear |
+| **Air:** gain curve | 0 dB at 0 → +7.8 dB at 100; `gainDb = 7.8 × p / 100`, with *p* the bent position (Knob response) | Tuned by ear 10/2; read at *p* since Beta 10/13 | dB is perceptually close to linear |
 | **Micro-shift:** detune | Left down, right up; ±5.5 cents at 0 → ±7.7 at 50 → ±11 at 100 | Tuned by ear 10/2 | Practitioner range: H3000 micropitch recipes use ±7 cents (Splice preset 519), 8–10 cents commonly, 4–12 cents overall |
 | **Micro-shift:** pre-delay | Left 11 ms / right 17 ms, fixed | Sourced range, values Test | 6–20 ms common, offset left and right |
 | **Micro-shift:** wet level | Off at 0 → −9 dB at 50 → −3 dB at 100 | Tuned by ear 10/2 | "Turn it up until you hear it, then back off" |
 | **Micro-shift:** algorithm | Dual-tap crossfading delay-line shifter (H910-style) | — | Lowest CPU; small shifts produce minimal artifacts |
-| **Micro-shift:** detune curve | Linear between points: ±5.5 cents at 0 → ±7.7 at 50 → ±11 at 100 | Tuned by ear 10/2 | The v1 curve's shape (5 : 7 : 10) scaled to the tuned maximum. Inaudible at 0 because the wet signal is off. |
-| **Micro-shift:** wet level curve | 0–50: linear in amplitude from off to −9 dB. 50–100: linear in dB from −9 to −3 dB. | Tuned by ear 10/2 | The v1 curve's shape (6 dB from 50 to 100) moved to the tuned maximum. "Off" has no dB value; linear in dB above 50 matches the air curve. |
+| **Micro-shift:** detune curve | Linear between points of *p*: ±5.5 cents at 0 → ±7.7 at 50 → ±11 at 100 | Tuned by ear 10/2; read at *p* since Beta 10/13 | The v1 curve's shape (5 : 7 : 10) scaled to the tuned maximum. Inaudible at 0 because the wet signal is off. |
+| **Micro-shift:** wet level curve | In terms of *p*. 0–50: linear in amplitude from off to −9 dB. 50–100: linear in dB from −9 to −3 dB. | Tuned by ear 10/2; read at *p* since Beta 10/13 | The v1 curve's shape (6 dB from 50 to 100) moved to the tuned maximum. "Off" has no dB value; linear in dB above 50 matches the air curve. |
 | **Micro-shift:** window | 20 ms, centered on the pre-delay (left sweeps 1–21 ms, right 7–27 ms) before modulation. Two taps half a cycle apart with sin² crossfades; 4-point cubic Hermite interpolation. | Test | About one crossfade cycle per 3.1 s at ±11 cents |
 | **Micro-shift:** modulation | Sine LFO at 0.72 Hz sweeps each voice's delay over 1.65 ms in total, upward from the pre-delay; left and right in opposite phase | Tuned by ear 10/2 | Juno-60 chorus: a slow LFO with the two sides in opposite phase. Upward only because the left window already reaches down to 1 ms; the average delay sits 0.83 ms above the pre-delay. |
 | **Wet:** high-pass | 250 Hz, 12 dB/oct Butterworth | Tuned by ear 10/2 | MicroShift's Focus control: keeps the shifted signal out of the low end |
 | **Wet:** low-pass | 7 kHz, 12 dB/oct Butterworth | Tuned by ear 10/2 | MicroShift's Focus control; also smooths the drive's added harmonics |
 | **Wet:** drive | 3 dB into a level-compensated tanh, `tanh(g·x) / g`, between the high-pass and the low-pass; no oversampling | Tuned by ear 10/2 | Gentle saturation, as in hardware shifters' wet path. Quiet signals pass at unity; only peaks round off. |
 | Signal order | Output = auto gain × air shelf(dry + wet level × low-pass(drive(high-pass(micro-shift(dry))))) | Test | The air reaches the wet signal too, with one shelf per channel. The wet level comes last in the wet path, so at 0 the wet signal is exactly silent. |
-| Auto gain | Fixed compensation curve: one value per 10 of City Size, linear in dB between points, following the smoothed City Size. Exactly 0 dB at 0. Values in `SoundSpec.h`. | **Measure** | Measured on programme simulation noise (music-weighted): the IEC 60268-1 Table II spectrum at −18 dBFS RMS through the plugin at 48 kHz; K-weighted loudness (ITU-R BS.1770) matched to bypass within 0.5 dB. Re-measured 10/5; it was pink noise until then (decision D-08). |
+| Auto gain | Fixed compensation curve: one value per 10 of City Size, linear in dB between points, following the smoothed City Size. Exactly 0 dB at 0. Values in `SoundSpec.h`. | **Measure** | Measured on programme simulation noise (music-weighted): the IEC 60268-1 Table II spectrum at −18 dBFS RMS through the plugin at 48 kHz; K-weighted loudness (ITU-R BS.1770) matched to bypass within 0.5 dB. Re-measured 10/5; it was pink noise until then (decision D-08). Re-measured 10/13 for the bent knob response. |
+| Peaks above 0 dBFS | No output ceiling in v1.0: a hot input can leave the plugin above 0 dBFS, which is fine in a float host. Never clip hard inside the plugin, never output NaN or inf, and keep the exact null at 0. | Decided 10/13 | On the beta loop (peaks at 0 dBFS, −13.6 LUFS), the 10/2 curve already reached +1.7 dBFS sample peak at 100. An optional ceiling is on the v1.1 backlog. |
 | Smoothing | 30 ms on `citySize` | — | Prevents zipper noise |
 | Bypass crossfade | 20 ms | — | Click-free |
+
+**Voicing change (Beta 10/13, D-30):** beta testers loved the design and reported no blockers, but found the effect too subtle at 50, and a bit at 100. The goal was noticeably more character at the same loudness. Three candidates were rendered through the plugin on a mixed loop at 25 / 50 / 75 / 100 and picked by ear:
+- **A** (picked): bend the knob so 50 sounds like the old 70, with 100 unchanged.
+- **B:** A plus up to +15% intensity at 100.
+- **C:** +25% intensity everywhere.
 
 **Shelf response check (Day 3):** measure the air shelf's frequency response at 44.1, 48 and 96 kHz. Flag it if the responses differ by more than 0.5 dB anywhere below 16 kHz.
 
