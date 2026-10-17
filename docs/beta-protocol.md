@@ -27,8 +27,23 @@
 - [ ] CPU or session impact in a dense project (20+ tracks)?
 - [ ] **One question:** "What would you tell a friend this does?" This gives a quote and a message test.
 
-## Results (fill in)
+## Results
 
 | Tester | Time to dial in | Final value | A/B ratings (25/50/75/100) | Picked bypass? | Issues | Quote |
 |---|---|---|---|---|---|---|
-| | | | | | | |
+| Round 1, before launch (10/10–11, beta testers, summary) | Not recorded | Not recorded | Not recorded. Effect too subtle at 50, and a bit at 100 | Not recorded | No blockers. Design loved. | Not recorded |
+| Round 2, after launch (10/16, Unknown Caller, city pop producer, v1.0.0) | Not recorded. "Quick and intuitive" | Not recorded | Not recorded. Still subtle at 100, which he likes | Not tested | None. Easy install; no real CPU difference with BigCity on 5 tracks, master included | "…adding a polished sheen to a track, giving it air and breath." |
+
+**Round 1** led to voicing A, the bent knob response (PRD §6 "Voicing change", D-30).
+
+**Round 2, other notes:**
+- He would use it on vocals or the master track "to add polish and air".
+- Price guess: $5.99–$9.99.
+- First reference that came to mind: Slate Digital's Fresh Air, but it has two knobs. He suggests it for a pricing reference or other inspiration.
+- He doesn't think it needs anything else beyond cosmetic touches such as the water shimmer.
+- Liking that 100 stays subtle makes the flat top of the knob response optional for v1.1 (PRD §5 backlog).
+
+## Quotes (permission granted)
+
+- "…adding a polished sheen to a track, giving it air and breath." (Unknown Caller)
+- "All my homies hate two knobs." (Unknown Caller)

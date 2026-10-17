@@ -23,7 +23,7 @@
 2. [x] Checked in Live on the dev build.
 3. [x] Live CPU check (P1-1).
 4. [x] Ableton matrix (PRD §11).
-5. [x] Beta results. The feedback that changed the sound is recorded in PRD §6 "Voicing change" and D-30. The results table in `docs/beta-protocol.md` is still blank.
+5. [x] Beta results. The feedback that changed the sound is recorded in PRD §6 "Voicing change" and D-30. Both beta rounds are in the results table in `docs/beta-protocol.md`.
 6. [x] Version set to 1.0.0 (`project()` in `CMakeLists.txt`, the only place it lives).
 7. [x] Final build, tests and pluginval.
 8. [x] Packaged, notarized and stapled with `tools/package.sh --notarize`.
@@ -38,6 +38,6 @@
 - **v1.1:** the PRD §5 v1.1 backlog and `docs/v1.1-review.md`. Neither has P0 items. They include:
   - UI CPU and the JUCE renderer's memory (P1-1, audit A2)
   - knob and switch accessibility (P1-4, D-24)
-  - the flat top of the knob response
+  - the flat top of the knob response (optional since beta round 2)
   - an optional output ceiling
   - recalibrating auto gain on music
