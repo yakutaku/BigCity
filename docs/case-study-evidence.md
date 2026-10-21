@@ -9,7 +9,7 @@
 | 1 | Decision log (10+ hard calls with reasoning) | `docs/decisions.md` | Ongoing | 🟡 Seeded (D-01 to D-21) |
 | 2 | Time to dial in (target under 10 s) | Beta test 1 | 10/10–11 | ⏳ |
 | 3 | Blind A/B ratings at 25/50/75/100 | Beta test 2 | 10/10–11 | ⏳ |
-| 4 | Tester quotes, plus permission for screen-recording clips | Beta test 3 | 10/10–11 | ⏳ |
+| 4 | Tester quotes, with permission to quote | Beta test 3 | 10/10–11 | ✅ Permission granted 10/17 to quote and credit by artist name. Recording clips not needed. |
 | 5 | CPU benchmark: 30 instances on the M2, % CPU and buffer size recorded | Day 9 | 10/9 | ⏳ |
 | 6 | Loudness match: auto gain old vs new table (pink noise vs music) | D-08 | 10/5 | ✅ |
 | 7 | Null test: 0 is bit-identical to bypass | Unit tests | Done | ✅ |
