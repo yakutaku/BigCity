@@ -1,0 +1,7 @@
+Copyright (c) 2026 Jonathan Day (sunshower audio). All rights reserved.
+
+The source is published for review and portfolio purposes only; no license is
+granted to use, copy, modify or distribute it.
+
+The JUCE framework, included as a git submodule in JUCE/, is used under the
+JUCE 8 Starter licence. It is not covered by this notice; see JUCE/LICENSE.md.
