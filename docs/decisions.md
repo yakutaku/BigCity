@@ -247,5 +247,8 @@ Each hard call, with its options, reasoning and evidence. This is the source for
   - Auto gain recalibrated on music for voicing 2, the mean of both files; each file is left up to ±0.55 dB off at 100 for Medium.
   - True peak at 100, input at 0 dBFS sample peak: vocal +3.3 / +3.6 / +4.1 dBTP (Gentle / Medium / Literal double) against +3.8 for voicing 1; on the mix every candidate stays below 0 dBTP (voicing 1 +0.4, dry +0.2).
   - Mono sum: within 0.33 dB of the dry file's own change for every candidate except Literal double on the vocal (0.64 dB). No notches of 3 dB or more in any band that carries signal.
-- **Pending:** the pick, by ear from loudness-matched renders at 25 / 50 / 75 / 100. Medium plays until then.
+- **Picked (10/26): Medium.** Chosen by ear from loudness-matched renders at 25 / 50 / 75 / 100 on a dry vocal and a full mix: it goes further at the top without warble or harshness. Gentle and Literal double were removed from the code.
+- **Accepted:** voicing 2's auto gain leaves each file up to ±0.55 dB off bypass at 100, just over voicing 1's 0.5 dB tolerance, because the vocal and the mix need different amounts.
+- **Shelf check:** at +10 dB the air shelf's sample-rate spread reaches 1.02 dB (Q 0.707, 14.6 kHz), against 0.77 dB for voicing 1. The matched shelf on the backlog covers both.
+- **CPU (M4, 30 instances, 48 kHz / 128, sweeping, 3 runs each against the released 1.0.0 binary):** mean audio-thread load 27.2–27.3% against 26.9–27.0% after a warm-up run, p99 within 0.2 points, 0 overruns.
 - **PRD:** §6 "Voicing", "Voicing 2" and "Voicing 2 auto gain"; §5 v1.1 backlog.
