@@ -66,28 +66,13 @@ namespace SoundSpec
     constexpr AutoGainCurve autoGainDb { 0.00f, -0.06f, -0.17f, -0.32f, -0.46f, -0.60f, -0.75f, -0.91f, -1.04f, -1.14f, -1.22f };
 
     // PRD §6 "Voicing 2": up to 50 it plays voicing 1's curves at twice the knob position, so 50 is
-    // voicing 1's 100; above 50 each element goes on to the candidate's value at 100.
-    struct Voicing2Candidate
-    {
-        const char* name;
-        float airGainDbAtMax;
-        float wetLevelDbAtMax;
-        float detuneCentsAtMax;
-        // PRD §6 "Voicing 2 auto gain": measured on the dry vocal and dry mix with Tests/VoicingMeasure (10/26)
-        AutoGainCurve autoGainDb;
-    };
+    // voicing 1's 100; above 50 each element goes on to these values at 100 (Medium, picked by ear 10/26, D-31).
+    constexpr float voicing2AirGainDbAtMax = 10.0f;
+    constexpr float voicing2WetLevelDbAtMax = -2.0f;
+    constexpr float voicing2DetuneCentsAtMax = 11.5f;
 
-    // PRD §6 "Voicing 2" candidates, status Test until the listening pick. Gentle stays inside the D-07
-    // tuning ranges, Medium sits at their air and wet ceilings, and Literal double (2x air in dB, 2x wet
-    // amplitude) is a reference beyond them, for hearing where it breaks.
-    constexpr std::array voicing2Candidates {
-        Voicing2Candidate { "Gentle",         9.0f,  -2.5f, 11.0f, { 0.00f, -0.45f, -0.99f, -1.43f, -1.85f, -2.11f, -2.23f, -2.31f, -2.36f, -2.41f, -2.45f } },
-        Voicing2Candidate { "Medium",         10.0f, -2.0f, 11.5f, { 0.00f, -0.45f, -0.99f, -1.43f, -1.85f, -2.11f, -2.23f, -2.36f, -2.51f, -2.64f, -2.77f } },
-        Voicing2Candidate { "Literal double", 15.6f,  3.0f, 12.0f, { 0.00f, -0.45f, -0.99f, -1.43f, -1.85f, -2.11f, -2.32f, -2.74f, -3.39f, -4.31f, -5.64f } },
-    };
-
-    // PRD §6 "Voicing 2": the candidate shipping builds play until the pick (Medium, approved 10/26)
-    constexpr size_t voicing2DefaultCandidate = 1;
+    // PRD §6 "Voicing 2 auto gain": measured on a dry vocal and a dry mix with Tests/VoicingMeasure (10/26)
+    constexpr AutoGainCurve voicing2AutoGainDb { 0.00f, -0.45f, -0.99f, -1.43f, -1.85f, -2.11f, -2.23f, -2.36f, -2.51f, -2.64f, -2.77f };
 
     // PRD §6 "Smoothing"
     constexpr double citySizeSmoothingSeconds = 0.030;

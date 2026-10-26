@@ -17,5 +17,4 @@ struct SoundTuning
     MicroShifter::Modulation wetModulation { SoundSpec::modulationRateHz, SoundSpec::modulationDepthMs };
     WetFilter::Cutoffs wetFilterCutoffs { SoundSpec::wetHighPassHz, SoundSpec::wetLowPassHz };
     float wetDriveDb = SoundSpec::wetDriveDb;
-    SoundSpec::Voicing2Candidate voicing2 = SoundSpec::voicing2Candidates[SoundSpec::voicing2DefaultCandidate];
 };

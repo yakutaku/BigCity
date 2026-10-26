@@ -132,12 +132,11 @@ namespace
 
         const auto proportion = (citySize - curveMidpointPercent) / (citySizeMaxPercent - curveMidpointPercent);
         const auto rates = upperHalfRates (tuning);
-        const auto& top = tuning.voicing2;
 
         auto settings = mapVoicing1 (citySizeMaxPercent, tuning);
-        settings.airGainDb = continueToTop (settings.airGainDb, rates.airGainDb, top.airGainDbAtMax, proportion);
-        settings.detuneCents = continueToTop (settings.detuneCents, rates.detuneCents, top.detuneCentsAtMax, proportion);
-        settings.wetLevelDb = continueToTop (settings.wetLevelDb, rates.wetLevelDb, top.wetLevelDbAtMax, proportion);
+        settings.airGainDb = continueToTop (settings.airGainDb, rates.airGainDb, voicing2AirGainDbAtMax, proportion);
+        settings.detuneCents = continueToTop (settings.detuneCents, rates.detuneCents, voicing2DetuneCentsAtMax, proportion);
+        settings.wetLevelDb = continueToTop (settings.wetLevelDb, rates.wetLevelDb, voicing2WetLevelDbAtMax, proportion);
         return settings;
     }
 }

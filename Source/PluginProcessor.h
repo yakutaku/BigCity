@@ -66,7 +66,6 @@ private:
     void applyCitySize (float citySizePercent, Voicing voicingNow, const SoundTuning& tuning);
     void applyWetPathTuning (const SoundTuning& tuning);
     SoundTuning currentTuning() const;
-    Voicing currentVoicing() const;
 
     juce::AudioProcessorValueTreeState parameters;
     juce::AudioParameterBool* bypassParameter = nullptr;

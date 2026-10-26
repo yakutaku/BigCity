@@ -36,9 +36,7 @@ private:
         expect (juce::exactlyEqual (AutoGain::gainDbFor (-10.0f, SoundSpec::autoGainDb), SoundSpec::autoGainDb.front()), "below 0 not clamped");
         expect (juce::exactlyEqual (AutoGain::gainDbFor (150.0f, SoundSpec::autoGainDb), SoundSpec::autoGainDb.back()), "above 100 not clamped");
 
-        for (const auto& candidate : SoundSpec::voicing2Candidates)
-            expect (juce::exactlyEqual (AutoGain::gainDbFor (0.0f, candidate.autoGainDb), 0.0f),
-                    juce::String ("voicing 2, ") + candidate.name + ": not exactly 0 dB at City Size 0");
+        expect (juce::exactlyEqual (AutoGain::gainDbFor (0.0f, SoundSpec::voicing2AutoGainDb), 0.0f), "voicing 2: not exactly 0 dB at City Size 0");
     }
 
     void testLoudnessMatchesBypass()

@@ -1,15 +1,12 @@
-// PRD §6 "Voicing 2" measurements on music: each candidate's auto gain curve, true peak at 100 on a hot
-// input, mono compatibility at 50 and 100, and loudness-matched renders for the listening pick. A tool
-// for building SoundSpec::voicing2Candidates, so it isn't a CTest test.
+// PRD §6 "Voicing 2" measurements on music: voicing 2's auto gain curve, true peak at 100 on a hot input,
+// mono compatibility at 50 and 100 against voicing 1, and loudness-matched renders for listening. A tool
+// for building SoundSpec::voicing2AutoGainDb, so it isn't a CTest test.
 //
 //   VoicingMeasure --vocal=vocal.wav --mix=mix.wav [--render-to=folder]
 //
-// It's built as a tuning build so it can switch candidates. The tuning sliders hold the sound values as
-// floats, which moves the output by far less than the 0.01 dB this tool reports to.
-//
-// Auto gain is measured with the current curves in place, so each suggestion is the current value
+// Auto gain is measured with the current curve in place, so each suggestion is the current value
 // corrected by what's still off; the output gain comes after everything else, so one pass converges.
-// Paste the suggested lines into SoundSpec::voicing2Candidates and run again to confirm.
+// Paste the suggested line into SoundSpec::voicing2AutoGainDb and run again to confirm.
 
 #include "AutoGain.h"
 #include "LoudnessMeasurement.h"
@@ -38,24 +35,13 @@ namespace
         juce::AudioBuffer<float> audio;
     };
 
-    // Voicing 1, or voicing 2 with one candidate.
     struct Setting
     {
         juce::String name;
         Voicing voicing;
-        size_t candidate;
     };
 
-    std::vector<Setting> allSettings()
-    {
-        std::vector<Setting> settings { { "v1", Voicing::original, SoundSpec::voicing2DefaultCandidate } };
-
-        for (size_t candidate = 0; candidate < SoundSpec::voicing2Candidates.size(); ++candidate)
-            settings.push_back ({ juce::String (SoundSpec::voicing2Candidates[candidate].name).toLowerCase().replace (" ", "-"),
-                                  Voicing::doubleRange, candidate });
-
-        return settings;
-    }
+    const std::vector<Setting> allSettings { { "v1", Voicing::original }, { "v2", Voicing::doubleRange } };
 
     std::optional<Source> read (const juce::String& name, const juce::File& file)
     {
@@ -81,7 +67,6 @@ namespace
     {
         BigCityAudioProcessor processor;
         ProcessorHarness::useVoicing (processor, setting.voicing);
-        ProcessorHarness::setParameter (processor, "tuningVoicing2Candidate", (float) setting.candidate);
         ProcessorHarness::useChannelCount (processor, input.getNumChannels());
         ProcessorHarness::setParameter (processor, "citySize", citySizePercent);
         processor.prepareToPlay (LoudnessMeasurement::sampleRate, blockSize);
@@ -197,33 +182,28 @@ namespace
     {
         std::printf ("\n## Auto gain on music (gated BS.1770-4, vs bypass; suggestion = current - mean of both files)\n");
 
-        for (const auto& setting : allSettings())
+        // Voicing 1 keeps its programme-noise curve, so 1.0 sessions stay bit for bit.
+        const Setting voicing2 { "v2", Voicing::doubleRange };
+        std::printf ("\n%10s %10s %10s %10s %10s\n", "City size", "current", "vocal", "mix", "suggested");
+        juce::String suggestedCurve;
+
+        for (size_t point = 0; point < citySizesForAutoGain.size(); ++point)
         {
-            if (setting.voicing == Voicing::original)
-                continue;   // voicing 1 keeps its programme-noise curve, so 1.0 sessions stay bit for bit
+            const auto citySize = citySizesForAutoGain[point];
+            const auto currentDb = AutoGain::gainDbFor (citySize, SoundSpec::voicing2AutoGainDb);
+            std::array<double, 2> differenceDb {};
 
-            const auto& candidate = SoundSpec::voicing2Candidates[setting.candidate];
-            std::printf ("\n### %s\n%10s %10s %10s %10s %10s\n", candidate.name, "City size", "current", "vocal", "mix", "suggested");
-            juce::String suggestedCurve;
+            for (size_t file = 0; file < sources.size(); ++file)
+                differenceDb[file] = LoudnessMeasurement::integratedLufs (process (sources[file].audio, voicing2, citySize))
+                                   - LoudnessMeasurement::integratedLufs (sources[file].audio);
 
-            for (size_t point = 0; point < citySizesForAutoGain.size(); ++point)
-            {
-                const auto citySize = citySizesForAutoGain[point];
-                const auto currentDb = AutoGain::gainDbFor (citySize, candidate.autoGainDb);
-                std::array<double, 2> differenceDb {};
-
-                for (size_t file = 0; file < sources.size(); ++file)
-                    differenceDb[file] = LoudnessMeasurement::integratedLufs (process (sources[file].audio, setting, citySize))
-                                       - LoudnessMeasurement::integratedLufs (sources[file].audio);
-
-                // City Size 0 must stay exactly 0 dB so it nulls against bypass.
-                const auto suggestedDb = point == 0 ? 0.0 : currentDb - (differenceDb[0] + differenceDb[1]) / 2.0;
-                std::printf ("%10.0f %+10.2f %+10.2f %+10.2f %+10.2f\n", citySize, currentDb, differenceDb[0], differenceDb[1], suggestedDb);
-                suggestedCurve << (point == 0 ? "" : ", ") << juce::String (suggestedDb, 2) << "f";
-            }
-
-            std::printf ("autoGainDb { %s }\n", suggestedCurve.toRawUTF8());
+            // City Size 0 must stay exactly 0 dB so it nulls against bypass.
+            const auto suggestedDb = point == 0 ? 0.0 : currentDb - (differenceDb[0] + differenceDb[1]) / 2.0;
+            std::printf ("%10.0f %+10.2f %+10.2f %+10.2f %+10.2f\n", citySize, currentDb, differenceDb[0], differenceDb[1], suggestedDb);
+            suggestedCurve << (point == 0 ? "" : ", ") << juce::String (suggestedDb, 2) << "f";
         }
+
+        std::printf ("voicing2AutoGainDb { %s }\n", suggestedCurve.toRawUTF8());
     }
 
     void printTruePeaks (const std::vector<Source>& sources)
@@ -247,7 +227,7 @@ namespace
         for (const auto& hot : hotInputs)
             std::printf (" %+12.2f", truePeakDbtp (hot));
 
-        for (const auto& setting : allSettings())
+        for (const auto& setting : allSettings)
         {
             std::printf ("\n%-16s", setting.name.toRawUTF8());
 
@@ -278,7 +258,7 @@ namespace
             std::printf ("\n### %s (dry stereo to mono: %+.2f dB)\n%-16s %6s %12s %-s\n", source.name.toRawUTF8(), dryLossDb,
                          "setting", "size", "vs dry (dB)", "worst band vs dry (its dry level below the loudest band); bands flagged at -3 dB or worse");
 
-            for (const auto& setting : allSettings())
+            for (const auto& setting : allSettings)
                 for (auto citySize : citySizesForMono)
                 {
                     const auto output = process (source.audio, setting, citySize);
@@ -331,7 +311,7 @@ namespace
             const auto targetLufs = LoudnessMeasurement::integratedLufs (source.audio);
             std::map<juce::String, juce::AudioBuffer<float>> renders { { "dry", source.audio } };
 
-            for (const auto& setting : allSettings())
+            for (const auto& setting : allSettings)
                 for (auto citySize : setting.voicing == Voicing::original ? std::vector { 50.0f, 100.0f }
                                                                           : std::vector (citySizesForRenders.begin(), citySizesForRenders.end()))
                 {
@@ -354,21 +334,17 @@ namespace
                              LoudnessMeasurement::integratedLufs (audio), truePeakDbtp (audio));
             }
 
-            // Sanity check: every candidate's 50 is voicing 1's 100, so once loudness-matched they should null.
-            for (const auto& setting : allSettings())
-                if (setting.voicing == Voicing::doubleRange)
-                {
-                    const auto& candidateAt50 = renders[setting.name + "-050"];
-                    const auto& voicing1At100 = renders["v1-100"];
-                    float residualPeak = 0.0f;
+            // Sanity check: voicing 2's 50 is voicing 1's 100, so once loudness-matched they should null.
+            const auto& voicing2At50 = renders["v2-050"];
+            const auto& voicing1At100 = renders["v1-100"];
+            float residualPeak = 0.0f;
 
-                    for (int channel = 0; channel < 2; ++channel)
-                        for (int i = 0; i < candidateAt50.getNumSamples(); ++i)
-                            residualPeak = std::max (residualPeak, std::abs (candidateAt50.getSample (channel, i) - voicing1At100.getSample (channel, i)));
+            for (int channel = 0; channel < 2; ++channel)
+                for (int i = 0; i < voicing2At50.getNumSamples(); ++i)
+                    residualPeak = std::max (residualPeak, std::abs (voicing2At50.getSample (channel, i) - voicing1At100.getSample (channel, i)));
 
-                    std::printf ("%s: %s at 50 against v1 at 100: residual %.1f dB below v1's peak\n", source.name.toRawUTF8(),
-                                 setting.name.toRawUTF8(), juce::Decibels::gainToDecibels (residualPeak / samplePeak (voicing1At100), -200.0f));
-                }
+            std::printf ("%s: v2 at 50 against v1 at 100: residual %.1f dB below v1's peak\n", source.name.toRawUTF8(),
+                         juce::Decibels::gainToDecibels (residualPeak / samplePeak (voicing1At100), -200.0f));
         }
 
         return true;

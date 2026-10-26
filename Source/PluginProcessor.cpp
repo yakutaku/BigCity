@@ -105,15 +105,6 @@ SoundTuning BigCityAudioProcessor::currentTuning() const
    #endif
 }
 
-Voicing BigCityAudioProcessor::currentVoicing() const
-{
-   #if BIGCITY_TUNING
-    if (const auto heard = tuningParameters.voicingOverride())
-        return *heard;
-   #endif
-
-    return voicing.load();
-}
 
 void BigCityAudioProcessor::prepareToPlay (double sampleRate, int)
 {
@@ -130,7 +121,7 @@ void BigCityAudioProcessor::prepareToPlay (double sampleRate, int)
     // Start at the current knob position so loading a session doesn't sweep up from 0.
     citySizeSmoothed.reset (sampleRate, SoundSpec::citySizeSmoothingSeconds);
     citySizeSmoothed.setCurrentAndTargetValue (citySizeValue->load());
-    applyCitySize (citySizeSmoothed.getCurrentValue(), currentVoicing(), tuning);
+    applyCitySize (citySizeSmoothed.getCurrentValue(), voicing.load(), tuning);
 }
 
 void BigCityAudioProcessor::releaseResources()
@@ -174,7 +165,7 @@ void BigCityAudioProcessor::renderBlock (juce::AudioBuffer<float>& buffer, bool 
     citySizeSmoothed.setTargetValue (citySizeValue->load());
 
     const auto tuning = currentTuning();
-    const auto voicingNow = currentVoicing();
+    const auto voicingNow = voicing.load();
     applyWetPathTuning (tuning);
 
     const auto numSamples = buffer.getNumSamples();
@@ -198,7 +189,7 @@ void BigCityAudioProcessor::applyCitySize (float citySizePercent, Voicing voicin
     gains.wet = juce::Decibels::decibelsToGain (settings.wetLevelDb, -std::numeric_limits<float>::infinity());
 
     // 0 dB gives a gain of exactly 1, so City Size 0 still nulls bit for bit.
-    const auto& autoGainCurve = voicingNow == Voicing::original ? SoundSpec::autoGainDb : tuning.voicing2.autoGainDb;
+    const auto& autoGainCurve = voicingNow == Voicing::original ? SoundSpec::autoGainDb : SoundSpec::voicing2AutoGainDb;
     gains.output = juce::Decibels::decibelsToGain (AutoGain::gainDbFor (citySizePercent, autoGainCurve));
 }
 

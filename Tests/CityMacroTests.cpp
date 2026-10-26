@@ -91,26 +91,10 @@ public:
             expectWithinAbsoluteError (CityMacro::map (150.0f, Voicing::original).airGainDb, 7.8f, tolerance);
         }
 
-        for (const auto& candidate : SoundSpec::voicing2Candidates)
-            testVoicing2 (candidate);
-
-        beginTest ("Voicing 2, Medium, at 75 is midway along the plan's curves: +8.74 dB air, +/-11.44 cents, wet -2.16 dB");
-        {
-            const auto settings = CityMacro::map (75.0f, Voicing::doubleRange, tuningWith (SoundSpec::voicing2Candidates[1]));
-            expectWithinAbsoluteError (settings.airGainDb, 8.74f, 0.005f);
-            expectWithinAbsoluteError (settings.detuneCents, 11.44f, 0.005f);
-            expectWithinAbsoluteError (settings.wetLevelDb, -2.16f, 0.005f);
-        }
+        testVoicing2();
     }
 
 private:
-    static SoundTuning tuningWith (const SoundSpec::Voicing2Candidate& candidate)
-    {
-        SoundTuning tuning;
-        tuning.voicing2 = candidate;
-        return tuning;
-    }
-
     static bool settingsMatchExactly (const CitySettings& a, const CitySettings& b)
     {
         return juce::exactlyEqual (a.airGainDb, b.airGainDb) && juce::exactlyEqual (a.airCornerHz, b.airCornerHz)
@@ -118,13 +102,12 @@ private:
             && juce::exactlyEqual (a.wetLevelDb, b.wetLevelDb);
     }
 
-    void testVoicing2 (const SoundSpec::Voicing2Candidate& candidate)
+    void testVoicing2()
     {
-        const juce::String name (candidate.name);
-        const auto tuning = tuningWith (candidate);
-        const auto voicing2At = [&] (float citySize) { return CityMacro::map (citySize, Voicing::doubleRange, tuning); };
+        using namespace SoundSpec;
+        const auto voicing2At = [] (float citySize) { return CityMacro::map (citySize, Voicing::doubleRange); };
 
-        beginTest ("Voicing 2, " + name + ": up to 50 it is voicing 1 at twice the position, bit for bit");
+        beginTest ("Voicing 2: up to 50 it is voicing 1 at twice the position, bit for bit");
         {
             for (int tenths = 0; tenths <= 500; ++tenths)
             {
@@ -136,16 +119,24 @@ private:
             expect (settingsMatchExactly (voicing2At (50.0f), CityMacro::map (100.0f, Voicing::original)), "50 isn't voicing 1's 100");
         }
 
-        beginTest ("Voicing 2, " + name + ": 100 reaches the candidate's values");
+        beginTest ("Voicing 2 at 75: +8.74 dB air, +/-11.44 cents, wet -2.16 dB");
+        {
+            const auto settings = voicing2At (75.0f);
+            expectWithinAbsoluteError (settings.airGainDb, 8.74f, 0.005f);
+            expectWithinAbsoluteError (settings.detuneCents, 11.44f, 0.005f);
+            expectWithinAbsoluteError (settings.wetLevelDb, -2.16f, 0.005f);
+        }
+
+        beginTest ("Voicing 2 at 100: +10 dB air, +/-11.5 cents, wet -2 dB");
         {
             const auto atMax = voicing2At (100.0f);
-            expectWithinAbsoluteError (atMax.airGainDb, candidate.airGainDbAtMax, 1.0e-4f);
-            expectWithinAbsoluteError (atMax.detuneCents, candidate.detuneCentsAtMax, 1.0e-4f);
-            expectWithinAbsoluteError (atMax.wetLevelDb, candidate.wetLevelDbAtMax, 1.0e-4f);
+            expectWithinAbsoluteError (atMax.airGainDb, voicing2AirGainDbAtMax, 1.0e-4f);
+            expectWithinAbsoluteError (atMax.detuneCents, voicing2DetuneCentsAtMax, 1.0e-4f);
+            expectWithinAbsoluteError (atMax.wetLevelDb, voicing2WetLevelDbAtMax, 1.0e-4f);
             expect (settingsMatchExactly (voicing2At (150.0f), atMax), "above 100 isn't clamped");
         }
 
-        beginTest ("Voicing 2, " + name + ": every element never turns down from 0 to 100");
+        beginTest ("Voicing 2: every element never turns down from 0 to 100");
         {
             for (int tenths = 1; tenths <= 1000; ++tenths)
             {
@@ -158,23 +149,20 @@ private:
             }
         }
 
-        beginTest ("Voicing 2, " + name + ": no corner at 50 for every element that keeps rising");
+        beginTest ("Voicing 2: no corner at 50");
         {
             constexpr float step = 0.05f;
             const auto below = voicing2At (50.0f - step), at = voicing2At (50.0f), above = voicing2At (50.0f + step);
 
-            const auto expectNoCorner = [&] (float before, float middle, float after, float top, const juce::String& element)
+            const auto expectNoCorner = [&] (float before, float middle, float after, const juce::String& element)
             {
-                if (top <= middle)
-                    return;   // held at its value from 50 on, so it levels off there
-
                 const auto slopeBelow = (middle - before) / step, slopeAbove = (after - middle) / step;
                 expectWithinAbsoluteError (slopeAbove, slopeBelow, 0.03f * slopeBelow, element + ": slope " + juce::String (slopeBelow) + " then " + juce::String (slopeAbove));
             };
 
-            expectNoCorner (below.airGainDb, at.airGainDb, above.airGainDb, candidate.airGainDbAtMax, "air");
-            expectNoCorner (below.detuneCents, at.detuneCents, above.detuneCents, candidate.detuneCentsAtMax, "detune");
-            expectNoCorner (below.wetLevelDb, at.wetLevelDb, above.wetLevelDb, candidate.wetLevelDbAtMax, "wet level");
+            expectNoCorner (below.airGainDb, at.airGainDb, above.airGainDb, "air");
+            expectNoCorner (below.detuneCents, at.detuneCents, above.detuneCents, "detune");
+            expectNoCorner (below.wetLevelDb, at.wetLevelDb, above.wetLevelDb, "wet level");
         }
     }
 };

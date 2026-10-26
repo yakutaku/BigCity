@@ -205,14 +205,13 @@ target_link_libraries(AutoGainMeasure
         juce::juce_recommended_warning_flags)
 
 # PRD §6 "Voicing 2" measurements on music: auto gain, true peak, mono compatibility and listening renders.
-# Always a tuning build, so it can switch voicing 2 candidates. A measuring tool, so it isn't a CTest test.
+# A measuring tool, so it isn't a CTest test.
 juce_add_console_app(VoicingMeasure
     PRODUCT_NAME "VoicingMeasure")
 
 target_sources(VoicingMeasure
     PRIVATE
         ${BIGCITY_SOURCES}
-        Source/TuningParameters.cpp
         Tests/VoicingMeasure.cpp)
 
 target_include_directories(VoicingMeasure
@@ -224,7 +223,7 @@ target_compile_definitions(VoicingMeasure
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
         JucePlugin_Name="BigCity"
-        BIGCITY_TUNING=1)
+        BIGCITY_TUNING=$<BOOL:${BIGCITY_TUNING}>)
 
 target_link_libraries(VoicingMeasure
     PRIVATE
