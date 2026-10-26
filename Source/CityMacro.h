@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SoundTuning.h"
+#include "Voicing.h"
 
 // What one City Size position means for each sound element.
 struct CitySettings
@@ -15,6 +16,7 @@ struct CitySettings
 namespace CityMacro
 {
     // Maps citySize (0–100, clamped) through the PRD §6 knob response to the curves, each scaled
-    // to the tuning's maximum.
-    CitySettings map (float citySizePercent, const SoundTuning& tuning = {});
+    // to the tuning's maximum. Voicing 2 plays those curves at twice the position up to 50, then
+    // carries each element on to the tuning's voicing 2 candidate at 100.
+    CitySettings map (float citySizePercent, Voicing voicing, const SoundTuning& tuning = {});
 }

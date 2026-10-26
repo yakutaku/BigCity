@@ -25,6 +25,20 @@ namespace ProcessorHarness
         processor.setBusesLayout (layout);
     }
 
+    // Picks the voicing the only way a host can: by restoring a saved state that names it.
+    inline void useVoicing (juce::AudioProcessor& processor, Voicing voicing)
+    {
+        juce::MemoryBlock state;
+        processor.getStateInformation (state);
+
+        auto xml = juce::AudioProcessor::getXmlFromBinary (state.getData(), (int) state.getSize());
+        xml->setAttribute ("voicing", (int) voicing);
+
+        juce::MemoryBlock edited;
+        juce::AudioProcessor::copyXmlToBinary (*xml, edited);
+        processor.setStateInformation (edited.getData(), (int) edited.getSize());
+    }
+
     struct BlockPosition
     {
         int index, startSample;

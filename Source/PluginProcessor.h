@@ -5,6 +5,7 @@
 #include "CityMacro.h"
 #include "MicroShifter.h"
 #include "SoundTuning.h"
+#include "Voicing.h"
 #include "WetDrive.h"
 #include "WetFilter.h"
 
@@ -62,14 +63,19 @@ private:
     };
 
     void renderChunk (juce::AudioBuffer<float>& buffer, int chunkStart, int chunkLength, ChunkGains gainsAtChunkStart);
-    void applyCitySize (float citySizePercent, const SoundTuning& tuning);
+    void applyCitySize (float citySizePercent, Voicing voicingNow, const SoundTuning& tuning);
     void applyWetPathTuning (const SoundTuning& tuning);
     SoundTuning currentTuning() const;
+    Voicing currentVoicing() const;
 
     juce::AudioProcessorValueTreeState parameters;
     juce::AudioParameterBool* bypassParameter = nullptr;
     juce::AudioParameterFloat* citySizeParameter = nullptr;
     std::atomic<float>* citySizeValue = nullptr;
+
+    // Set on the message thread when state is restored, read by the audio thread; mirrors the saved state.
+    std::atomic<Voicing> voicing { newestVoicing };
+    static_assert (std::atomic<Voicing>::is_always_lock_free);
 
    #if BIGCITY_TUNING
     TuningParameters::Reader tuningParameters { parameters };

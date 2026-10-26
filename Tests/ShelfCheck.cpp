@@ -94,7 +94,7 @@ namespace
 
 int main()
 {
-    const auto gainDb = CityMacro::map (SoundSpec::citySizeMaxPercent).airGainDb;
+    const auto gainDb = CityMacro::map (SoundSpec::citySizeMaxPercent, Voicing::original).airGainDb;
 
     for (auto q : { SoundSpec::airShelfQ, SoundSpec::airShelfAlternativeQ })
         printTable (q, gainDb);

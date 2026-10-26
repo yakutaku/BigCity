@@ -112,9 +112,10 @@ namespace LoudnessMeasurement
     }
 
     // Loudness through the plugin at this City Size minus the loudness of bypass, in dB.
-    inline double differenceFromBypassDb (float citySizePercent, int numChannels)
+    inline double differenceFromBypassDb (float citySizePercent, int numChannels, Voicing voicing)
     {
         BigCityAudioProcessor processor;
+        ProcessorHarness::useVoicing (processor, voicing);
         ProcessorHarness::useChannelCount (processor, numChannels);
         ProcessorHarness::setParameter (processor, "citySize", citySizePercent);
         processor.prepareToPlay (sampleRate, blockSize);

@@ -62,7 +62,32 @@ namespace SoundSpec
     // PRD §6 "Auto gain": output gain in dB at City Size 0, 10, 20 … 100, from Tests/AutoGainMeasure (10/13).
     // The first value must stay exactly 0 so City Size 0 nulls against bypass.
     constexpr float autoGainStepPercent = 10.0f;
-    constexpr std::array<float, 11> autoGainDb { 0.00f, -0.06f, -0.17f, -0.32f, -0.46f, -0.60f, -0.75f, -0.91f, -1.04f, -1.14f, -1.22f };
+    using AutoGainCurve = std::array<float, 11>;
+    constexpr AutoGainCurve autoGainDb { 0.00f, -0.06f, -0.17f, -0.32f, -0.46f, -0.60f, -0.75f, -0.91f, -1.04f, -1.14f, -1.22f };
+
+    // PRD §6 "Voicing 2": up to 50 it plays voicing 1's curves at twice the knob position, so 50 is
+    // voicing 1's 100; above 50 each element goes on to the candidate's value at 100.
+    struct Voicing2Candidate
+    {
+        const char* name;
+        float airGainDbAtMax;
+        float wetLevelDbAtMax;
+        float detuneCentsAtMax;
+        // PRD §6 "Voicing 2 auto gain". Not measured yet: voicing 1's curve at twice the position, then held.
+        AutoGainCurve autoGainDb;
+    };
+
+    // PRD §6 "Voicing 2" candidates, status Test until the listening pick. Gentle stays inside the D-07
+    // tuning ranges, Medium sits at their air and wet ceilings, and Literal double (2x air in dB, 2x wet
+    // amplitude) is a reference beyond them, for hearing where it breaks.
+    constexpr std::array voicing2Candidates {
+        Voicing2Candidate { "Gentle",         9.0f,  -2.5f, 11.0f, { 0.00f, -0.17f, -0.46f, -0.75f, -1.04f, -1.22f, -1.22f, -1.22f, -1.22f, -1.22f, -1.22f } },
+        Voicing2Candidate { "Medium",         10.0f, -2.0f, 11.5f, { 0.00f, -0.17f, -0.46f, -0.75f, -1.04f, -1.22f, -1.22f, -1.22f, -1.22f, -1.22f, -1.22f } },
+        Voicing2Candidate { "Literal double", 15.6f,  3.0f, 12.0f, { 0.00f, -0.17f, -0.46f, -0.75f, -1.04f, -1.22f, -1.22f, -1.22f, -1.22f, -1.22f, -1.22f } },
+    };
+
+    // PRD §6 "Voicing 2": the candidate shipping builds play until the pick (Medium, approved 10/26)
+    constexpr size_t voicing2DefaultCandidate = 1;
 
     // PRD §6 "Smoothing"
     constexpr double citySizeSmoothingSeconds = 0.030;

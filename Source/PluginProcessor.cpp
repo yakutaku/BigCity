@@ -9,6 +9,9 @@ namespace
     constexpr auto citySizeId = "citySize";
     constexpr auto bypassId = "bypass";
 
+    // Saved on the state's root, not as a parameter, so hosts never see it (PRD §6 "Voicing 2").
+    constexpr auto voicingProperty = "voicing";
+
     // Bumped only when a parameter's meaning changes, so hosts can migrate old sessions.
     constexpr int parameterVersion = 1;
 
@@ -24,6 +27,22 @@ namespace
 
     // JUCE reads a saved "nan" as NaN, which its range clamp passes straight through to the audio.
     // Such a parameter is dropped, so it resets to its default, as a parameter missing from the state does.
+    // Sessions saved by 1.0 have no voicing, so they keep voicing 1. A value this build doesn't know,
+    // from a damaged file or a later version, gets the newest voicing it does know.
+    Voicing voicingFromSaved (const juce::var& saved)
+    {
+        if (saved.isVoid())
+            return Voicing::original;
+
+        const auto text = saved.toString().trim();
+
+        for (auto known : { Voicing::original, Voicing::doubleRange })
+            if (text == juce::String ((int) known))
+                return known;
+
+        return newestVoicing;
+    }
+
     void removeNonFiniteValues (juce::XmlElement& state)
     {
         constexpr auto valueAttribute = "value";   // where AudioProcessorValueTreeState saves each value
@@ -48,6 +67,8 @@ BigCityAudioProcessor::BigCityAudioProcessor()
     citySizeParameter = dynamic_cast<juce::AudioParameterFloat*> (parameters.getParameter (citySizeId));
     citySizeValue = parameters.getRawParameterValue (citySizeId);
     jassert (bypassParameter != nullptr && citySizeParameter != nullptr && citySizeValue != nullptr);
+
+    parameters.state.setProperty (voicingProperty, (int) newestVoicing, nullptr);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout BigCityAudioProcessor::createParameterLayout()
@@ -84,6 +105,16 @@ SoundTuning BigCityAudioProcessor::currentTuning() const
    #endif
 }
 
+Voicing BigCityAudioProcessor::currentVoicing() const
+{
+   #if BIGCITY_TUNING
+    if (const auto heard = tuningParameters.voicingOverride())
+        return *heard;
+   #endif
+
+    return voicing.load();
+}
+
 void BigCityAudioProcessor::prepareToPlay (double sampleRate, int)
 {
     // Set before prepare, which starts the wet-path glides at these values rather than sweeping to them.
@@ -99,7 +130,7 @@ void BigCityAudioProcessor::prepareToPlay (double sampleRate, int)
     // Start at the current knob position so loading a session doesn't sweep up from 0.
     citySizeSmoothed.reset (sampleRate, SoundSpec::citySizeSmoothingSeconds);
     citySizeSmoothed.setCurrentAndTargetValue (citySizeValue->load());
-    applyCitySize (citySizeSmoothed.getCurrentValue(), tuning);
+    applyCitySize (citySizeSmoothed.getCurrentValue(), currentVoicing(), tuning);
 }
 
 void BigCityAudioProcessor::releaseResources()
@@ -143,6 +174,7 @@ void BigCityAudioProcessor::renderBlock (juce::AudioBuffer<float>& buffer, bool 
     citySizeSmoothed.setTargetValue (citySizeValue->load());
 
     const auto tuning = currentTuning();
+    const auto voicingNow = currentVoicing();
     applyWetPathTuning (tuning);
 
     const auto numSamples = buffer.getNumSamples();
@@ -152,21 +184,22 @@ void BigCityAudioProcessor::renderBlock (juce::AudioBuffer<float>& buffer, bool 
         const auto chunkLength = std::min (SoundSpec::controlIntervalSamples, numSamples - chunkStart);
         const auto gainsAtChunkStart = gains;
 
-        applyCitySize (citySizeSmoothed.skip (chunkLength), tuning);
+        applyCitySize (citySizeSmoothed.skip (chunkLength), voicingNow, tuning);
         wetFilter.advance (chunkLength);
         renderChunk (buffer, chunkStart, chunkLength, gainsAtChunkStart);
     }
 }
 
-void BigCityAudioProcessor::applyCitySize (float citySizePercent, const SoundTuning& tuning)
+void BigCityAudioProcessor::applyCitySize (float citySizePercent, Voicing voicingNow, const SoundTuning& tuning)
 {
-    const auto settings = CityMacro::map (citySizePercent, tuning);
+    const auto settings = CityMacro::map (citySizePercent, voicingNow, tuning);
     airShelf.update (settings.airGainDb, settings.airCornerHz, settings.airShelfQ);
     microShifter.setDetuneCents (settings.detuneCents);
     gains.wet = juce::Decibels::decibelsToGain (settings.wetLevelDb, -std::numeric_limits<float>::infinity());
 
     // 0 dB gives a gain of exactly 1, so City Size 0 still nulls bit for bit.
-    gains.output = juce::Decibels::decibelsToGain (AutoGain::gainDbFor (citySizePercent));
+    const auto& autoGainCurve = voicingNow == Voicing::original ? SoundSpec::autoGainDb : tuning.voicing2.autoGainDb;
+    gains.output = juce::Decibels::decibelsToGain (AutoGain::gainDbFor (citySizePercent, autoGainCurve));
 }
 
 void BigCityAudioProcessor::applyWetPathTuning (const SoundTuning& tuning)
@@ -269,6 +302,11 @@ void BigCityAudioProcessor::setStateInformation (const void* data, int sizeInByt
 
     removeNonFiniteValues (*xml);
     parameters.replaceState (juce::ValueTree::fromXml (*xml));
+
+    // Written back as a number so the next save stores what's playing.
+    const auto restoredVoicing = voicingFromSaved (parameters.state.getProperty (voicingProperty));
+    parameters.state.setProperty (voicingProperty, (int) restoredVoicing, nullptr);
+    voicing.store (restoredVoicing);
 }
 
 juce::AudioProcessorParameter* BigCityAudioProcessor::getBypassParameter() const

@@ -3,6 +3,7 @@
 #include "SoundSpec.h"
 
 #include <array>
+#include <bit>
 #include <cmath>
 #include <optional>
 
@@ -141,6 +142,46 @@ namespace
     {
         return editedState (state, [&] (juce::XmlElement& xml) { xml.getChildByAttribute ("id", parameterId)->setAttribute ("value", savedValue); });
     }
+
+    // 64-bit FNV-1a over the output's sample bits: any change to any sample changes it.
+    juce::uint64 fingerprint (const juce::AudioBuffer<float>& audio)
+    {
+        juce::uint64 hash = 14695981039346656037ull;
+
+        for (int channel = 0; channel < audio.getNumChannels(); ++channel)
+            for (int i = 0; i < audio.getNumSamples(); ++i)
+            {
+                const auto bits = std::bit_cast<juce::uint32> (audio.getSample (channel, i));
+
+                for (int byte = 0; byte < 4; ++byte)
+                    hash = (hash ^ ((bits >> (8 * byte)) & 0xffu)) * 1099511628211ull;
+            }
+
+        return hash;
+    }
+
+    // The 1.0 reference pass: two seconds of noise at 48 kHz from the restored position (37.5), then
+    // automation jumps to 100, 0 and 50, then a sweep from 0 to 100.
+    juce::uint64 referencePassFingerprint (BigCityAudioProcessor& processor, int numChannels)
+    {
+        constexpr double sampleRate = 48000.0;
+        constexpr int blockSize = 441;
+
+        useChannelCount (processor, numChannels);
+        processor.prepareToPlay (sampleRate, blockSize);
+
+        auto audio = makeNoise (numChannels, 2 * (int) sampleRate);
+        render (processor, audio, blockSize, [&] (BlockPosition block)
+        {
+            if (block.index == 40)  setParameter (processor, "citySize", 100.0f);
+            if (block.index == 80)  setParameter (processor, "citySize", 0.0f);
+            if (block.index == 120) setParameter (processor, "citySize", 50.0f);
+            if (block.index >= 160) setParameter (processor, "citySize", std::min (100.0f, 2.0f * (float) (block.index - 160)));
+            return false;
+        });
+
+        return fingerprint (audio);
+    }
 }
 
 class ProcessorTests final : public juce::UnitTest
@@ -150,8 +191,12 @@ public:
 
     void runTest() override
     {
-        testNullAtZero();
-        testNullAfterTurningDownToZero();
+        for (auto voicing : { Voicing::original, Voicing::doubleRange })
+        {
+            testNullAtZero (voicing);
+            testNullAfterTurningDownToZero (voicing);
+        }
+
         testBypassIsClickFree();
         testBypassPathsShareOneCrossfade();
         testHotInputIsNeverHardClipped();
@@ -160,15 +205,24 @@ public:
         testMissingParameterFallsBackToDefault();
         testOutOfRangeValuesAreClamped();
         testNonNumericValuesNeverReachTheAudio();
+        testOneZeroStatePlaysExactlyAsOneZero();
+        testNewInstanceIsVoicing2();
+        testVoicingRoundTrips();
+        testInvalidVoicingIsHandled();
     }
 
 private:
     static constexpr double nullLimitDb = -100.0;   // PRD §4 "Transparent at 0"
     static constexpr int oddBlockSize = 441;        // not a multiple of the 32-sample control interval
 
-    void testNullAtZero()
+    static juce::String nameOf (Voicing voicing)
     {
-        beginTest ("At 0 the output nulls against the input (stereo and mono, 44.1–192 kHz, awkward block sizes)");
+        return "voicing " + juce::String ((int) voicing);
+    }
+
+    void testNullAtZero (Voicing voicing)
+    {
+        beginTest ("At 0 the output nulls against the input, " + nameOf (voicing) + " (stereo and mono, 44.1–192 kHz, awkward block sizes)");
 
         for (auto sampleRate : sampleRatesHz)
             for (auto numChannels : { 1, 2 })
@@ -179,6 +233,7 @@ private:
                 for (const auto& blockSizes : awkwardBlockSizes())
                 {
                     BigCityAudioProcessor processor;
+                    useVoicing (processor, voicing);
                     useChannelCount (processor, numChannels);
                     setParameter (processor, "citySize", 0.0f);
                     processor.prepareToPlay (sampleRate, blockSizes.largest);
@@ -196,9 +251,9 @@ private:
             }
     }
 
-    void testNullAfterTurningDownToZero()
+    void testNullAfterTurningDownToZero (Voicing voicing)
     {
-        beginTest ("Turned down from 50 to 0, the output nulls once smoothing has settled");
+        beginTest ("Turned down from 50 to 0, the output nulls once smoothing has settled, " + nameOf (voicing));
 
         constexpr double sampleRate = 48000.0;
         constexpr int settleSamples = 9600;   // 200 ms: well past the 30 ms smoothing
@@ -206,6 +261,7 @@ private:
         for (auto numChannels : { 1, 2 })
         {
             BigCityAudioProcessor processor;
+            useVoicing (processor, voicing);
             useChannelCount (processor, numChannels);
             setParameter (processor, "citySize", 50.0f);
             processor.prepareToPlay (sampleRate, oddBlockSize);
@@ -506,6 +562,116 @@ private:
                 expect (processor.getBypassParameter()->getValue() < 0.5f, label + ": bypass not reset to its default (off)");
             }
         }
+    }
+
+    // A real state saved by BigCity 1.0.0 (City size 37.5, bypass off): it has no voicing.
+    static juce::MemoryBlock oneZeroState()
+    {
+        juce::MemoryBlock state;
+        state.loadFromHexString ("564332217d0000003c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d225554462d38223f3e20"
+                                 "3c426967436974793e3c504152414d2069643d22627970617373222076616c75653d22302e30222f3e3c504152414d"
+                                 "2069643d226369747953697a65222076616c75653d2233372e35222f3e3c2f426967436974793e00");
+        return state;
+    }
+
+    static juce::String savedVoicing (juce::AudioProcessor& processor)
+    {
+        const auto state = stateOf (processor);
+        return juce::AudioProcessor::getXmlFromBinary (state.getData(), (int) state.getSize())->getStringAttribute ("voicing", "(none)");
+    }
+
+    void testOneZeroStatePlaysExactlyAsOneZero()
+    {
+        beginTest ("A state saved by 1.0 restores as voicing 1 and plays bit for bit what 1.0 played");
+
+        // referencePassFingerprint run by the 1.0.0 code (Source/ unchanged since the v1.0.0 tag) on
+        // 2026-10-26, natively on arm64 and under Rosetta on x86_64. The two differ because floating-point
+        // contraction differs between the architectures, not because the sound does.
+       #if JUCE_ARM
+        constexpr juce::uint64 oneZeroMono = 0xf110fbdd25ad7f7full, oneZeroStereo = 0x637b968682885b2aull;
+       #else
+        constexpr juce::uint64 oneZeroMono = 0xbf6efee2ef994106ull, oneZeroStereo = 0xcbd9690d77aaf796ull;
+       #endif
+
+        for (const auto& [numChannels, expected] : { std::pair { 1, oneZeroMono }, std::pair { 2, oneZeroStereo } })
+        {
+            BigCityAudioProcessor processor;
+            restore (processor, oneZeroState());
+            expectEquals (savedVoicing (processor), juce::String ("1"));
+
+            // A tuning build's sliders hold the double-precision sound values as floats, so it never
+            // matched a shipping build bit for bit. The guarantee is for shipping builds.
+           #if ! BIGCITY_TUNING
+            expect (referencePassFingerprint (processor, numChannels) == expected, juce::String (numChannels) + " ch output differs from 1.0");
+           #else
+            juce::ignoreUnused (expected);
+           #endif
+        }
+    }
+
+    void testNewInstanceIsVoicing2()
+    {
+        beginTest ("A new instance plays and saves voicing 2");
+
+        BigCityAudioProcessor fresh;
+        expectEquals (savedVoicing (fresh), juce::String ("2"));
+
+        BigCityAudioProcessor original;
+        restore (original, oneZeroState());
+        BigCityAudioProcessor doubleRange;
+        restore (doubleRange, oneZeroState());
+        useVoicing (doubleRange, Voicing::doubleRange);
+        expect (referencePassFingerprint (original, 2) != referencePassFingerprint (doubleRange, 2), "voicing 2 sounds the same as voicing 1");
+    }
+
+    void testVoicingRoundTrips()
+    {
+        beginTest ("Save and restore keep the voicing, whichever it is");
+
+        for (auto voicing : { Voicing::original, Voicing::doubleRange })
+        {
+            BigCityAudioProcessor saved;
+            useVoicing (saved, voicing);
+
+            BigCityAudioProcessor restored;
+            useVoicing (restored, voicing == Voicing::original ? Voicing::doubleRange : Voicing::original);
+            restore (restored, stateOf (saved));
+            expectEquals (savedVoicing (restored), juce::String ((int) voicing));
+
+            BigCityAudioProcessor restoredAgain;
+            restore (restoredAgain, stateOf (restored));
+            expectEquals (savedVoicing (restoredAgain), juce::String ((int) voicing), "second round trip");
+        }
+
+        BigCityAudioProcessor processor;
+        useVoicing (processor, Voicing::original);
+        restore (processor, juce::MemoryBlock (8));
+        expectEquals (savedVoicing (processor), juce::String ("1"), "unreadable state changed the voicing");
+    }
+
+    // CLAUDE.md "Handle invalid states at the boundary (text entry, state restore)".
+    void testInvalidVoicingIsHandled()
+    {
+        beginTest ("A missing voicing is voicing 1; one this build doesn't know is the newest it does");
+
+        BigCityAudioProcessor source;
+        const auto valid = stateOf (source);
+
+        const std::vector<std::pair<juce::String, juce::String>> savedValues {
+            { " 1 ", "1" }, { "2", "2" }, { "3", "2" }, { "0", "2" }, { "-1", "2" }, { "1.5", "2" },
+            { "abc", "2" }, { "", "2" }, { "nan", "2" },
+        };
+
+        for (const auto& [savedValue, expected] : savedValues)
+        {
+            BigCityAudioProcessor processor;
+            restore (processor, editedState (valid, [&] (juce::XmlElement& xml) { xml.setAttribute ("voicing", savedValue); }));
+            expectEquals (savedVoicing (processor), expected, "\"" + savedValue + "\"");
+        }
+
+        BigCityAudioProcessor processor;
+        restore (processor, editedState (valid, [] (juce::XmlElement& xml) { xml.removeAttribute ("voicing"); }));
+        expectEquals (savedVoicing (processor), juce::String ("1"), "missing");
     }
 };
 
