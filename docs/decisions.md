@@ -237,3 +237,15 @@ Each hard call, with its options, reasoning and evidence. This is the source for
 - **Not chosen:** B (A plus up to +15% at 100) and C (+25% everywhere). All three were rendered on the beta loop at 25 / 50 / 75 / 100 with `CpuBenchmark --render` and compared by ear.
 - **Peaks:** no output stage in v1.0. Overs above 0 dBFS are fine in a float host; the rules are no internal hard clipping, no NaN or inf, and an exact null at 0. A ceiling and an auto gain recalibration on music are on the v1.1 backlog.
 - **PRD:** §6 "Knob response", "Peaks above 0 dBFS" and "Voicing change"; §5 v1.1 backlog.
+
+## D-31 · Voicing 2: the knob does twice as much, and 1.0 sessions keep their sound (v1.1, 10/26)
+- **Feedback:** beta round 3 still found it too subtle: "can't tell what it's doing even at 100", on vocals.
+- **Decision:** a second voicing. Up to 50 it plays voicing 1 at twice the position, so 50 is the old 100; above 50, air and shimmer go further while detune stays near 11 cents (D-07 capped it where it starts to warble).
+- **Compatibility:** the voicing is saved in the plugin state, not as a parameter (IDs are frozen). State without one, as 1.0 saved it, plays voicing 1. A test restores a real 1.0 state blob and checks the output bit for bit against a fingerprint of the 1.0.0 code.
+- **Options:** three candidates at 100, all with 50 = the old 100: Gentle (+9.0 dB air, −2.5 dB wet, ±11.0 cents), inside the D-07 ranges; Medium (+10.0, −2.0, ±11.5), at their air and wet ceilings; Literal double (+15.6, +3.0, ±12.0), beyond them as a reference for where it breaks.
+- **Evidence (10/26, `Tests/VoicingMeasure` on a dry vocal and a dry mix):**
+  - Auto gain recalibrated on music for voicing 2, the mean of both files; each file is left up to ±0.55 dB off at 100 for Medium.
+  - True peak at 100, input at 0 dBFS sample peak: vocal +3.3 / +3.6 / +4.1 dBTP (Gentle / Medium / Literal double) against +3.8 for voicing 1; on the mix every candidate stays below 0 dBTP (voicing 1 +0.4, dry +0.2).
+  - Mono sum: within 0.33 dB of the dry file's own change for every candidate except Literal double on the vocal (0.64 dB). No notches of 3 dB or more in any band that carries signal.
+- **Pending:** the pick, by ear from loudness-matched renders at 25 / 50 / 75 / 100. Medium plays until then.
+- **PRD:** §6 "Voicing", "Voicing 2" and "Voicing 2 auto gain"; §5 v1.1 backlog.
