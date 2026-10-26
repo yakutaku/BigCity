@@ -204,6 +204,37 @@ target_link_libraries(AutoGainMeasure
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)
 
+# PRD §6 "Voicing 2" measurements on music: auto gain, true peak, mono compatibility and listening renders.
+# Always a tuning build, so it can switch voicing 2 candidates. A measuring tool, so it isn't a CTest test.
+juce_add_console_app(VoicingMeasure
+    PRODUCT_NAME "VoicingMeasure")
+
+target_sources(VoicingMeasure
+    PRIVATE
+        ${BIGCITY_SOURCES}
+        Source/TuningParameters.cpp
+        Tests/VoicingMeasure.cpp)
+
+target_include_directories(VoicingMeasure
+    PRIVATE
+        Source)
+
+target_compile_definitions(VoicingMeasure
+    PRIVATE
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+        JucePlugin_Name="BigCity"
+        BIGCITY_TUNING=1)
+
+target_link_libraries(VoicingMeasure
+    PRIVATE
+        BigCityAssets
+        juce::juce_audio_utils
+        juce::juce_dsp
+    PUBLIC
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags)
+
 # CPU benchmark: hosts the installed BigCity.vst3 many times on one real-time thread and reports the load,
 # with or without an editor open. A measuring tool, so it isn't a CTest test.
 juce_add_console_app(CpuBenchmark

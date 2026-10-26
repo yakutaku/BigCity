@@ -81,34 +81,86 @@ namespace LoudnessMeasurement
         return noise;
     }
 
+    // ITU-R BS.1770-4 Tables 1 and 2: the head-effect shelf, then the RLB high-pass, both specified at 48 kHz.
+    inline std::vector<float> kWeighted (const juce::AudioBuffer<float>& audio, int channel)
+    {
+        constexpr BiquadCoefficients headShelf { 1.53512485958697, -2.69169618940638, 1.19839281085285, -1.69065929318241, 0.73248077421585 };
+        constexpr BiquadCoefficients rlbHighPass { 1.0, -2.0, 1.0, -1.99004745483398, 0.99007225036621 };
+
+        BiquadState shelfState, highPassState;
+        std::vector<float> weighted ((size_t) audio.getNumSamples());
+
+        for (int i = 0; i < audio.getNumSamples(); ++i)
+            weighted[(size_t) i] = highPassState.process (rlbHighPass, shelfState.process (headShelf, audio.getSample (channel, i)));
+
+        return weighted;
+    }
+
+    // BS.1770-4: loudness from the sum of the channels' mean squares (left and right both weigh 1.0).
+    constexpr double loudnessOffsetDb = -0.691;
+
     // ITU-R BS.1770-4 loudness at 48 kHz, in LUFS. Ungated: on steady noise neither gate removes anything.
     inline double kWeightedLufs (const juce::AudioBuffer<float>& audio, int fromSample)
     {
-        // BS.1770-4 Tables 1 and 2: the head-effect shelf, then the RLB high-pass, both specified at 48 kHz.
-        constexpr BiquadCoefficients headShelf { 1.53512485958697, -2.69169618940638, 1.19839281085285, -1.69065929318241, 0.73248077421585 };
-        constexpr BiquadCoefficients rlbHighPass { 1.0, -2.0, 1.0, -1.99004745483398, 0.99007225036621 };
-        constexpr double loudnessOffsetDb = -0.691;
-
         double weightedPowerSum = 0.0;
 
         for (int channel = 0; channel < audio.getNumChannels(); ++channel)
         {
-            BiquadState shelfState, highPassState;
+            const auto weighted = kWeighted (audio, channel);
             double sumOfSquares = 0.0;
 
-            for (int i = 0; i < audio.getNumSamples(); ++i)
-            {
-                const auto weighted = highPassState.process (rlbHighPass, shelfState.process (headShelf, audio.getSample (channel, i)));
+            for (auto i = (size_t) fromSample; i < weighted.size(); ++i)
+                sumOfSquares += (double) weighted[i] * weighted[i];
 
-                if (i >= fromSample)
-                    sumOfSquares += (double) weighted * weighted;
-            }
-
-            // Left and right both weigh 1.0 in BS.1770.
             weightedPowerSum += sumOfSquares / (audio.getNumSamples() - fromSample);
         }
 
         return loudnessOffsetDb + 10.0 * std::log10 (weightedPowerSum);
+    }
+
+    // ITU-R BS.1770-4 integrated loudness at 48 kHz, in LUFS: gated, as music with pauses needs.
+    // 400 ms blocks every 100 ms; an absolute gate at -70 LUFS, then a relative gate 10 LU below.
+    inline double integratedLufs (const juce::AudioBuffer<float>& audio)
+    {
+        constexpr int blockSamples = (int) (0.4 * sampleRate), hopSamples = (int) (0.1 * sampleRate);
+        constexpr double absoluteGateLufs = -70.0, relativeGateLu = -10.0;
+
+        std::vector<std::vector<float>> weighted;
+
+        for (int channel = 0; channel < audio.getNumChannels(); ++channel)
+            weighted.push_back (kWeighted (audio, channel));
+
+        std::vector<double> blockPowers;
+
+        for (int start = 0; start + blockSamples <= audio.getNumSamples(); start += hopSamples)
+        {
+            double power = 0.0;
+
+            for (const auto& channel : weighted)
+                for (int i = start; i < start + blockSamples; ++i)
+                    power += (double) channel[(size_t) i] * channel[(size_t) i] / blockSamples;
+
+            blockPowers.push_back (power);
+        }
+
+        const auto lufsOf = [] (double power) { return loudnessOffsetDb + 10.0 * std::log10 (power); };
+        const auto gatedMeanPower = [&] (double gateLufs)
+        {
+            double sum = 0.0;
+            int count = 0;
+
+            for (auto power : blockPowers)
+                if (lufsOf (power) > gateLufs)
+                {
+                    sum += power;
+                    ++count;
+                }
+
+            return count > 0 ? sum / count : 0.0;
+        };
+
+        const auto relativeGateLufs = lufsOf (gatedMeanPower (absoluteGateLufs)) + relativeGateLu;
+        return lufsOf (gatedMeanPower (std::max (absoluteGateLufs, relativeGateLufs)));
     }
 
     // Loudness through the plugin at this City Size minus the loudness of bypass, in dB.

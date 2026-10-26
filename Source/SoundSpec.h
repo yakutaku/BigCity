@@ -73,7 +73,7 @@ namespace SoundSpec
         float airGainDbAtMax;
         float wetLevelDbAtMax;
         float detuneCentsAtMax;
-        // PRD §6 "Voicing 2 auto gain". Not measured yet: voicing 1's curve at twice the position, then held.
+        // PRD §6 "Voicing 2 auto gain": measured on the dry vocal and dry mix with Tests/VoicingMeasure (10/26)
         AutoGainCurve autoGainDb;
     };
 
@@ -81,9 +81,9 @@ namespace SoundSpec
     // tuning ranges, Medium sits at their air and wet ceilings, and Literal double (2x air in dB, 2x wet
     // amplitude) is a reference beyond them, for hearing where it breaks.
     constexpr std::array voicing2Candidates {
-        Voicing2Candidate { "Gentle",         9.0f,  -2.5f, 11.0f, { 0.00f, -0.17f, -0.46f, -0.75f, -1.04f, -1.22f, -1.22f, -1.22f, -1.22f, -1.22f, -1.22f } },
-        Voicing2Candidate { "Medium",         10.0f, -2.0f, 11.5f, { 0.00f, -0.17f, -0.46f, -0.75f, -1.04f, -1.22f, -1.22f, -1.22f, -1.22f, -1.22f, -1.22f } },
-        Voicing2Candidate { "Literal double", 15.6f,  3.0f, 12.0f, { 0.00f, -0.17f, -0.46f, -0.75f, -1.04f, -1.22f, -1.22f, -1.22f, -1.22f, -1.22f, -1.22f } },
+        Voicing2Candidate { "Gentle",         9.0f,  -2.5f, 11.0f, { 0.00f, -0.45f, -0.99f, -1.43f, -1.85f, -2.11f, -2.23f, -2.31f, -2.36f, -2.41f, -2.45f } },
+        Voicing2Candidate { "Medium",         10.0f, -2.0f, 11.5f, { 0.00f, -0.45f, -0.99f, -1.43f, -1.85f, -2.11f, -2.23f, -2.36f, -2.51f, -2.64f, -2.77f } },
+        Voicing2Candidate { "Literal double", 15.6f,  3.0f, 12.0f, { 0.00f, -0.45f, -0.99f, -1.43f, -1.85f, -2.11f, -2.32f, -2.74f, -3.39f, -4.31f, -5.64f } },
     };
 
     // PRD §6 "Voicing 2": the candidate shipping builds play until the pick (Medium, approved 10/26)
