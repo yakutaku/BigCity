@@ -1,5 +1,6 @@
 // PRD §6 "Shelf response check (Day 3)": prints the air shelf's response at City Size 100 for
-// 44.1, 48 and 96 kHz, at Q 0.5 and Q 0.707, and flags any spread over 0.5 dB below 16 kHz.
+// 44.1, 48 and 96 kHz, at Q 0.5 and Q 0.707, and flags any spread over 0.5 dB below 16 kHz. It checks
+// each voicing's maximum air, since voicing 2 goes higher (PRD §6 "Voicing 2").
 // A flag is a finding to discuss, not a failure, so this always exits 0.
 
 #include "AirShelf.h"
@@ -94,15 +95,19 @@ namespace
 
 int main()
 {
-    const auto gainDb = CityMacro::map (SoundSpec::citySizeMaxPercent, Voicing::original).airGainDb;
+    for (auto voicing : { Voicing::original, Voicing::doubleRange })
+    {
+        const auto gainDb = CityMacro::map (SoundSpec::citySizeMaxPercent, voicing).airGainDb;
+        std::printf ("\n=== Voicing %d at City Size 100 ===\n", (int) voicing);
 
-    for (auto q : { SoundSpec::airShelfQ, SoundSpec::airShelfAlternativeQ })
-        printTable (q, gainDb);
+        for (auto q : { SoundSpec::airShelfQ, SoundSpec::airShelfAlternativeQ })
+            printTable (q, gainDb);
 
-    std::printf ("\n");
+        std::printf ("\n");
 
-    for (auto q : { SoundSpec::airShelfQ, SoundSpec::airShelfAlternativeQ })
-        reportWorstSpread (q, gainDb);
+        for (auto q : { SoundSpec::airShelfQ, SoundSpec::airShelfAlternativeQ })
+            reportWorstSpread (q, gainDb);
+    }
 
     return 0;
 }
