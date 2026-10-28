@@ -64,6 +64,7 @@ BigCity does one job, costs little CPU, and needs no learning.
 - Optional output ceiling or soft clip, so a hot input doesn't leave the plugin above 0 dBFS (§6 "Peaks above 0 dBFS"; v1.0 has none, by decision on 10/13)
 - Recalibrate auto gain on music-like material. The IEC programme noise has less top end than modern mixes, so on the 10/13 beta loop every City Size read 0.2–1.2 LU louder than bypass. *Done for voicing 2 (§6 "Voicing 2 auto gain", 10/26). Voicing 1 keeps its curve so 1.0 sessions are unchanged.*
 - *Optional, not a priority:* 75–100 feels slightly flat: the knob response's bend slope is only 0.2 near 100 (§6 "Knob response"). Try a bend of 0.6, or a small lift at the top end (Ableton check, 10/13). A round 2 beta tester likes that 100 stays subtle (10/16, `docs/beta-protocol.md`).
+- *Considered and declined:* separate EQ and width knobs (beta round 3). It breaks the one-knob principle (§1).
 
 ## 6. Sound spec
 
