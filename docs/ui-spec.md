@@ -30,8 +30,8 @@ All coordinates are in points, relative to the window's top-left. Assets are exp
 | 2 | Skyline | Crossfade of two `skyline_tod_*.png` keyframes + lit windows | 240, 104, 336, 280 | Value or bypass changes |
 | 2b | Water shimmer | Code: glint highlights and sparkles on the water (see "Water shimmer"), inside the skyline's normal look | Water rows 59–80: 240, 281, 336, 66 | 8 fps while City size > 0, not bypassed, the editor showing and Reduce motion off |
 | 3 | `screen_overlay.png` | Static image: scanlines, glare, glass scratches | 240, 104, 336, 280 (corner radius 14) | Never |
-| 4 | `knob_base.png` | Static image: ticks, arc, cast shadow, skirt and face lighting | 24, 136, 192, 192 (the knob's origin minus 8) | Never (cached with the panel behind it as one image) |
-| 5 | `knob_rotor.png` | Rotated image: knurl, grime, rim wear, face wear. **No pointer** (D-25) | Same as `knob_base`; pivot at (96, 96) in the image, which is (120, 232) in the window | Value changes |
+| 4 | `knob_base.png` | Static image: ticks, arc, cast shadow, skirt and face lighting, rim highlight (D-32) | 24, 136, 192, 192 (the knob's origin minus 8) | Never (cached with the panel behind it as one image) |
+| 5 | `knob_rotor.png` | Rotated image: knurl, grime, rim wear, face wear. **No pointer** (D-25) and no rim highlight (D-32) | Same as `knob_base`; pivot at (96, 96) in the image, which is (120, 232) in the window | Value changes |
 | 5b | Knob pointer | Code: a vector shape rotated with the rotor (see "Knob") | | Value changes |
 | 6 | Knob overlay | Code: the cap circle, an ellipse at 32, 32, 112, 112 relative to the knob origin (32, 144) | | Hover and press |
 | 7 | Readout digits | Code: 7-segment paths (see below), drawn in the LCD at 68, 332, 104, 40 | | Value changes |

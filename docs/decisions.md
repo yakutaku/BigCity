@@ -252,3 +252,10 @@ Each hard call, with its options, reasoning and evidence. This is the source for
 - **Shelf check:** at +10 dB the air shelf's sample-rate spread reaches 1.02 dB (Q 0.707, 14.6 kHz), against 0.77 dB for voicing 1. The matched shelf on the backlog covers both.
 - **CPU (M4, 30 instances, 48 kHz / 128, sweeping, 3 runs each against the released 1.0.0 binary):** mean audio-thread load 27.2–27.3% against 26.9–27.0% after a warm-up run, p99 within 0.2 points, 0 overruns.
 - **PRD:** §6 "Voicing", "Voicing 2" and "Voicing 2 auto gain"; §5 v1.1 backlog.
+
+## D-32 · UI realism polish: the knob's highlight stays still (v1.1, 10/28)
+- **Feedback:** beta round 3 (vaporrer) suggested more realism: text effects, knob highlights that don't rotate, and screw shading.
+- **Decision:** re-export five @2x images from Figma. The knob's rim highlight moves from `knob_rotor.png` to the static `knob_base.png`, so the light stays put while the knob turns. No code changes.
+- **Assets:** `panel.png` (1536×832), `knob_base.png` and `knob_rotor.png` (384×384), `switch_fx_on.png` and `switch_bypassed.png` (272×224). Each keeps the pixel size of the file it replaces, so `UiSpec.h` is unchanged.
+- **Checked (pixel diff against the 1.0 images):** the panel changes only at the four screws and the header and CITY SIZE label text; the switches only in their label area; the knob images only within the knob.
+- **PRD:** §5 v1.1 backlog. ui-spec layers 4 and 5.
