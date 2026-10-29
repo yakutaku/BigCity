@@ -33,7 +33,7 @@
 |---|---|---|---|---|---|---|
 | Round 1, before launch (10/10–11, beta testers, summary) | Not recorded | Not recorded | Not recorded. Effect too subtle at 50, and a bit at 100 | Not recorded | No blockers. Design loved. | Not recorded |
 | Round 2, after launch (10/16, Unknown Caller, city pop producer, v1.0.0) | Not recorded. "Quick and intuitive" | Not recorded | Not recorded. Still subtle at 100, which he likes | Not tested | None. Easy install; no real CPU difference with BigCity on 5 tracks, master included | "…adding a polished sheen to a track, giving it air and breath." |
-| Round 3, after launch (about 10/23, vaporrer, PLUS100 Records; MacBook Pro M3 Max, 64 GB, macOS 26 Tahoe; v1.0.0) | Not recorded | Not recorded | Not recorded. Best on vocals and individual instruments rather than the master or a bus | Not tested | None. Easy install; no CPU change with 4 instances, about +5% with 64 | Permission pending |
+| Round 3, after launch (about 10/23, Vaperror, PLUS100 Records; MacBook Pro M3 Max, 64 GB, macOS 26 Tahoe; v1.0.0) | Not recorded | Not recorded | Not recorded. Best on vocals and individual instruments rather than the master or a bus | Not tested | None. Easy install; no CPU change with 4 instances, about +5% with 64 | "…stereoizer with a smoother feel than Ableton Utility… scatter feels more controlled but still widening…" |
 | Round 3, after launch (about 10/23, underbelly, on pre-processed vocals, v1.0.0) | Not recorded | Not recorded | Not recorded. Too subtle even at 100 | Not tested | "I can't really tell what the effect is doing even at 100 - it feels too subtle" | Not recorded |
 
 **Round 1** led to voicing A, the bent knob response (PRD §6 "Voicing change", D-30).
@@ -47,8 +47,8 @@
 - He doesn't think it needs anything else beyond cosmetic touches such as the water shimmer.
 - Liking that 100 stays subtle makes the flat top of the knob response optional for v1.1 (PRD §5 backlog).
 
-**Round 3, other notes (vaporrer):**
-- Describes it as a "stereoizer with a smoother feel than Ableton Utility… scatter feels more controlled but still widening". Quote permission is pending, so it isn't in the quotes list yet.
+**Round 3, other notes (Vaperror):**
+- Describes it as a "stereoizer with a smoother feel than Ableton Utility… scatter feels more controlled but still widening". Permission to quote granted 10/28.
 - "Willing to experiment more".
 - Suggested separate EQ and width knobs. Considered and declined: it breaks the one-knob principle (PRD §5 v1.1 backlog).
 - Suggested more UI realism: text effects, knob highlights that don't rotate, and screw shading. Done in the 1.1 assets (D-32).
@@ -57,3 +57,4 @@
 
 - "…adding a polished sheen to a track, giving it air and breath." (Unknown Caller)
 - "All my homies hate two knobs." (Unknown Caller)
+- "…stereoizer with a smoother feel than Ableton Utility… scatter feels more controlled but still widening…" (Vaperror)
